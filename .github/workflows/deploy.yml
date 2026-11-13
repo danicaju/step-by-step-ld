@@ -22,6 +22,8 @@ jobs:
         run: |
           flutter pub get
           flutter build web --release
+          cp vercel.json build/web/
+
 
       - name: Deploy to Vercel Production
         uses: amondnet/vercel-action@v25
