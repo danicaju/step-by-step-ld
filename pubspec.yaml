@@ -1,0 +1,61 @@
+name: casio_tutor_calc
+description: Calculadora científica estilo Casio ClassWiz con resolución paso a paso e IA pedagógica.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Estado y Arquitectura
+  flutter_riverpod: ^2.6.1
+
+  # Renderizado Matemático Natural Textbook Display (LaTeX a 120fps)
+  flutter_math_fork: ^0.7.3
+
+  # IA Pedagógica Serverless (Gemini 2.5 Flash + Inferencia Híbrida Android)
+  firebase_core: ^3.12.1
+  firebase_ai: ^2.2.0
+  firebase_app_check: ^0.3.2+4
+
+  # Exportación de Stickers PNG transparentes (Goodnotes) y Portapapeles
+  path_provider: ^2.1.5
+  share_plus: ^10.1.4
+
+  # Tipografías estilo LCD / Técnica
+  google_fonts: ^6.2.1
+
+  # Escáner Multimodal (Cámara / Galería)
+  image_picker: ^1.1.2
+
+  # Persistencia de Historial y Preferencias
+  shared_preferences: ^2.3.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#181A1E"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  ios: true
+  remove_alpha_ios: true
+  image_path_ios: "assets/icon/app_icon.png"
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#181A1E"
+    theme_color: "#181A1E"
+  windows:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+
+flutter:
+  uses-material-design: true

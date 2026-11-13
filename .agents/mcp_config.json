@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "dart": {
+      "command": "dart",
+      "args": ["mcp-server"],
+      "timeoutSeconds": 300
+    },
+    "firebase": {
+      "command": "npx",
+      "args": ["-y", "firebase-tools@latest", "mcp"],
+      "timeoutSeconds": 180
+    },
+    "stitch": {
+      "command": "npx",
+      "args": ["-y", "stitch-mcp"],
+      "env": {
+        "GOOGLE_CLOUD_PROJECT": "calculadora-casio"
+      },
+      "timeoutSeconds": 180
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"],
+      "timeoutSeconds": 120
+    }
+  }
+}
