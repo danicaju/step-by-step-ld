@@ -58,6 +58,14 @@ void main() {
       final resolution = evaluator.evaluate(ast);
       expect(resolution.exactResultLatex, '8');
     });
+
+    test('Evaluación decimal de log_(5, 2) * 6 no trunca a 0 y aproxima con decimales', () {
+      final ast = parser.parse('log_(5, 2) * 6');
+      final resolution = evaluator.evaluate(ast);
+      expect(resolution.exactResultLatex, contains('2,584062'));
+      expect(resolution.exactResultLatex, isNot(equals('0')));
+      expect(resolution.steps.last.latexExpression, contains(r'\approx'));
+    });
   });
 
   group('rawToLiveLatex', () {
@@ -66,9 +74,24 @@ void main() {
       expect(ExpressionParser.rawToLiveLatex('4/'), r'\frac{4}{\square}');
     });
 
-    test('Formatea potencias completas e incompletas', () {
+    test('Formatea potencias completas e incompletas sin hueco extra', () {
       expect(ExpressionParser.rawToLiveLatex('3^2'), '3^{2}');
       expect(ExpressionParser.rawToLiveLatex('3^'), r'3^{\square}');
+      expect(ExpressionParser.rawToLiveLatex('5^(3'), '5^{3}');
+      expect(ExpressionParser.rawToLiveLatex('5^('), r'5^{\square}');
+    });
+
+    test('Parentesis de usuario normal no se autocierran al pulsar flecha derecha', () {
+      // (2x + 1 no tiene prefijo estructurado de función ni potencia: no debe autocerrar
+      final result = ExpressionParser.handleStructuredBlockRightArrow('(2x + 1', 7);
+      expect(result, isNull);
+    });
+
+    test('handleFractionRightArrow permite salir de la fracción añadiendo espacio', () {
+      final result = ExpressionParser.handleFractionRightArrow('1/2', 3);
+      expect(result, isNotNull);
+      expect(result!.$1, '1/2 ');
+      expect(result.$2, 4);
     });
   });
 }

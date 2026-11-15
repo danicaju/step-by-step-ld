@@ -777,49 +777,71 @@ class StepEvaluator {
 
         // Mismo denominador o números enteros
         final result = op == BinaryOperator.add ? a + b : a - b;
+        final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
         final rightStr = b.numerator < 0 ? '(${b.toLatex()})' : b.toLatex();
+        final addLatex = isApprox
+            ? '${a.toDecimalLatex()} $signSymbol ${b.toDecimalLatex()} \\approx ${result.toDecimalLatex()}'
+            : '${a.toLatex()} $signSymbol $rightStr = ${result.toLatex()}';
         _addStep(
-          title: a.isInteger && b.isInteger
-              ? 'Operar números enteros'
-              : 'Fracciones con igual denominador',
-          latex: '${a.toLatex()} $signSymbol $rightStr = ${result.toLatex()}',
-          note: a.isInteger && b.isInteger
-              ? 'Resolvemos la operación entera respetando la regla de los signos.'
-              : 'Mantenemos el denominador común (${a.denominator}) y operamos los numeradores.',
+          title: isApprox
+              ? 'Operación con valores aproximados'
+              : (a.isInteger && b.isInteger
+                  ? 'Operar números enteros'
+                  : 'Fracciones con igual denominador'),
+          latex: addLatex,
+          note: isApprox
+              ? 'Realizamos la operación con los valores numéricos respetando la regla de los signos.'
+              : (a.isInteger && b.isInteger
+                  ? 'Resolvemos la operación entera respetando la regla de los signos.'
+                  : 'Mantenemos el denominador común (${a.denominator}) y operamos los numeradores.'),
         );
-        return ResolvedRationalNode(result);
+        return ResolvedRationalNode(result, isApproximateDecimal: isApprox);
 
       case BinaryOperator.multiply:
         final result = a * b;
+        final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
         final rightStr = b.numerator < 0 ? '(${b.toLatex()})' : b.toLatex();
-        final mulLatex = (a.isInteger && b.isInteger)
-            ? '${a.toLatex()} \\cdot $rightStr = ${result.toLatex()}'
-            : '${a.toLatex()} \\cdot $rightStr = \\frac{${a.numerator} \\cdot ${AlgebraicLatexFormatter.parenIfNegative(b.numerator)}}{${a.denominator} \\cdot ${b.denominator}} = ${result.toLatex()}';
+        final mulLatex = isApprox
+            ? '${a.toDecimalLatex()} \\cdot ${b.toDecimalLatex()} \\approx ${result.toDecimalLatex()}'
+            : ((a.isInteger && b.isInteger)
+                ? '${a.toLatex()} \\cdot $rightStr = ${result.toLatex()}'
+                : '${a.toLatex()} \\cdot $rightStr = \\frac{${a.numerator} \\cdot ${AlgebraicLatexFormatter.parenIfNegative(b.numerator)}}{${a.denominator} \\cdot ${b.denominator}} = ${result.toLatex()}');
         _addStep(
-          title: (a.isInteger && b.isInteger) ? 'Multiplicar enteros' : 'Multiplicación en línea',
+          title: isApprox
+              ? 'Multiplicación de valores aproximados'
+              : ((a.isInteger && b.isInteger) ? 'Multiplicar enteros' : 'Multiplicación en línea'),
           latex: mulLatex,
-          note: (a.isInteger && b.isInteger)
-              ? 'Calculamos el producto respetando la regla de los signos.'
-              : 'Multiplicamos en línea: numerador por numerador y denominador por denominador.',
+          note: isApprox
+              ? 'Calculamos el producto numérico respetando la regla de los signos.'
+              : ((a.isInteger && b.isInteger)
+                  ? 'Calculamos el producto respetando la regla de los signos.'
+                  : 'Multiplicamos en línea: numerador por numerador y denominador por denominador.'),
         );
-        return ResolvedRationalNode(result);
+        return ResolvedRationalNode(result, isApproximateDecimal: isApprox);
 
       case BinaryOperator.divide:
         final result = a / b;
+        final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
         final rightStr = b.numerator < 0 ? '(${b.toLatex()})' : b.toLatex();
-        final divLatex = (a.isInteger && b.isInteger)
-            ? '${a.toLatex()} : $rightStr = ${result.toLatex()}'
-            : '${a.toLatex()} : $rightStr = \\frac{${a.numerator} \\cdot ${b.denominator}}{${a.denominator} \\cdot ${AlgebraicLatexFormatter.parenIfNegative(b.numerator)}} = ${result.toLatex()}';
+        final divLatex = isApprox
+            ? '${a.toDecimalLatex()} : ${b.toDecimalLatex()} \\approx ${result.toDecimalLatex()}'
+            : ((a.isInteger && b.isInteger)
+                ? '${a.toLatex()} : $rightStr = ${result.toLatex()}'
+                : '${a.toLatex()} : $rightStr = \\frac{${a.numerator} \\cdot ${b.denominator}}{${a.denominator} \\cdot ${AlgebraicLatexFormatter.parenIfNegative(b.numerator)}} = ${result.toLatex()}');
         _addStep(
-          title: (a.isInteger && b.isInteger)
-              ? 'División exacta o en forma de fracción'
-              : 'División de fracciones (productos cruzados)',
+          title: isApprox
+              ? 'División de valores aproximados'
+              : ((a.isInteger && b.isInteger)
+                  ? 'División exacta o en forma de fracción'
+                  : 'División de fracciones (productos cruzados)'),
           latex: divLatex,
-          note: (a.isInteger && b.isInteger)
-              ? 'Dividimos los dos números y simplificamos si es fracción irreducible.'
-              : 'Multiplicamos en cruz (o multiplicamos la primera fracción por la inversa de la segunda).',
+          note: isApprox
+              ? 'Efectuamos el cociente numérico respetando la regla de los signos.'
+              : ((a.isInteger && b.isInteger)
+                  ? 'Dividimos los dos números y simplificamos si es fracción irreducible.'
+                  : 'Multiplicamos en cruz (o multiplicamos la primera fracción por la inversa de la segunda).'),
         );
-        return ResolvedRationalNode(result);
+        return ResolvedRationalNode(result, isApproximateDecimal: isApprox);
     }
   }
 

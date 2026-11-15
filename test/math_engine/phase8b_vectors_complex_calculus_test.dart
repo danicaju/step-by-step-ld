@@ -274,6 +274,7 @@ void main() {
       expect(find.byKey(const Key('menu_mode_9')), findsOneWidget);
       expect(find.byKey(const Key('menu_mode_10')), findsOneWidget);
       expect(find.byKey(const Key('menu_mode_11')), findsOneWidget);
+      expect(find.byKey(const Key('menu_mode_12')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('menu_mode_9')));
       await tester.pumpAndSettle();
@@ -341,7 +342,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Modo 11 (Cálculo Móvil 390x844): ∫_0^2 3x² dx por Barrow sin overflow', (tester) async {
+    testWidgets('Modo 12 (Cálculo Móvil 390x844): ∫_0^2 3x² dx por Barrow sin overflow', (tester) async {
       await pumpCalc(tester, const Size(390, 844));
 
       await tester.tap(find.text('MODE'));
@@ -350,7 +351,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('menu_page_next')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('menu_mode_11')));
+      await tester.tap(find.byKey(const Key('menu_mode_12')));
       await tester.pumpAndSettle();
 
       expect(find.byType(CasioCalculusEditorView), findsOneWidget);

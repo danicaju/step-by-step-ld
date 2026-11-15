@@ -803,7 +803,7 @@ class CasioLcdScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '[◀ ▶] o [1-9, =]',
+                    '[◄►] o [1-12, =]',
                     style: TextStyle(
                       color: formulaColor.withValues(alpha: 0.72),
                       fontSize: 9.5,
@@ -1179,16 +1179,16 @@ const List<_ClassWizMenuItem> _classWizMenuItems = [
   _ClassWizMenuItem(
     modeId: 11,
     number: '11',
-    shortTitle: 'Derivadas e Integrales',
-    fullTitle: '11:Derivadas e Integrales',
-    icon: Icons.calculate_rounded,
+    shortTitle: 'Sistemas Inec.',
+    fullTitle: '11:Sistemas de Inecuaciones (1D / 2D)',
+    icon: Icons.alt_route_rounded,
   ),
   _ClassWizMenuItem(
     modeId: 12,
     number: '12',
-    shortTitle: 'Sistemas Inec.',
-    fullTitle: '12:Sistemas de Inecuaciones (1D / 2D)',
-    icon: Icons.alt_route_rounded,
+    shortTitle: 'Derivadas e Integrales',
+    fullTitle: '12:Derivadas e Integrales',
+    icon: Icons.calculate_rounded,
   ),
 ];
 

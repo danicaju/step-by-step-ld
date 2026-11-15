@@ -453,6 +453,30 @@ class ExpressionParser {
 
     if (innermostOpenParen == null) return null;
 
+    // CRÍTICO: SOLO autocerrar si es un bloque estructurado de plantilla de función
+    // o exponente / raíz (ej: ^(, √(, ³√(, root(, log_(, sin(, cos(, tan(, ln(),
+    // NUNCA para un paréntesis aritmético o algebraico normal de usuario como (x + 1) o (1/2 - 3).
+    final beforeOpen = raw.substring(0, innermostOpenParen);
+    const structuredPrefixes = [
+      '^',
+      '√',
+      '³√',
+      'root',
+      'log_',
+      'sin',
+      'cos',
+      'tan',
+      'asin',
+      'acos',
+      'atan',
+      'ln',
+    ];
+    final isStructuredTemplate = structuredPrefixes.any(beforeOpen.endsWith);
+    if (!isStructuredTemplate) {
+      // Paréntesis de usuario normal: NO autocerrar con flecha derecha.
+      return null;
+    }
+
     // Verificar si ese '(' ya tiene un ')' de cierre después de 'safe'
     int forwardDepth = 1;
     bool hasClosingParen = false;
@@ -467,13 +491,37 @@ class ExpressionParser {
       }
     }
 
-    // Si no está cerrado y el cursor está al final del bloque abierto
-    if (!hasClosingParen && safe > innermostOpenParen) {
+    // Si no está cerrado y el cursor está al final del contenido del bloque abierto
+    if (!hasClosingParen && safe >= raw.length) {
       final updated = '${raw.substring(0, safe)})${raw.substring(safe)}';
       return (updated, safe + 1);
     }
 
     return null;
+  }
+
+  /// Gestiona la salida de una fracción con la flecha derecha `▶`:
+  /// si el cursor está al final de un denominador sin espacio posterior,
+  /// inserta un espacio `' '` para situar el cursor fuera de la fracción en la línea base.
+  static (String raw, int cursor)? handleFractionRightArrow(
+    String raw,
+    int cursorPos,
+  ) {
+    if (raw.isEmpty) return null;
+    final safe = snapCursorOutsideKeywords(raw, cursorPos).clamp(0, raw.length);
+    if (safe != raw.length) return null;
+    if (raw.endsWith(' ')) return null;
+
+    // Verificar si el último término es una fracción no cerrada con paréntesis
+    final lastSlash = raw.lastIndexOf('/');
+    if (lastSlash == -1) return null;
+
+    // Asegurar que no hay operadores después de la barra (el cursor está al final del denominador)
+    final afterSlash = raw.substring(lastSlash + 1);
+    if (afterSlash.isEmpty) return null;
+
+    // Si no contiene operadores de salida, añadir espacio para salir de la fracción
+    return ('$raw ', safe + 1);
   }
 
   /// Limpia comas finales y autocierra cualquier paréntesis abierto antes de evaluar.
@@ -599,7 +647,10 @@ class ExpressionParser {
     // 3. Potencias con paréntesis libre ^(expr), exponente negativo ^-n y ^n
     out = _replaceBalancedPrefix(out, '^(', (inner, isClosed) {
       if (inner == c) return '^{$_cursorBoxLatex}';
-      if (!isClosed) return '^{$inner\\square}';
+      if (!isClosed) {
+        if (inner.isEmpty) return '^{\\square}';
+        return '^{$inner}';
+      }
       return '^{$inner}';
     });
     out = out.replaceAllMapped(
@@ -636,7 +687,8 @@ class ExpressionParser {
           final idx = parts[0];
           final rad = parts.length > 1 ? parts[1] : '';
           if (rad == c) return '\\sqrt[$idx]{$_cursorBoxLatex}';
-          return '\\sqrt[$idx]{$rad\\square}';
+          if (rad.isEmpty) return '\\sqrt[$idx]{\\square}';
+          return '\\sqrt[$idx]{$rad}';
         }
         return '\\sqrt[$inner]{\\square}';
       },
@@ -645,7 +697,10 @@ class ExpressionParser {
     // 5b. Raíces cúbicas (³√)
     out = _replaceBalancedPrefix(out, '³√(', (inner, isClosed) {
       if (inner == c) return '\\sqrt[3]{$_cursorBoxLatex}';
-      if (!isClosed) return '\\sqrt[3]{$inner\\square}';
+      if (!isClosed) {
+        if (inner.isEmpty) return '\\sqrt[3]{\\square}';
+        return '\\sqrt[3]{$inner}';
+      }
       return '\\sqrt[3]{$inner}';
     });
     out = out.replaceAllMapped(
@@ -658,7 +713,10 @@ class ExpressionParser {
     // 5c. Raíces cuadradas
     out = _replaceBalancedPrefix(out, '√(', (inner, isClosed) {
       if (inner == c) return '\\sqrt{$_cursorBoxLatex}';
-      if (!isClosed) return '\\sqrt{$inner\\square}';
+      if (!isClosed) {
+        if (inner.isEmpty) return '\\sqrt{\\square}';
+        return '\\sqrt{$inner}';
+      }
       return '\\sqrt{$inner}';
     });
     out = out.replaceAllMapped(
@@ -1109,7 +1167,7 @@ class ExpressionParser {
       final recInner = _formatFunctionCalls(inner, cursorSentinel);
       final formattedInner = recInner == cursorSentinel
           ? _cursorBoxLatex
-          : (recInner.isEmpty ? r'\square' : (closeIdx == null ? '$recInner\\square' : recInner));
+          : (recInner.isEmpty ? r'\square' : recInner);
       final replacement = '\\$fn^{$exp}\\left($formattedInner\\right)';
       final endIdx = closeIdx != null ? closeIdx + 1 : out.length;
       out = out.substring(0, matchStart) + replacement + out.substring(endIdx);
@@ -1168,7 +1226,7 @@ class ExpressionParser {
           final recInner = _formatFunctionCalls(inner, cursorSentinel);
           final formattedInner = recInner == cursorSentinel
               ? _cursorBoxLatex
-              : (recInner.isEmpty ? r'\square' : '$recInner\\square');
+              : (recInner.isEmpty ? r'\square' : recInner);
           final replacement = '$latexFn\\left($formattedInner\\right)';
           out = out.substring(0, idx) + replacement;
           break;

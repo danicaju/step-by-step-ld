@@ -1,3 +1,4 @@
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../domain/math_engine/core/calculator_memory.dart';
@@ -142,12 +143,14 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   InequalitySign _inequalitySign = InequalitySign.less;
   Inequality1DVisualData? _activeIneqVisualData;
 
-  // Estado Modo 12 (Sistemas de Inecuaciones: 1D o 2D)
+  // Estado Modo 11 (Sistemas de Inecuaciones: 1D o 2D)
   int _ineqSysUnknowns = 1; // 1 = 1 Incóg. (x), 2 = 2 Incóg. (x, y)
   int _ineqSysRows = 2; // 2 o 3 inecuaciones
   final List<String> _ineqSysRowInputs = ['', '', ''];
+  final List<int> _ineqSysRowCursors = [0, 0, 0];
   int _ineqSysActiveRow = 0;
   bool _show2DRegionView = true;
+  bool _isChoosingIneqSysUnknowns = true;
   FeasibleRegion2DVisualData? _currentFeasibleRegion;
 
   // Estado Modo 7 (Estadística 1-Var: tabla xi | fi)
@@ -187,7 +190,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   final List<String> _complexCells = List<String>.filled(4, '');
   int _complexActiveIndex = 0;
 
-  // Estado Modo 11 (Derivadas, Tangente e Integrales por Barrow)
+  // Estado Modo 12 (Derivadas, Tangente e Integrales por Barrow)
   CalculusOperation _calculusOp = CalculusOperation.derivative;
   String _calculusExprRaw = '';
   int _calculusCursorPos = 0;
@@ -233,11 +236,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       _calculatorMode == 8 ||
       _calculatorMode == 9 ||
       _calculatorMode == 10 ||
-      (_calculatorMode == 11 && _calculusActiveField != 0);
+      (_calculatorMode == 12 && _calculusActiveField != 0);
 
   /// Verdadero cuando el cursor activo edita una expresión simbólica (`f(x)`, Modo 1, 2, 4 Notables, 6 lineal).
   bool get _supportsExpressionInput =>
-      !_isCoefficientMode && !_isGridOrStructuredMode && _calculatorMode != 12;
+      !_isCoefficientMode && !_isGridOrStructuredMode && _calculatorMode != 11;
 
   /// Verdadero solo en modos de expresión general con funciones científicas (`sin`, `log`, `√`, `mcm`).
   bool get _supportsScientificFns =>
@@ -480,9 +483,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     _ineqSysRows = 2;
     for (int i = 0; i < _ineqSysRowInputs.length; i++) {
       _ineqSysRowInputs[i] = '';
+      _ineqSysRowCursors[i] = 0;
     }
     _ineqSysActiveRow = 0;
     _show2DRegionView = true;
+    _isChoosingIneqSysUnknowns = true;
     _currentFeasibleRegion = null;
 
     _statRows = [(xi: '', fi: '')];
@@ -932,7 +937,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       return;
     }
 
-    if (_calculatorMode == 12) {
+    if (_calculatorMode == 11) {
       final activeRows = _ineqSysRowInputs
           .take(_ineqSysRows)
           .map((s) => s.trim())
@@ -960,7 +965,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           });
           _recordCurrentResolutionToHistory(
             outcome.resolution,
-            'M12: Sistema Inecuaciones 1D ($_ineqSysRows Inec.)',
+            'M11: Sistema Inecuaciones 1D ($_ineqSysRows Inec.)',
           );
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -983,7 +988,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           });
           _recordCurrentResolutionToHistory(
             outcome.resolution,
-            'M12: Región Factible 2D ($_ineqSysRows Inec.)',
+            'M11: Región Factible 2D ($_ineqSysRows Inec.)',
           );
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1175,7 +1180,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       return;
     }
 
-    if (_calculatorMode == 11) {
+    if (_calculatorMode == 12) {
       try {
         final expr = _calculusExprRaw.trim().isEmpty ? '0' : _calculusExprRaw.trim();
         final x0 = _parseRationalCell(_calculusX0Raw, defaultValue: Rational(0));
@@ -1194,7 +1199,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         });
         _recordCurrentResolutionToHistory(
           res,
-          'M11: Cálculo (${_calculusOp.shortLabel})',
+          'M12: Cálculo (${_calculusOp.shortLabel})',
         );
       } on FormatException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1280,17 +1285,25 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   void _setInequalitySign(InequalitySign sign, {bool insertIfMissing = true}) {
     _inequalitySign = sign;
-    if (_calculatorMode == 12) {
+    if (_calculatorMode == 11) {
       if (_activeResolution != null) {
         _activeResolution = null;
         _activeStepIndex = 0;
       }
       final cur = _ineqSysRowInputs[_ineqSysActiveRow];
+      final pos = _ineqSysRowCursors[_ineqSysActiveRow];
       final existing = RegExp(r'(<=|>=|[≤≥<>])');
       if (existing.hasMatch(cur)) {
         _ineqSysRowInputs[_ineqSysActiveRow] = cur.replaceFirst(existing, sign.symbol);
       } else if (insertIfMissing && cur.trim().isNotEmpty) {
-        _ineqSysRowInputs[_ineqSysActiveRow] = '$cur ${sign.symbol} ';
+        final (nextRaw, nextPos) = ExpressionParser.insertAtCursor(
+          cur,
+          pos,
+          ' ${sign.symbol} ',
+          keepLeadingZero: true,
+        );
+        _ineqSysRowInputs[_ineqSysActiveRow] = nextRaw;
+        _ineqSysRowCursors[_ineqSysActiveRow] = nextPos;
       }
       return;
     }
@@ -1328,18 +1341,40 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       } else {
         _eqRightCursorPos = _eqRightRaw.length;
       }
-    } else if (_calculatorMode == 11 && _calculusActiveField == 0) {
+    } else if (_calculatorMode == 12 && _calculusActiveField == 0) {
       _calculusCursorPos = _calculusExprRaw.length;
+    } else if (_calculatorMode == 11) {
+      _ineqSysRowCursors[_ineqSysActiveRow] =
+          _ineqSysRowInputs[_ineqSysActiveRow].length;
     } else {
       _cursorPos = _rawInput.length;
     }
   }
 
   void _applyRawInsertion(String token, {bool keepLeadingZero = false}) {
-    if (_calculatorMode == 12) {
+    if (_calculatorMode == 11) {
+      if (_isChoosingIneqSysUnknowns) {
+        if (token == '1') {
+          _ineqSysUnknowns = 1;
+          _isChoosingIneqSysUnknowns = false;
+          return;
+        } else if (token == '2') {
+          _ineqSysUnknowns = 2;
+          _isChoosingIneqSysUnknowns = false;
+          return;
+        }
+      }
       _replayIndex = -1;
       final cur = _ineqSysRowInputs[_ineqSysActiveRow];
-      _ineqSysRowInputs[_ineqSysActiveRow] = cur == '0' ? token : cur + token;
+      final pos = _ineqSysRowCursors[_ineqSysActiveRow];
+      final (nextRaw, nextPos) = ExpressionParser.insertAtCursor(
+        cur,
+        pos,
+        token,
+        keepLeadingZero: true,
+      );
+      _ineqSysRowInputs[_ineqSysActiveRow] = nextRaw;
+      _ineqSysRowCursors[_ineqSysActiveRow] = nextPos;
       return;
     }
     if (_calculatorMode == 2) {
@@ -1365,7 +1400,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       }
       return;
     }
-    if (_calculatorMode == 11 && _calculusActiveField == 0) {
+    if (_calculatorMode == 12 && _calculusActiveField == 0) {
       final base = _calculusExprRaw.isEmpty ? '0' : _calculusExprRaw;
       final cur = _calculusExprRaw.isEmpty ? 1 : _calculusCursorPos;
       final (nextRaw, nextPos) = ExpressionParser.insertAtCursor(
@@ -1379,6 +1414,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       return;
     }
     _replayIndex = -1;
+    // Conservar espacio si el usuario acaba de salir de una fracción con ▶
+    if (_rawInput.endsWith(' ') && _cursorPos == _rawInput.length) {
+      if (!'+-*^/()=<>≤≥'.contains(token)) {
+        _rawInput = _rawInput.substring(0, _rawInput.length - 1);
+        _cursorPos = _rawInput.length;
+      }
+    }
     final (nextRaw, nextPos) = ExpressionParser.insertAtCursor(
       _rawInput,
       _cursorPos,
@@ -1666,7 +1708,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return;
       }
 
-      // Tecla MENU / MODE / SETUP (SHIFT + MODE abre SETUP con DEG/RAD/OLED; MODE abre menú 4x2)
+      // Tecla MENU / MODE / SETUP (SHIFT + MODE abre SETUP con DEG/RAD/OLED; MODE abre menú con prioridad absoluta)
       if (key == 'MENU' || key == 'MODE') {
         if (_isShiftActive) {
           _isShiftActive = false;
@@ -1684,6 +1726,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           _activeResolution = null;
           _activeStepIndex = 0;
           _showDecimalApprox = false;
+          _showGraphView = false;
+          _show2DRegionView = false;
+          _currentFeasibleRegion = null;
+          _currentGraphAnalysis = null;
+          _isCalcPromptActive = false;
+          _isChoosingIneqSysUnknowns = false;
         }
         return;
       }
@@ -1763,12 +1811,42 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           return;
         }
         final parsedMode = int.tryParse(key);
-        if (parsedMode != null && parsedMode >= 1 && parsedMode <= 9) {
-          _isMenuOpen = false;
-          _isAlphaActive = false;
-          _isShiftActive = false;
-          _resetFieldsForMode(parsedMode);
-          return;
+        if (parsedMode != null) {
+          // Si pulsa 2..9, salta directamente a ese modo
+          if (parsedMode >= 2 && parsedMode <= 9) {
+            _isMenuOpen = false;
+            _isAlphaActive = false;
+            _isShiftActive = false;
+            _resetFieldsForMode(parsedMode);
+            return;
+          }
+          // Si pulsa 1: sitúa el cursor en el modo 1. Si vuelve a pulsar 0, 1 o 2, entra a 10, 11 o 12.
+          if (parsedMode == 1) {
+            if (_menuCursorIndex == CasioLcdScreen.menuIndexForMode(1)) {
+              // Ya estaba en 1 y volvió a pulsar 1 -> Modo 11
+              _isMenuOpen = false;
+              _isAlphaActive = false;
+              _isShiftActive = false;
+              _resetFieldsForMode(11);
+              return;
+            }
+            _menuCursorIndex = CasioLcdScreen.menuIndexForMode(1);
+            return;
+          }
+          if (parsedMode == 0 && _menuCursorIndex == CasioLcdScreen.menuIndexForMode(1)) {
+            _isMenuOpen = false;
+            _isAlphaActive = false;
+            _isShiftActive = false;
+            _resetFieldsForMode(10);
+            return;
+          }
+          if (parsedMode == 2 && _menuCursorIndex == CasioLcdScreen.menuIndexForMode(1)) {
+            _isMenuOpen = false;
+            _isAlphaActive = false;
+            _isShiftActive = false;
+            _resetFieldsForMode(12);
+            return;
+          }
         }
         return;
       }
@@ -1846,25 +1924,31 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           }
           _complexActiveIndex = 0;
         } else if (_calculatorMode == 11) {
-          _calculusExprRaw = '';
-          _calculusCursorPos = 0;
-          _calculusX0Raw = '';
-          _calculusLimitARaw = '';
-          _calculusLimitBRaw = '';
-          _calculusActiveField = 0;
-        } else if (_calculatorMode == 12) {
           _activeResolution = null;
           _activeStepIndex = 0;
           _activeIneqVisualData = null;
           _currentFeasibleRegion = null;
           if (_ineqSysRowInputs[_ineqSysActiveRow].isNotEmpty) {
             _ineqSysRowInputs[_ineqSysActiveRow] = '';
+            _ineqSysRowCursors[_ineqSysActiveRow] = 0;
           } else {
+            final allEmpty = _ineqSysRowInputs.every((r) => r.isEmpty);
             for (int i = 0; i < _ineqSysRowInputs.length; i++) {
               _ineqSysRowInputs[i] = '';
+              _ineqSysRowCursors[i] = 0;
             }
             _ineqSysActiveRow = 0;
+            if (allEmpty) {
+              _isChoosingIneqSysUnknowns = true;
+            }
           }
+        } else if (_calculatorMode == 12) {
+          _calculusExprRaw = '';
+          _calculusCursorPos = 0;
+          _calculusX0Raw = '';
+          _calculusLimitARaw = '';
+          _calculusLimitBRaw = '';
+          _calculusActiveField = 0;
         } else if (_isCoefficientMode) {
           final cells = _currentCellValues;
           for (int i = 0; i < cells.length; i++) {
@@ -1913,14 +1997,20 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           return;
         }
         if (_calculatorMode == 11) {
-          _calculusBackspace();
+          final cur = _ineqSysRowInputs[_ineqSysActiveRow];
+          final pos = _ineqSysRowCursors[_ineqSysActiveRow];
+          final (nextRaw, nextPos) = ExpressionParser.deleteAtCursor(
+            cur,
+            pos,
+            emptyResult: '',
+            emptyCursor: 0,
+          );
+          _ineqSysRowInputs[_ineqSysActiveRow] = nextRaw;
+          _ineqSysRowCursors[_ineqSysActiveRow] = nextPos;
           return;
         }
         if (_calculatorMode == 12) {
-          final cur = _ineqSysRowInputs[_ineqSysActiveRow];
-          if (cur.isNotEmpty) {
-            _ineqSysRowInputs[_ineqSysActiveRow] = cur.substring(0, cur.length - 1);
-          }
+          _calculusBackspace();
           return;
         }
 
@@ -2122,7 +2212,20 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           _complexInsertToken('/');
           return;
         }
-        if (_calculatorMode == 11 && _calculusActiveField != 0) {
+        if (_calculatorMode == 11) {
+          final cur = _ineqSysRowInputs[_ineqSysActiveRow];
+          final pos = _ineqSysRowCursors[_ineqSysActiveRow];
+          final (nextRaw, advancedPos) = ExpressionParser.insertAtCursor(
+            cur,
+            pos,
+            '/',
+            keepLeadingZero: true,
+          );
+          _ineqSysRowInputs[_ineqSysActiveRow] = nextRaw;
+          _ineqSysRowCursors[_ineqSysActiveRow] = advancedPos;
+          return;
+        }
+        if (_calculatorMode == 12 && _calculusActiveField != 0) {
           _calculusInsertAuxToken('/');
           return;
         }
@@ -2181,7 +2284,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           }
           return;
         }
-        if (_calculatorMode == 11 && _calculusActiveField == 0) {
+        if (_calculatorMode == 12 && _calculusActiveField == 0) {
           if (_calculusExprRaw.isEmpty || _calculusExprRaw == '0') {
             _calculusExprRaw = '/';
             _calculusCursorPos = 0;
@@ -2423,22 +2526,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           return;
         }
 
-        // En Modo 11 (Cálculo: Derivada / Tangente / Barrow)
+        // En Modo 11 (Sistemas de Inecuaciones)
         if (_calculatorMode == 11) {
-          if (_activeResolution != null) {
-            if (_activeStepIndex < _activeResolution!.steps.length - 1) {
-              _activeStepIndex++;
-            } else {
-              _activeStepIndex = 0;
-            }
+          if (_isChoosingIneqSysUnknowns) {
+            _isChoosingIneqSysUnknowns = false;
             return;
           }
-          _calculusAdvanceOnEquals();
-          return;
-        }
-
-        // En Modo 12 (Sistemas de Inecuaciones)
-        if (_calculatorMode == 12) {
           if (_activeResolution != null) {
             if (_activeStepIndex < _activeResolution!.steps.length - 1) {
               _activeStepIndex++;
@@ -2454,6 +2547,20 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             return;
           }
           _solveCurrentMode();
+          return;
+        }
+
+        // En Modo 12 (Cálculo: Derivada / Tangente / Barrow)
+        if (_calculatorMode == 12) {
+          if (_activeResolution != null) {
+            if (_activeStepIndex < _activeResolution!.steps.length - 1) {
+              _activeStepIndex++;
+            } else {
+              _activeStepIndex = 0;
+            }
+            return;
+          }
+          _calculusAdvanceOnEquals();
           return;
         }
 
@@ -2552,8 +2659,31 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return;
       }
 
-      // ENTRADA EN MODO 11 (CÁLCULO: campo auxiliar x0/a/b vs f(x))
+      // ENTRADA EN MODO 11 (SISTEMAS DE INECUACIONES: selector 1D/2D o edición de fila)
       if (_calculatorMode == 11) {
+        if (_isChoosingIneqSysUnknowns) {
+          if (effectiveChar == '1') {
+            _ineqSysUnknowns = 1;
+            _isChoosingIneqSysUnknowns = false;
+            return;
+          }
+          if (effectiveChar == '2') {
+            _ineqSysUnknowns = 2;
+            _isChoosingIneqSysUnknowns = false;
+            _show2DRegionView = true;
+            return;
+          }
+        }
+        if (_activeResolution != null) {
+          _activeResolution = null;
+          _activeStepIndex = 0;
+          _ineqSysRowCursors[_ineqSysActiveRow] =
+              _ineqSysRowInputs[_ineqSysActiveRow].length;
+        }
+      }
+
+      // ENTRADA EN MODO 12 (CÁLCULO: campo auxiliar x0/a/b vs f(x))
+      if (_calculatorMode == 12) {
         if (_activeResolution != null) {
           _activeResolution = null;
           _activeStepIndex = 0;
@@ -3007,6 +3137,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return;
       }
       if (_calculatorMode == 11) {
+        if (_isChoosingIneqSysUnknowns) {
+          _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
+          return;
+        }
+        if (_activeResolution == null) {
+          final cur = _ineqSysRowInputs[_ineqSysActiveRow];
+          final pos = _ineqSysRowCursors[_ineqSysActiveRow];
+          _ineqSysRowCursors[_ineqSysActiveRow] =
+              ExpressionParser.stepCursorLeft(cur, pos);
+        }
+        return;
+      }
+      if (_calculatorMode == 12) {
         _calculusMoveDpad(dRow: 0, dCol: -1);
         return;
       }
@@ -3072,6 +3215,31 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return;
       }
       if (_calculatorMode == 11) {
+        if (_activeResolution == null) {
+          final cur = _ineqSysRowInputs[_ineqSysActiveRow];
+          final pos = _ineqSysRowCursors[_ineqSysActiveRow];
+          final fracRight = ExpressionParser.handleFractionRightArrow(cur, pos);
+          if (fracRight != null) {
+            _ineqSysRowInputs[_ineqSysActiveRow] = fracRight.$1;
+            _ineqSysRowCursors[_ineqSysActiveRow] = fracRight.$2;
+          } else {
+            final mcmRight = ExpressionParser.handleMcmMcdRightArrow(cur, pos);
+            final slotRight = mcmRight ??
+                ExpressionParser.handleTwoSlotRightArrow(cur, pos);
+            final blockRight = slotRight ??
+                ExpressionParser.handleStructuredBlockRightArrow(cur, pos);
+            if (blockRight != null) {
+              _ineqSysRowInputs[_ineqSysActiveRow] = blockRight.$1;
+              _ineqSysRowCursors[_ineqSysActiveRow] = blockRight.$2;
+            } else {
+              _ineqSysRowCursors[_ineqSysActiveRow] =
+                  ExpressionParser.stepCursorRight(cur, pos);
+            }
+          }
+        }
+        return;
+      }
+      if (_calculatorMode == 12) {
         _calculusMoveDpad(dRow: 0, dCol: 1);
         return;
       }
@@ -3087,6 +3255,18 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       if (_calculatorMode == 2) {
         final sideRaw = _eqActiveSide == 0 ? _eqLeftRaw : _eqRightRaw;
         final sideCur = _eqActiveSide == 0 ? _eqLeftCursorPos : _eqRightCursorPos;
+        final fracRight = ExpressionParser.handleFractionRightArrow(sideRaw, sideCur);
+        if (fracRight != null) {
+          if (_eqActiveSide == 0) {
+            _eqLeftRaw = fracRight.$1;
+            _eqLeftCursorPos = fracRight.$2;
+          } else {
+            _eqRightRaw = fracRight.$1;
+            _eqRightCursorPos = fracRight.$2;
+          }
+          _replayIndex = -1;
+          return;
+        }
         final mcmRight = ExpressionParser.handleMcmMcdRightArrow(sideRaw, sideCur);
         final slotRight = mcmRight ?? ExpressionParser.handleTwoSlotRightArrow(sideRaw, sideCur);
         final blockRight = slotRight ?? ExpressionParser.handleStructuredBlockRightArrow(sideRaw, sideCur);
@@ -3112,11 +3292,20 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         }
         return;
       }
-      // Modo escritura libre: en mcm/mcd o log_(base,arg)/root(n,x) abre hueco con ',' o cierra; si no, desplaza _cursorPos
-      final mcmRight = ExpressionParser.handleMcmMcdRightArrow(
+      // Modo escritura libre: salir de fracción con ' ', o en mcm/mcd o log_/root abre hueco; si no, desplaza _cursorPos
+      final fracRight = ExpressionParser.handleFractionRightArrow(
         _rawInput,
         _cursorPos,
       );
+      if (fracRight != null) {
+        _rawInput = fracRight.$1;
+        _cursorPos = fracRight.$2;
+        _replayIndex = -1;
+      } else {
+        final mcmRight = ExpressionParser.handleMcmMcdRightArrow(
+          _rawInput,
+          _cursorPos,
+        );
       if (mcmRight != null) {
         _rawInput = mcmRight.$1;
         _cursorPos = mcmRight.$2;
@@ -3144,6 +3333,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           }
         }
       }
+    }
     });
   }
 
@@ -3192,13 +3382,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return;
       }
       if (_calculatorMode == 11) {
-        _calculusMoveDpad(dRow: -1, dCol: 0);
-        return;
-      }
-      if (_calculatorMode == 12 && _activeResolution == null) {
-        if (_ineqSysActiveRow > 0) {
+        if (_isChoosingIneqSysUnknowns) {
+          _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
+          return;
+        }
+        if (_activeResolution == null && _ineqSysActiveRow > 0) {
           _ineqSysActiveRow--;
         }
+        return;
+      }
+      if (_calculatorMode == 12) {
+        _calculusMoveDpad(dRow: -1, dCol: 0);
         return;
       }
       if (_isCoefficientMode) {
@@ -3283,13 +3477,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return;
       }
       if (_calculatorMode == 11) {
-        _calculusMoveDpad(dRow: 1, dCol: 0);
-        return;
-      }
-      if (_calculatorMode == 12 && _activeResolution == null) {
-        if (_ineqSysActiveRow < _ineqSysRows - 1) {
+        if (_isChoosingIneqSysUnknowns) {
+          _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
+          return;
+        }
+        if (_activeResolution == null && _ineqSysActiveRow < _ineqSysRows - 1) {
           _ineqSysActiveRow++;
         }
+        return;
+      }
+      if (_calculatorMode == 12) {
+        _calculusMoveDpad(dRow: 1, dCol: 0);
         return;
       }
       if (_isCoefficientMode) {
@@ -3441,7 +3639,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           _calculatorMode == 8 ||
           _calculatorMode == 9 ||
           _calculatorMode == 10 ||
-          (_calculatorMode == 11 && _calculusExprRaw.trim().isNotEmpty) ||
+          (_calculatorMode == 11 && _ineqSysRowInputs.any((r) => r.trim().isNotEmpty)) ||
+          (_calculatorMode == 12 && _calculusExprRaw.trim().isNotEmpty) ||
           (_calculatorMode == 2 &&
               (_eqLeftRaw.trim().isNotEmpty || _eqRightRaw.trim().isNotEmpty)) ||
           (_rawInput.trim().isNotEmpty && _rawInput != '0')) {
@@ -3512,9 +3711,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       if (_calculatorMode == 2) {
         _restoreMode2EquationString(restored);
       } else if (_calculatorMode == 11) {
-        _calculusExprRaw = entry.rawExpression ?? '';
-        _calculusCursorPos = _calculusExprRaw.length;
-      } else if (_calculatorMode == 12) {
         final rawRows = (entry.rawExpression ?? restored)
             .split(RegExp(r'[;,]'))
             .map((s) => s.trim())
@@ -3522,10 +3718,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             .toList();
         for (int i = 0; i < _ineqSysRowInputs.length; i++) {
           _ineqSysRowInputs[i] = i < rawRows.length ? rawRows[i] : '';
+          _ineqSysRowCursors[i] = _ineqSysRowInputs[i].length;
         }
         _ineqSysRows = rawRows.length.clamp(2, 3);
         _ineqSysUnknowns = (entry.rawExpression ?? restored).contains('y') ? 2 : 1;
+        _isChoosingIneqSysUnknowns = false;
         _ineqSysActiveRow = 0;
+      } else if (_calculatorMode == 12) {
+        _calculusExprRaw = entry.rawExpression ?? '';
+        _calculusCursorPos = _calculusExprRaw.length;
       } else {
         _rawInput = restored;
         _cursorPos = _rawInput.length;
@@ -3543,7 +3744,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     });
 
     // Re-evaluar con el motor y vistas visuales actualizadas de la app
-    if (_calculatorMode == 1 || _calculatorMode == 2 || _calculatorMode == 6 || _calculatorMode == 12) {
+    if (_calculatorMode == 1 || _calculatorMode == 2 || _calculatorMode == 6 || _calculatorMode == 11) {
       _solveCurrentMode();
     }
 
@@ -3673,8 +3874,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       8: 'M8: MATRICES ($_matrixDim×$_matrixDim)',
       9: 'M9: VECTORES ${_vectorDim}D',
       10: 'M10: COMPLEJOS',
-      11: 'M11: CÁLCULO',
-      12: _ineqSysUnknowns == 1 ? 'M12: SIST. INEC 1D' : 'M12: REGIÓN 2D',
+      11: _ineqSysUnknowns == 1 ? 'M11: SIST. INEC 1D' : 'M11: REGIÓN 2D',
+      12: 'M12: CÁLCULO',
     };
     final modeLabel = modeLabels[_calculatorMode] ?? 'M1: CALC & √';
 
@@ -3895,27 +4096,59 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                     // 1. Pantalla LCD Natural Textbook Display o Visor Gráfico (36%-40%, minHeight: 195 px)
                     SizedBox(
                       height: targetLcdH,
-                      child: _calculatorMode == 5 &&
-                              _showGraphView &&
-                              _currentGraphAnalysis != null
-                      ? CasioGraphCanvas(
-                          analysisResult: _currentGraphAnalysis!,
-                          selectedPoint: _selectedGraphPoint,
-                          onPointSelected: (point) {
-                            setState(() {
-                              _selectedGraphPoint = point;
-                            });
-                          },
-                        )
-                      : (_calculatorMode == 12 &&
-                              _ineqSysUnknowns == 2 &&
-                              _show2DRegionView &&
-                              _currentFeasibleRegion != null
-                          ? FeasibleRegionCanvas(
-                              visualData: _currentFeasibleRegion!,
+                      child: _isMenuOpen || _isSetupOpen
+                          ? CasioLcdScreen(
+                              currentInputLatex: liveLatex,
+                              currentResolution: _activeResolution,
+                              activeStepIndex: _activeStepIndex,
+                              isShiftActive: _isShiftActive,
+                              isAlphaActive: _isAlphaActive,
+                              isMemoryActive: _memory.hasActiveM,
                               isOledDark: _isOledDark,
+                              showDecimalApprox: _showDecimalApprox,
+                              modeLabel: modeLabel,
+                              idleHint: _lcdIdleHint,
+                              customHeaderTitle: _lcdCustomHeaderTitle,
+                              isMenuOpen: _isMenuOpen,
+                              menuCursorIndex: _menuCursorIndex,
+                              onSelectMenuMode: _selectModeFromMenu,
+                              onMenuCursorChanged: (idx) {
+                                setState(() {
+                                  _menuCursorIndex = idx;
+                                });
+                              },
+                              onToggleTheme: _toggleLcdTheme,
+                              isSoundMuted: _isSoundMuted,
+                              onToggleSound: _toggleSound,
+                              isRadMode: _angleUnit == AngleUnit.rad,
+                              onToggleAngleUnit: _toggleAngleUnit,
+                              isSetupOpen: _isSetupOpen,
+                              onSelectSetupOption: _handleSetupOption,
                             )
-                          : CasioLcdScreen(
+                          : (_calculatorMode == 5 &&
+                                  _showGraphView &&
+                                  _currentGraphAnalysis != null
+                              ? CasioGraphCanvas(
+                                  analysisResult: _currentGraphAnalysis!,
+                                  selectedPoint: _selectedGraphPoint,
+                                  onPointSelected: (point) {
+                                    setState(() {
+                                      _selectedGraphPoint = point;
+                                    });
+                                  },
+                                )
+                              : (_calculatorMode == 11 &&
+                                      _ineqSysUnknowns == 2 &&
+                                      _show2DRegionView &&
+                                      _currentFeasibleRegion != null
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: FeasibleRegionCanvas(
+                                        visualData: _currentFeasibleRegion!,
+                                        isOledDark: _isOledDark,
+                                      ),
+                                    )
+                                  : CasioLcdScreen(
                           currentInputLatex: liveLatex,
                           currentResolution: _activeResolution,
                           activeStepIndex: _activeStepIndex,
@@ -3927,48 +4160,51 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           modeLabel: modeLabel,
                           idleHint: _lcdIdleHint,
                           customHeaderTitle: _lcdCustomHeaderTitle,
-                          customBodyView: (_calculatorMode == 4 &&
-                                  !_polyIsNotableMode &&
-                                  _isChoosingRuffiniDegree)
-                              ? _buildRuffiniDegreeSelector()
-                              : (_calculatorMode == 7
-                                  ? CasioStatTableView(
-                                      rows: _statRows,
-                                      activeRow: _statActiveRow,
-                                      activeCol: _statActiveCol,
-                                      isOledDark: _isOledDark,
-                                      onCellTap: (r, c) {
-                                        setState(() {
-                                          _activeResolution = null;
-                                          _statActiveRow = r;
-                                          _statActiveCol = c;
-                                        });
-                                      },
-                                    )
-                                  : (_calculatorMode == 8
-                                      ? CasioMatrixEditorView(
-                                          dimension: _matrixDim,
-                                          activeMatrixTarget: _matrixActiveTarget,
-                                          selectedOperation: _matrixOp,
-                                          cellsA: _matrixCellsA,
-                                          cellsB: _matrixCellsB,
-                                          scalarK: _matrixScalarK,
-                                          activeRow: _matrixActiveRow,
-                                          activeCol: _matrixActiveCol,
+                          customBodyView: (_calculatorMode == 11 &&
+                                  _isChoosingIneqSysUnknowns)
+                              ? _buildIneqSysUnknownsSelector()
+                              : (_calculatorMode == 4 &&
+                                      !_polyIsNotableMode &&
+                                      _isChoosingRuffiniDegree)
+                                  ? _buildRuffiniDegreeSelector()
+                                  : (_calculatorMode == 7
+                                      ? CasioStatTableView(
+                                          rows: _statRows,
+                                          activeRow: _statActiveRow,
+                                          activeCol: _statActiveCol,
                                           isOledDark: _isOledDark,
                                           onCellTap: (r, c) {
                                             setState(() {
                                               _activeResolution = null;
-                                              if (_matrixActiveTarget == 2) {
-                                                _matrixActiveTarget = 0;
-                                              }
-                                              _matrixActiveRow = r;
-                                              _matrixActiveCol = c;
+                                              _statActiveRow = r;
+                                              _statActiveCol = c;
                                             });
                                           },
-                                          onSwitchMatrixTarget: (target) {
-                                            setState(() {
-                                              _activeResolution = null;
+                                        )
+                                      : (_calculatorMode == 8
+                                          ? CasioMatrixEditorView(
+                                              dimension: _matrixDim,
+                                              activeMatrixTarget: _matrixActiveTarget,
+                                              selectedOperation: _matrixOp,
+                                              cellsA: _matrixCellsA,
+                                              cellsB: _matrixCellsB,
+                                              scalarK: _matrixScalarK,
+                                              activeRow: _matrixActiveRow,
+                                              activeCol: _matrixActiveCol,
+                                              isOledDark: _isOledDark,
+                                              onCellTap: (r, c) {
+                                                setState(() {
+                                                  _activeResolution = null;
+                                                  if (_matrixActiveTarget == 2) {
+                                                    _matrixActiveTarget = 0;
+                                                  }
+                                                  _matrixActiveRow = r;
+                                                  _matrixActiveCol = c;
+                                                });
+                                              },
+                                              onSwitchMatrixTarget: (target) {
+                                                setState(() {
+                                                  _activeResolution = null;
                                               _matrixActiveTarget = target;
                                             });
                                           },
@@ -4077,46 +4313,48 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                                   onSelectOperation: _selectComplexOp,
                                                 )
                                               : (_calculatorMode == 11
-                                                  ? CasioCalculusEditorView(
-                                                      selectedOperation: _calculusOp,
-                                                      expressionRaw: _calculusExprRaw,
-                                                      expressionCursorPos:
-                                                          _calculusCursorPos,
-                                                      x0Raw: _calculusX0Raw,
-                                                      limitARaw: _calculusLimitARaw,
-                                                      limitBRaw: _calculusLimitBRaw,
-                                                      activeField:
-                                                          _calculusActiveField,
-                                                      isOledDark: _isOledDark,
-                                                      onSelectField: (field) {
-                                                        setState(() {
-                                                          _activeResolution = null;
-                                                          _calculusActiveField = field;
-                                                        });
-                                                      },
-                                                      onSelectOperation: (op) {
-                                                        setState(() {
-                                                          _activeResolution = null;
-                                                          _calculusOp = op;
-                                                          if (op !=
-                                                                  CalculusOperation
-                                                                      .tangentLine &&
-                                                              op !=
-                                                                  CalculusOperation
-                                                                      .definiteIntegral) {
-                                                            _calculusActiveField = 0;
-                                                          } else if (op ==
-                                                                  CalculusOperation
-                                                                      .tangentLine &&
-                                                              _calculusActiveField >
-                                                                  1) {
-                                                            _calculusActiveField = 1;
-                                                          }
-                                                        });
-                                                      },
-                                                    )
-                                                  : (_calculatorMode == 12 && _activeResolution == null
-                                                      ? _buildInequalitySystemEditorView()
+                                                  ? (_isChoosingIneqSysUnknowns || _activeResolution != null
+                                                      ? null
+                                                      : _buildInequalitySystemEditorView())
+                                                  : (_calculatorMode == 12
+                                                      ? CasioCalculusEditorView(
+                                                          selectedOperation: _calculusOp,
+                                                          expressionRaw: _calculusExprRaw,
+                                                          expressionCursorPos:
+                                                              _calculusCursorPos,
+                                                          x0Raw: _calculusX0Raw,
+                                                          limitARaw: _calculusLimitARaw,
+                                                          limitBRaw: _calculusLimitBRaw,
+                                                          activeField:
+                                                              _calculusActiveField,
+                                                          isOledDark: _isOledDark,
+                                                          onSelectField: (field) {
+                                                            setState(() {
+                                                              _activeResolution = null;
+                                                              _calculusActiveField = field;
+                                                            });
+                                                          },
+                                                          onSelectOperation: (op) {
+                                                            setState(() {
+                                                              _activeResolution = null;
+                                                              _calculusOp = op;
+                                                              if (op !=
+                                                                      CalculusOperation
+                                                                          .tangentLine &&
+                                                                  op !=
+                                                                      CalculusOperation
+                                                                          .definiteIntegral) {
+                                                                _calculusActiveField = 0;
+                                                              } else if (op ==
+                                                                      CalculusOperation
+                                                                          .tangentLine &&
+                                                                  _calculusActiveField >
+                                                                      1) {
+                                                                _calculusActiveField = 1;
+                                                              }
+                                                            });
+                                                          },
+                                                        )
                                                       : null)))))),
                           isMenuOpen: _isMenuOpen,
                           menuCursorIndex: _menuCursorIndex,
@@ -4147,7 +4385,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                             });
                           },
                           supplementaryVisualView:
-                              (_calculatorMode == 6 || _calculatorMode == 12) &&
+                              (_calculatorMode == 6 || _calculatorMode == 11) &&
                                       _activeIneqVisualData != null &&
                                       (_activeResolution == null ||
                                           _activeResolution!.steps.length <= 1 ||
@@ -4178,7 +4416,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                   },
                                 )
                               : null,
-                        )),
+                        ))),
                 ),
 
                 // Barra interactiva contextual para Modos 2..11
@@ -4725,6 +4963,135 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   const SizedBox(height: 3),
                   Row(
                     children: [
+                        if (_activeResolution != null) ...[
+                          _buildMethodTab(
+                            key: const Key('ineq_sys_edit_btn'),
+                            label: '✎ Editar Sistema',
+                            selected: false,
+                            onTap: () {
+                              setState(() {
+                                _activeResolution = null;
+                                _show2DRegionView = false;
+                              });
+                            },
+                          ),
+                          if (_ineqSysUnknowns == 2 && _currentFeasibleRegion != null) ...[
+                            const SizedBox(width: 4),
+                            _buildMethodTab(
+                              key: const Key('ineq_sys_2d_toggle_btn'),
+                              label: _show2DRegionView ? 'Ver Pasos' : 'Ver Plano 2D',
+                              selected: _show2DRegionView,
+                              onTap: () {
+                                setState(() {
+                                  _show2DRegionView = !_show2DRegionView;
+                                });
+                              },
+                            ),
+                          ],
+                        ] else ...[
+                          _buildMethodTab(
+                            key: const Key('ineq_sys_rows_2'),
+                            label: '2 Inec.',
+                            selected: _ineqSysRows == 2,
+                            onTap: () {
+                              setState(() {
+                                _ineqSysRows = 2;
+                                _activeResolution = null;
+                                _activeStepIndex = 0;
+                                _activeIneqVisualData = null;
+                                _currentFeasibleRegion = null;
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 3),
+                          _buildMethodTab(
+                            key: const Key('ineq_sys_rows_3'),
+                            label: '3 Inec.',
+                            selected: _ineqSysRows == 3,
+                            onTap: () {
+                              setState(() {
+                                _ineqSysRows = 3;
+                                _activeResolution = null;
+                                _activeStepIndex = 0;
+                                _activeIneqVisualData = null;
+                                _currentFeasibleRegion = null;
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 3),
+                          _buildMethodTab(
+                            key: const Key('ineq_sys_unk_1'),
+                            label: '1 Incóg. (x)',
+                            selected: _ineqSysUnknowns == 1,
+                            onTap: () {
+                              setState(() {
+                                _ineqSysUnknowns = 1;
+                                _activeResolution = null;
+                                _activeStepIndex = 0;
+                                _activeIneqVisualData = null;
+                                _currentFeasibleRegion = null;
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 3),
+                          _buildMethodTab(
+                            key: const Key('ineq_sys_unk_2'),
+                            label: '2 Incóg. (x, y)',
+                            selected: _ineqSysUnknowns == 2,
+                            onTap: () {
+                              setState(() {
+                                _ineqSysUnknowns = 2;
+                                _activeResolution = null;
+                                _activeStepIndex = 0;
+                                _activeIneqVisualData = null;
+                                _currentFeasibleRegion = null;
+                                _show2DRegionView = true;
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 3),
+                          _buildMethodTab(
+                            key: const Key('ineq_sys_var_x'),
+                            label: 'x',
+                            selected: false,
+                            onTap: _insertVariableX,
+                          ),
+                          if (_ineqSysUnknowns == 2) ...[
+                            const SizedBox(width: 3),
+                            _buildMethodTab(
+                              key: const Key('ineq_sys_var_y'),
+                              label: 'y',
+                              selected: false,
+                              onTap: _insertVariableY,
+                            ),
+                          ],
+                          for (final s in InequalitySign.values) ...[
+                            const SizedBox(width: 3),
+                            _buildMethodTab(
+                              key: Key('ineq_sys_sign_${s.name}'),
+                              label: s.symbol,
+                              selected: _inequalitySign == s,
+                              onTap: () {
+                                setState(() {
+                                  _setInequalitySign(s, insertIfMissing: true);
+                                });
+                              },
+                            ),
+                          ],
+                          const SizedBox(width: 4),
+                          _buildMethodTab(
+                            key: const Key('ineq_sys_solve_btn'),
+                            label: 'Resolver',
+                            selected: false,
+                            onTap: _solveCurrentMode,
+                          ),
+                        ],
+                      ],
+                    ),
+                ] else if (_calculatorMode == 12) ...[
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
                       if (_activeResolution != null) ...[
                         _buildMethodTab(
                           key: const Key('calculus_edit_btn'),
@@ -4762,129 +5129,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       ),
                     ],
                   ),
-                ] else if (_calculatorMode == 12) ...[
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      if (_activeResolution != null) ...[
-                        _buildMethodTab(
-                          key: const Key('ineq_sys_edit_btn'),
-                          label: 'Editar',
-                          selected: false,
-                          onTap: () {
-                            setState(() {
-                              _activeResolution = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 3),
-                      ],
-                      _buildMethodTab(
-                        key: const Key('ineq_sys_rows_2'),
-                        label: '2 Inec.',
-                        selected: _ineqSysRows == 2,
-                        onTap: () {
-                          setState(() {
-                            _ineqSysRows = 2;
-                            _activeResolution = null;
-                            _activeStepIndex = 0;
-                            _activeIneqVisualData = null;
-                            _currentFeasibleRegion = null;
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 3),
-                      _buildMethodTab(
-                        key: const Key('ineq_sys_rows_3'),
-                        label: '3 Inec.',
-                        selected: _ineqSysRows == 3,
-                        onTap: () {
-                          setState(() {
-                            _ineqSysRows = 3;
-                            _activeResolution = null;
-                            _activeStepIndex = 0;
-                            _activeIneqVisualData = null;
-                            _currentFeasibleRegion = null;
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 3),
-                      _buildMethodTab(
-                        key: const Key('ineq_sys_unk_1'),
-                        label: '1 Incóg. (x)',
-                        selected: _ineqSysUnknowns == 1,
-                        onTap: () {
-                          setState(() {
-                            _ineqSysUnknowns = 1;
-                            _activeResolution = null;
-                            _activeStepIndex = 0;
-                            _activeIneqVisualData = null;
-                            _currentFeasibleRegion = null;
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 3),
-                      _buildMethodTab(
-                        key: const Key('ineq_sys_unk_2'),
-                        label: '2 Incóg. (x, y)',
-                        selected: _ineqSysUnknowns == 2,
-                        onTap: () {
-                          setState(() {
-                            _ineqSysUnknowns = 2;
-                            _activeResolution = null;
-                            _activeStepIndex = 0;
-                            _activeIneqVisualData = null;
-                            _currentFeasibleRegion = null;
-                            _show2DRegionView = true;
-                          });
-                        },
-                      ),
-                      if (_ineqSysUnknowns == 2 && _currentFeasibleRegion != null) ...[
-                        const SizedBox(width: 3),
-                        _buildMethodTab(
-                          key: const Key('ineq_sys_2d_toggle_view'),
-                          label: _show2DRegionView ? 'PASOS' : 'PLANO 2D',
-                          selected: _show2DRegionView,
-                          onTap: () {
-                            setState(() {
-                              _show2DRegionView = !_show2DRegionView;
-                            });
-                          },
-                        ),
-                      ],
-                      const SizedBox(width: 3),
-                      _buildMethodTab(
-                        key: const Key('ineq_sys_var_x'),
-                        label: 'x',
-                        selected: false,
-                        onTap: _insertVariableX,
-                      ),
-                      if (_ineqSysUnknowns == 2) ...[
-                        const SizedBox(width: 3),
-                        _buildMethodTab(
-                          key: const Key('ineq_sys_var_y'),
-                          label: 'y',
-                          selected: false,
-                          onTap: _insertVariableY,
-                        ),
-                      ],
-                      for (final s in InequalitySign.values) ...[
-                        const SizedBox(width: 3),
-                        _buildMethodTab(
-                          key: Key('ineq_sys_sign_${s.name}'),
-                          label: s.symbol,
-                          selected: _inequalitySign == s,
-                          onTap: () {
-                            setState(() {
-                              _setInequalitySign(s, insertIfMissing: true);
-                            });
-                          },
-                        ),
-                      ],
-                    ],
-                  ),
                 ],
-
                 const SizedBox(height: 6),
 
                 // =========================================================
@@ -5325,8 +5570,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return 'Teclea valor absoluto o racional (ej: |x - 5| < 3) y pulsa =';
       }
     }
-    if (_calculatorMode == 12) {
-      return 'Rellena cada inecuación (▲ ▼ o = para saltar fila) y pulsa = para resolver';
+    if (_calculatorMode == 11) {
+      return _ineqSysUnknowns == 1
+          ? 'Escribe inecuaciones con x y pulsa = (▲ ▼ para saltar fila)'
+          : 'Escribe rectas con x, y y pulsa = para ver la región 2D';
     }
     if (_calculatorMode == 7) {
       return 'Introduce xi/fi, pulsa = para bajar fila, ◀ ▶ ▲ ▼ moverte y CALC STAT';
@@ -5340,7 +5587,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     if (_calculatorMode == 10) {
       return 'Introduce z1 = a + bi y z2 = c + di (o módulo/ángulo en Polar) y pulsa =';
     }
-    if (_calculatorMode == 11) {
+    if (_calculatorMode == 12) {
       return 'Escribe P(x), elige f\'(x), recta tangente o ∫ (Barrow) y pulsa =';
     }
     return null;
@@ -5371,7 +5618,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _ => 'VALOR ABSOLUTO / RACIONAL',
       };
     }
-    if (_calculatorMode == 12) {
+    if (_calculatorMode == 11) {
       return _ineqSysUnknowns == 1
           ? 'SISTEMA INECUACIONES 1D ($_ineqSysRows INEC.)'
           : 'REGIÓN FACTIBLE 2D ($_ineqSysRows INEC.)';
@@ -5388,7 +5635,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     if (_calculatorMode == 10) {
       return 'COMPLEJOS (${_complexOp.shortLabel})';
     }
-    if (_calculatorMode == 11) {
+    if (_calculatorMode == 12) {
       return 'CÁLCULO (${_calculusOp.shortLabel})';
     }
     return null;
@@ -5548,6 +5795,169 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
+  Widget _buildIneqSysUnknownsSelector() {
+    final textColor =
+        _isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF101815);
+    final unselectedBg =
+        _isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD);
+    final unselectedBorder =
+        _isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
+    final selectedBg =
+        _isOledDark ? const Color(0xFF2563EB) : const Color(0xFF1E3A5F);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final safeWidth =
+            constraints.maxWidth.isFinite && constraints.maxWidth > 0
+                ? constraints.maxWidth
+                : 320.0;
+        return Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: SizedBox(
+              width: safeWidth,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Selecciona incógnitas del sistema:',
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          key: const Key('ineq_sys_sel_unk_1'),
+                          onTap: () {
+                            setState(() {
+                              _ineqSysUnknowns = 1;
+                              _isChoosingIneqSysUnknowns = false;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _ineqSysUnknowns == 1
+                                  ? selectedBg
+                                  : unselectedBg,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: _ineqSysUnknowns == 1
+                                    ? Colors.cyanAccent
+                                    : unselectedBorder,
+                                width: _ineqSysUnknowns == 1 ? 1.8 : 1.0,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '1: 1 Incógnita (x)',
+                                  style: TextStyle(
+                                    color: _ineqSysUnknowns == 1
+                                        ? Colors.white
+                                        : textColor,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Recta Real 1D',
+                                  style: TextStyle(
+                                    color: (_ineqSysUnknowns == 1
+                                            ? Colors.white
+                                            : textColor)
+                                        .withValues(alpha: 0.7),
+                                    fontSize: 9,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          key: const Key('ineq_sys_sel_unk_2'),
+                          onTap: () {
+                            setState(() {
+                              _ineqSysUnknowns = 2;
+                              _isChoosingIneqSysUnknowns = false;
+                              _show2DRegionView = true;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _ineqSysUnknowns == 2
+                                  ? selectedBg
+                                  : unselectedBg,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: _ineqSysUnknowns == 2
+                                    ? Colors.cyanAccent
+                                    : unselectedBorder,
+                                width: _ineqSysUnknowns == 2 ? 1.8 : 1.0,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '2: 2 Incógnitas (x, y)',
+                                  style: TextStyle(
+                                    color: _ineqSysUnknowns == 2
+                                        ? Colors.white
+                                        : textColor,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Plano 2D / Región Sf',
+                                  style: TextStyle(
+                                    color: (_ineqSysUnknowns == 2
+                                            ? Colors.white
+                                            : textColor)
+                                        .withValues(alpha: 0.7),
+                                    fontSize: 9,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildInequalitySystemEditorView() {
     final textColor =
         _isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF101815);
@@ -5590,6 +6000,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                         onTap: () {
                           setState(() {
                             _ineqSysActiveRow = i;
+                            _ineqSysRowCursors[i] =
+                                _ineqSysRowInputs[i].length;
                           });
                         },
                         child: Container(
@@ -5618,26 +6030,42 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                 ),
                               ),
                               Expanded(
-                                child: Text(
-                                  _ineqSysRowInputs[i].isEmpty
-                                      ? (_ineqSysActiveRow == i
-                                          ? '▌'
+                                child: Builder(
+                                  builder: (context) {
+                                    final raw = _ineqSysRowInputs[i];
+                                    final isActive = _ineqSysActiveRow == i;
+                                    final cursor = isActive
+                                        ? _ineqSysRowCursors[i]
+                                        : null;
+                                    final String rowTex;
+                                    if (raw.isEmpty) {
+                                      rowTex = isActive
+                                          ? r'\textcolor{#2E86DE}{\blacksquare}'
                                           : (_ineqSysUnknowns == 1
-                                              ? 'ej. 2x - 3 ≤ 5'
-                                              : 'ej. x + y ≤ 4'))
-                                      : (_ineqSysActiveRow == i
-                                          ? '${_ineqSysRowInputs[i]}▌'
-                                          : _ineqSysRowInputs[i]),
-                                  style: TextStyle(
-                                    color: _ineqSysRowInputs[i].isEmpty &&
-                                            _ineqSysActiveRow != i
-                                        ? textColor.withValues(alpha: 0.38)
-                                        : textColor,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    fontFamily: 'monospace',
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                                              ? r'2x - 3 \le 5'
+                                              : r'x + y \le 4');
+                                    } else {
+                                      rowTex = ExpressionParser.rawToLiveLatex(
+                                        raw,
+                                        cursorPos: cursor,
+                                      );
+                                    }
+                                    return FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Math.tex(
+                                        rowTex,
+                                        textStyle: TextStyle(
+                                          color: raw.isEmpty && !isActive
+                                              ? textColor.withValues(
+                                                  alpha: 0.38)
+                                              : textColor,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                             ],

@@ -634,17 +634,26 @@ void main() {
       expect(find.byKey(const Key('menu_mode_9')), findsOneWidget);
       expect(find.byKey(const Key('menu_mode_10')), findsOneWidget);
       expect(find.byKey(const Key('menu_mode_11')), findsOneWidget);
+      expect(find.byKey(const Key('menu_mode_12')), findsOneWidget);
 
       // Seleccionar Modo 10
       await tester.tap(find.byKey(const Key('menu_mode_10')));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      // Volver a MODE (se abre en la Página 3 donde están los modos 9, 10 y 11) y seleccionar Modo 11
+      // Volver a MODE y seleccionar Modo 11 (Sistemas de Inec.)
       await tester.tap(find.text('MODE'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('menu_mode_11')), findsOneWidget);
       await tester.tap(find.byKey(const Key('menu_mode_11')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Volver a MODE y seleccionar Modo 12 (Derivadas e Integrales)
+      await tester.tap(find.text('MODE'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('menu_mode_12')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('menu_mode_12')));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });

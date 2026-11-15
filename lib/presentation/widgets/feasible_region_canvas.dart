@@ -21,7 +21,6 @@ class FeasibleRegionCanvas extends StatelessWidget {
     return Container(
       height: height,
       width: double.infinity,
-      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: isOledDark ? const Color(0xFF111615) : const Color(0xFFDDE6DF),
         borderRadius: BorderRadius.circular(8),
@@ -30,10 +29,16 @@ class FeasibleRegionCanvas extends StatelessWidget {
           width: 1.5,
         ),
       ),
-      child: CustomPaint(
-        painter: _FeasibleRegionPainter(
-          data: visualData,
-          isOledDark: isOledDark,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(7),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: CustomPaint(
+            painter: _FeasibleRegionPainter(
+              data: visualData,
+              isOledDark: isOledDark,
+            ),
+          ),
         ),
       ),
     );
@@ -116,7 +121,7 @@ class _FeasibleRegionPainter extends CustomPainter {
       _drawText(canvas, 'Y', Offset(originX + 4, 2), TextStyle(color: axisColor, fontSize: 10, fontWeight: FontWeight.bold));
     }
 
-    // 3. Sombrear región factible (polígono de vértices)
+    // 3. Sombrear región factible (polígono de vértices) o mensaje de conjunto vacío
     if (!data.isEmpty && data.vertices.length >= 3) {
       final polyPath = Path();
       final first = data.vertices.first;
@@ -136,12 +141,38 @@ class _FeasibleRegionPainter extends CustomPainter {
       canvas.save();
       canvas.clipPath(polyPath);
       final hatchPaint = Paint()
-        ..color = const Color(0xFF059669).withValues(alpha: 0.4)
+        ..color = const Color(0xFF059669).withValues(alpha: 0.45)
         ..strokeWidth = 1.2;
       for (double x = -size.height; x < size.width + size.height; x += 10.0) {
         canvas.drawLine(Offset(x, 0), Offset(x + size.height, size.height), hatchPaint);
       }
       canvas.restore();
+
+      // Etiqueta distintiva de Región Solución (Sf)
+      _drawText(
+        canvas,
+        'REGIÓN SOLUCIÓN (Sf)',
+        const Offset(10, 8),
+        TextStyle(
+          color: const Color(0xFF059669),
+          fontSize: 9.5,
+          fontWeight: FontWeight.w800,
+          backgroundColor: (isOledDark ? Colors.black87 : Colors.white70),
+        ),
+      );
+    } else if (data.isEmpty) {
+      // Incompatible / Conjunto solución vacío
+      _drawText(
+        canvas,
+        'Sin región común (S = ∅)',
+        Offset(size.width / 2 - 75, size.height / 2 - 10),
+        TextStyle(
+          color: const Color(0xFFDC2626),
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          backgroundColor: (isOledDark ? Colors.black87 : Colors.white),
+        ),
+      );
     }
 
     // 4. Dibujar rectas frontera (continuas o discontinuas)
