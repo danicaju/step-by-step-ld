@@ -182,7 +182,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Cambiar a vista de pasos en la LCD para verificar PASO 1/
-      await tester.tap(find.text('📈 Ver Gráfica'));
+      await tester.tap(find.byKey(const Key('mode5_view_toggle')));
       await tester.pumpAndSettle();
       expect(find.textContaining('PASO 1/'), findsOneWidget);
 
@@ -244,24 +244,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('M4: NOTABLES'), findsOneWidget);
-      expect(find.text('0'), findsWidgets);
 
-      // Teclear '(', '2', ALPHA + ')', '+', '3', ')', 'x²'
-      await tester.tap(find.text('('));
-      await tester.pumpAndSettle();
+      // En la plantilla ( + )^2 con cursor en slot a: teclear '2', ALPHA + ')', ▶ para slot b, '3'
       await tester.tap(find.text('2'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('ALPHA'));
       await tester.pumpAndSettle();
       await tester.tap(find.text(')')); // Escribe 'x'
       await tester.pumpAndSettle();
-      await tester.tap(find.text('+'));
+      await tester.tap(find.byKey(const Key('replay_right'))); // Salta al slot b
       await tester.pumpAndSettle();
       await tester.tap(find.text('3'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(')'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('x²'));
       await tester.pumpAndSettle();
 
       // Pulsar '=' -> Debe resolver (2x + 3)² y mostrar pasos
@@ -301,7 +294,7 @@ void main() {
       await tester.tap(find.text('='));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('📈 Ver Gráfica'));
+      await tester.tap(find.byKey(const Key('mode5_view_toggle')));
       await tester.pumpAndSettle();
       expect(find.textContaining('PASO 1/'), findsOneWidget);
 

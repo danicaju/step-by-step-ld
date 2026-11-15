@@ -423,7 +423,7 @@ class VectorSolver {
         pedagogicalNote:
             'Calculamos cada determinante 2×2 multiplicando en cruz y alternando los signos (+, -, +).',
         warningTrick:
-            'La segunda componente del producto vectorial lleva un signo menos delante de su determinante 2x2: -(uₓ·v_z - u_z·vₓ)j.',
+            'La segunda componente del producto vectorial lleva un signo menos delante de su determinante 2x2: -(u_{x} \\cdot v_{z} - u_{z} \\cdot v_{x})j.',
       ),
       MathStep(
         index: 3,

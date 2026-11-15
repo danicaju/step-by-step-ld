@@ -46,8 +46,8 @@ void main() {
       expect(result.resolution.steps[0].pedagogicalNote, contains('mínimo'));
 
       // Paso 2: Vértice V(2, -1)
-      expect(result.resolution.steps[1].latexExpression, contains('x_v'));
-      expect(result.resolution.steps[1].latexExpression, contains('y_v'));
+      expect(result.resolution.steps[1].latexExpression, contains('x_{v}'));
+      expect(result.resolution.steps[1].latexExpression, contains('y_{v}'));
 
       // Paso 3: Cortes
       expect(result.resolution.steps[2].latexExpression, contains('(0, 3)'));

@@ -331,6 +331,50 @@ class CasioCoefficientView extends StatelessWidget {
       );
     }
 
+    if (mode == 3 && cellValues.length == 20) {
+      // Modo 3: Sistemas 4x4 (20 celdas: a_r x + b_r y + c_r z + d_r w = e_r)
+      final color = isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF0F172A);
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '{',
+            style: TextStyle(
+              fontSize: 72,
+              fontWeight: FontWeight.w200,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List.generate(4, (r) {
+              final base = r * 5;
+              return Padding(
+                padding: EdgeInsets.only(bottom: r < 3 ? 3 : 0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildCell(base, compact: true),
+                    _mathSymbol('x+', compact: true),
+                    _buildCell(base + 1, compact: true),
+                    _mathSymbol('y+', compact: true),
+                    _buildCell(base + 2, compact: true),
+                    _mathSymbol('z+', compact: true),
+                    _buildCell(base + 3, compact: true),
+                    _mathSymbol('w=', compact: true),
+                    _buildCell(base + 4, compact: true),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ],
+      );
+    }
+
     return const SizedBox.shrink();
   }
 }

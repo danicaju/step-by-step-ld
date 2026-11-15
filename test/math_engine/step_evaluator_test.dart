@@ -1,4 +1,5 @@
 import 'package:casio_tutor_calc/domain/math_engine/ast/ast_nodes.dart';
+import 'package:casio_tutor_calc/domain/math_engine/parser/expression_parser.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/step_evaluator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -52,5 +53,43 @@ void main() {
       // ignore: avoid_print
       print(step);
     }
+  });
+
+  test('Operaciones con logaritmos decimales aproximados: log_5(2) * 6 no es 0 sino ~2.584062', () {
+    const ast = BinaryOpNode(
+      LogNode(base: IntNode(5), arg: IntNode(2)),
+      BinaryOperator.multiply,
+      IntNode(6),
+    );
+
+    final resolution = evaluator.evaluate(ast);
+
+    expect(resolution.exactResultLatex, isNot(equals('0')));
+    expect(resolution.exactResultLatex, contains('2,584'));
+    expect(resolution.decimalApproxLatex, contains('2,584'));
+    expect(resolution.steps.length, greaterThanOrEqualTo(2));
+  });
+
+  test('Operaciones con logaritmos exactos: log_2(8) * 6 = 18 exacto', () {
+    const ast = BinaryOpNode(
+      LogNode(base: IntNode(2), arg: IntNode(8)),
+      BinaryOperator.multiply,
+      IntNode(6),
+    );
+
+    final resolution = evaluator.evaluate(ast);
+
+    expect(resolution.exactResultLatex, equals('18'));
+    expect(resolution.decimalApproxLatex, equals('18'));
+  });
+
+  test('Parser + Evaluator: log_(5,2)*6 de la interfaz Casio produce ~2,584062 y nunca 0', () {
+    final parser = ExpressionParser();
+    final ast = parser.parse('log_(5,2)*6');
+    final res = evaluator.evaluate(ast);
+
+    expect(res.exactResultLatex, isNot(equals('0')));
+    expect(res.exactResultLatex, contains('2,584'));
+    expect(res.decimalApproxLatex, contains('2,584'));
   });
 }

@@ -49,10 +49,15 @@ class CasioMatrixEditorView extends StatelessWidget {
     final Color bracketColor =
         isOledDark ? const Color(0xFF94A3B8) : const Color(0xFF334155);
 
+    final int rowsCount = dimension == 34 ? 3 : (dimension == 45 ? 4 : dimension);
+    final int colsCount = dimension == 34 ? 4 : (dimension == 45 ? 5 : dimension);
+    final int stride = activeCells.length >= 25 ? 5 : (dimension <= 3 ? 3 : 4);
+    final double bracketH = rowsCount == 2 ? 52 : (rowsCount == 3 ? 72 : 88);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Barra superior dentro de la LCD: selector MatA/MatB + [2x2] / [3x3]
+        // Barra superior dentro de la LCD: selector MatA/MatB + [2x2] / [3x3] / [4x4]
         SizedBox(
           height: 22,
           child: Row(
@@ -63,16 +68,16 @@ class CasioMatrixEditorView extends StatelessWidget {
                 selected: activeMatrixTarget == 0,
                 onTap: () => onSwitchMatrixTarget?.call(0),
               ),
-              const SizedBox(width: 4),
-              _lcdPill(
-                key: const Key('matrix_tab_B'),
-                label: 'MatB',
-                selected: activeMatrixTarget == 1,
-                accentColor: selectedOperation.needsMatrixB
-                    ? const Color(0xFF0EA5E9)
-                    : null,
-                onTap: () => onSwitchMatrixTarget?.call(1),
-              ),
+              if (selectedOperation.needsMatrixB) ...[
+                const SizedBox(width: 4),
+                _lcdPill(
+                  key: const Key('matrix_tab_B'),
+                  label: 'MatB',
+                  selected: activeMatrixTarget == 1,
+                  accentColor: const Color(0xFF0EA5E9),
+                  onTap: () => onSwitchMatrixTarget?.call(1),
+                ),
+              ],
               if (selectedOperation == MatrixOperation.scalarMultiply) ...[
                 const SizedBox(width: 4),
                 _lcdPill(
@@ -97,6 +102,29 @@ class CasioMatrixEditorView extends StatelessWidget {
                 selected: dimension == 3,
                 onTap: () => onChangeDimension?.call(3),
               ),
+              const SizedBox(width: 3),
+              _lcdPill(
+                key: const Key('matrix_size_4'),
+                label: '4×4',
+                selected: dimension == 4,
+                onTap: () => onChangeDimension?.call(4),
+              ),
+              if (selectedOperation == MatrixOperation.gauss) ...[
+                const SizedBox(width: 3),
+                _lcdPill(
+                  key: const Key('matrix_size_34'),
+                  label: '3×4',
+                  selected: dimension == 34,
+                  onTap: () => onChangeDimension?.call(34),
+                ),
+                const SizedBox(width: 3),
+                _lcdPill(
+                  key: const Key('matrix_size_45'),
+                  label: '4×5',
+                  selected: dimension == 45,
+                  onTap: () => onChangeDimension?.call(45),
+                ),
+              ],
             ],
           ),
         ),
@@ -137,20 +165,20 @@ class CasioMatrixEditorView extends StatelessWidget {
                                   MatrixOperation.determinant &&
                               !isEditingB,
                           color: bracketColor,
-                          height: dimension == 2 ? 52 : 76,
+                          height: bracketH,
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 2),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
-                            children: List.generate(dimension, (r) {
+                            children: List.generate(rowsCount, (r) {
                               return Padding(
-                                padding: EdgeInsets.only(bottom: r < dimension - 1 ? 3 : 0),
+                                padding: EdgeInsets.only(bottom: r < rowsCount - 1 ? 3 : 0),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: List.generate(dimension, (c) {
-                                    final rawIdx = r * 3 + c;
-                                    final value = activeCells[rawIdx];
+                                  children: List.generate(colsCount, (c) {
+                                    final rawIdx = r * stride + c;
+                                    final value = rawIdx < activeCells.length ? activeCells[rawIdx] : '';
                                     final isSelected = !isEditingK &&
                                         r == activeRow &&
                                         c == activeCol;
@@ -172,7 +200,7 @@ class CasioMatrixEditorView extends StatelessWidget {
                                   MatrixOperation.determinant &&
                               !isEditingB,
                           color: bracketColor,
-                          height: dimension == 2 ? 52 : 76,
+                          height: bracketH,
                         ),
                       ],
                     ),

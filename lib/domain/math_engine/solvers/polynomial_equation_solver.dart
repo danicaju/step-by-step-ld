@@ -3,6 +3,7 @@ import '../core/rational.dart';
 import '../models/step_resolution.dart';
 import '../parser/expression_parser.dart';
 import 'quadratic_solver.dart';
+import 'super_equation_solver.dart';
 
 /// Polinomio exacto con coeficientes racionales ordenado de grado `0` a `N`.
 class _RationalPoly {
@@ -177,8 +178,30 @@ class _BinAst extends _EqAstNode {
 ///    - Si $A = 0$: resuelve limpiamente como ecuación de 1.º grado (`sin 0x` ni `1x`).
 ///    - Si $A \ne 0$: delega en [QuadraticEquationSolver] conservando los pasos previos.
 class PolynomialEquationSolver {
-  /// Resuelve cualquier ecuación de 1.º o 2.º grado escrita libremente como texto.
+  /// Resuelve cualquier ecuación de 1.º, 2.º grado, irracional, exponencial, logarítmica o bicuadrada.
   static StepByStepResolution solveEquationString(String rawEquation) {
+    final clean = rawEquation.replaceAll('\r', '').replaceAll(' ', '');
+    final hasExpX = RegExp(
+      r'\^\{[^}]*x[^}]*\}|\^\([^)]*x[^)]*\)|\^[0-9]*x[0-9]*',
+    ).hasMatch(clean);
+    final isAdvanced = clean.contains(r'\sqrt') ||
+        clean.contains('sqrt') ||
+        clean.contains(r'\log') ||
+        clean.contains(r'\ln') ||
+        clean.contains('log(') ||
+        clean.contains('ln(') ||
+        clean.contains('x^4') ||
+        clean.contains('x^{4}') ||
+        clean.contains('x⁴') ||
+        hasExpX;
+    if (isAdvanced) {
+      return SuperEquationSolver.solve(rawEquation);
+    }
+    return solvePolynomialDirect(rawEquation);
+  }
+
+  /// Resuelve ecuaciones estrictamente polinómicas (lineales, cuadráticas, cúbicas...)
+  static StepByStepResolution solvePolynomialDirect(String rawEquation) {
     final normalized = _normalizeInput(rawEquation);
     final eqParts = normalized.split('=');
     if (eqParts.length != 2 ||

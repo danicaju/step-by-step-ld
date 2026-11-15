@@ -42,10 +42,11 @@ final class FractionNode extends ExprNode {
 /// Nodo de valor racional ya resuelto internamente durante la reducción del AST
 final class ResolvedRationalNode extends ExprNode {
   final Rational value;
-  const ResolvedRationalNode(this.value);
+  final bool isApproximateDecimal;
+  const ResolvedRationalNode(this.value, {this.isApproximateDecimal = false});
 
   @override
-  String toLatex() => value.toLatex();
+  String toLatex() => isApproximateDecimal ? value.toDecimalLatex() : value.toLatex();
 }
 
 /// Signo menos unario delante de una expresión: ej. -3^2 o -(4 + 2)

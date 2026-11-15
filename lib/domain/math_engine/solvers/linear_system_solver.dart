@@ -76,8 +76,8 @@ class LinearSystemSolver {
       final List<MathStep> steps = [];
 
       final propLatex = (a2 != 0 && b2 != 0)
-          ? '${AlgebraicLatexFormatter.signedFraction(a1, a2)} = ${AlgebraicLatexFormatter.signedFraction(b1, b2)} \\quad \\left(a_1 b_2 - a_2 b_1 = 0\\right)'
-          : 'a_1 b_2 - a_2 b_1 = $a1 \\cdot $b2 - $a2 \\cdot $b1 = 0';
+          ? '${AlgebraicLatexFormatter.signedFraction(a1, a2)} = ${AlgebraicLatexFormatter.signedFraction(b1, b2)} \\quad \\left(a_{1} b_{2} - a_{2} b_{1} = 0\\right)'
+          : 'a_{1} b_{2} - a_{2} b_{1} = $a1 \\cdot $b2 - $a2 \\cdot $b1 = 0';
 
       steps.add(
         MathStep(
@@ -605,4 +605,424 @@ class LinearSystemSolver {
       decimalApproxLatex: 'x = ${xRational.toDecimalLatex()}, \\; y = ${yRational.toDecimalLatex()}',
     );
   }
+
+  // ===========================================================================
+  // PARSER DE ENTRADA DESORDENADA Y SISTEMAS N×N (HASTA 4 ECUACIONES)
+  // ===========================================================================
+
+  /// Parsea cualquier ecuación lineal desordenada (ej: "2y + 3x - 5 = x + 1")
+  /// y la agrupa a la forma estándar: a1*x + a2*y + a3*z + a4*w = C.
+  static ParsedLinearEquation parseUnorderedEquation(
+    String raw, {
+    List<String> vars = const ['x', 'y', 'z', 'w'],
+  }) {
+    final clean = raw
+        .replaceAll('\r', '')
+        .replaceAll(' ', '')
+        .replaceAll('X', 'x')
+        .replaceAll('Y', 'y')
+        .replaceAll('Z', 'z')
+        .replaceAll('W', 'w')
+        .replaceAll('−', '-')
+        .replaceAll('·', '*')
+        .replaceAll('×', '*')
+        .replaceAll(r'\cdot', '*')
+        .replaceAll(r'\times', '*');
+
+    final sides = clean.split('=');
+    final lhsStr = sides[0].trim();
+    final rhsStr = sides.length > 1 ? sides[1].trim() : '0';
+
+    final lhsMap = _parseLinearSide(lhsStr, vars);
+    final rhsMap = _parseLinearSide(rhsStr, vars);
+
+    final finalCoeffs = <String, Rational>{};
+    for (final v in vars) {
+      final lhsCoeff = lhsMap[v] ?? Rational(0);
+      final rhsCoeff = rhsMap[v] ?? Rational(0);
+      finalCoeffs[v] = lhsCoeff - rhsCoeff;
+    }
+
+    final lhsConst = lhsMap['__const__'] ?? Rational(0);
+    final rhsConst = rhsMap['__const__'] ?? Rational(0);
+    final finalConst = rhsConst - lhsConst;
+
+    // Construir LaTeX ordenado
+    final buffer = StringBuffer();
+    bool first = true;
+    for (final v in vars) {
+      final c = finalCoeffs[v]!;
+      if (c.isZero) continue;
+      if (first) {
+        if (c.isNegative) buffer.write('-');
+        final absC = c.abs();
+        if (absC != Rational(1)) buffer.write(absC.toLatex());
+        buffer.write(v);
+        first = false;
+      } else {
+        buffer.write(c.isNegative ? ' - ' : ' + ');
+        final absC = c.abs();
+        if (absC != Rational(1)) buffer.write(absC.toLatex());
+        buffer.write(v);
+      }
+    }
+    if (first) buffer.write('0');
+    buffer.write(' = ${finalConst.toLatex()}');
+
+    return ParsedLinearEquation(
+      coefficients: finalCoeffs,
+      constant: finalConst,
+      originalRaw: raw,
+      orderedLatex: buffer.toString(),
+    );
+  }
+
+  static Map<String, Rational> _parseLinearSide(String expr, List<String> vars) {
+    final res = <String, Rational>{};
+    for (final v in vars) {
+      res[v] = Rational(0);
+    }
+    res['__const__'] = Rational(0);
+
+    if (expr.isEmpty) return res;
+
+    // Expandir paréntesis simples si existen: k*(ax + b)
+    var expanded = expr;
+    final parenPattern = RegExp(r'([+-]?\d*(?:\.\d+)?)\*?\(([^)]+)\)');
+    while (parenPattern.hasMatch(expanded)) {
+      final m = parenPattern.firstMatch(expanded)!;
+      final kStr = m.group(1)!;
+      final k = kStr.isEmpty || kStr == '+' ? 1.0 : (kStr == '-' ? -1.0 : double.parse(kStr));
+      final inner = m.group(2)!;
+      // reemplazar k*(...) por expansión
+      final innerTokens = _splitSignedTokens(inner);
+      final expBuf = StringBuffer();
+      for (final t in innerTokens) {
+        final parsedT = _parseSingleToken(t, vars);
+        if (parsedT.varName != null) {
+          final newCoeff = parsedT.val * k;
+          final sign = newCoeff >= 0 ? '+' : '-';
+          expBuf.write('$sign${newCoeff.abs()}${parsedT.varName}');
+        } else {
+          final newConst = parsedT.val * k;
+          final sign = newConst >= 0 ? '+' : '-';
+          expBuf.write('$sign${newConst.abs()}');
+        }
+      }
+      expanded = expanded.replaceFirst(m.group(0)!, expBuf.toString());
+    }
+
+    final tokens = _splitSignedTokens(expanded);
+    for (final t in tokens) {
+      final item = _parseSingleToken(t, vars);
+      if (item.varName != null) {
+        final r = Rational.fromDouble(item.val, 1000);
+        res[item.varName!] = res[item.varName!]! + r;
+      } else {
+        final r = Rational.fromDouble(item.val, 1000);
+        res['__const__'] = res['__const__']! + r;
+      }
+    }
+    return res;
+  }
+
+  static List<String> _splitSignedTokens(String s) {
+    final clean = s.replaceAll(' ', '');
+    final tokens = <String>[];
+    int start = 0;
+    for (int i = 0; i < clean.length; i++) {
+      if (i > 0 && (clean[i] == '+' || clean[i] == '-')) {
+        tokens.add(clean.substring(start, i));
+        start = i;
+      }
+    }
+    if (start < clean.length) {
+      tokens.add(clean.substring(start));
+    }
+    return tokens;
+  }
+
+  static ({double val, String? varName}) _parseSingleToken(String tok, List<String> vars) {
+    for (final v in vars) {
+      if (tok.contains(v)) {
+        final coeffStr = tok.replaceAll(v, '').replaceAll('*', '').trim();
+        final double coeff;
+        if (coeffStr.isEmpty || coeffStr == '+') {
+          coeff = 1.0;
+        } else if (coeffStr == '-') {
+          coeff = -1.0;
+        } else if (coeffStr.contains('/')) {
+          final parts = coeffStr.split('/');
+          coeff = double.parse(parts[0]) / double.parse(parts[1]);
+        } else {
+          coeff = double.parse(coeffStr);
+        }
+        return (val: coeff, varName: v);
+      }
+    }
+    // Constante
+    final double cVal;
+    if (tok.contains('/')) {
+      final parts = tok.split('/');
+      cVal = double.parse(parts[0]) / double.parse(parts[1]);
+    } else {
+      cVal = double.tryParse(tok) ?? 0.0;
+    }
+    return (val: cVal, varName: null);
+  }
+
+  /// Resuelve un sistema de N ecuaciones lineales (N = 2, 3 o 4) con coeficientes exactos [Rational].
+  static StepByStepResolution solveNxN({
+    required List<List<Rational>> augmentedRows,
+    SystemResolutionMethod method = SystemResolutionMethod.sustitucion,
+  }) {
+    final n = augmentedRows.length;
+    if (n < 2 || n > 4) {
+      throw const FormatException('El sistema admite de 2 a 4 ecuaciones.');
+    }
+    for (final r in augmentedRows) {
+      if (r.length != n + 1) {
+        throw FormatException('Cada fila debe tener ${n + 1} coeficientes.');
+      }
+    }
+
+    if (n == 2) {
+      final a1 = augmentedRows[0][0].toDouble().round();
+      final b1 = augmentedRows[0][1].toDouble().round();
+      final c1 = augmentedRows[0][2].toDouble().round();
+      final a2 = augmentedRows[1][0].toDouble().round();
+      final b2 = augmentedRows[1][1].toDouble().round();
+      final c2 = augmentedRows[1][2].toDouble().round();
+      return solve(
+        a1: a1,
+        b1: b1,
+        c1: c1,
+        a2: a2,
+        b2: b2,
+        c2: c2,
+        method: method,
+      );
+    }
+
+    final varNames = const ['x', 'y', 'z', 'w'].sublist(0, n);
+    final eqLines = [
+      for (final r in augmentedRows)
+        _formatRowLatex(r.sublist(0, n), r[n], varNames),
+    ];
+    final originalInputLatex = '\\begin{cases} ${eqLines.join(" \\\\ ")} \\end{cases}';
+
+    // Resolver mediante reducción progresiva (triangularización) o sustitución
+    final m = [
+      for (final r in augmentedRows) [for (final v in r) v],
+    ];
+    final steps = <MathStep>[];
+
+    steps.add(
+      MathStep(
+        index: 1,
+        shortTitle: 'Sistema de $n ecuaciones con $n incognitas planteado',
+        latexExpression: originalInputLatex,
+        pedagogicalNote:
+            'Planteamos el sistema con todas las incognitas (${varNames.join(", ")}) ordenadas a la izquierda y los terminos independientes a la derecha.',
+      ),
+    );
+
+    // Eliminación progresiva
+    for (int k = 0; k < n - 1; k++) {
+      if (m[k][k].isZero) {
+        // Intercambiar con fila debajo
+        int swapRow = -1;
+        for (int r = k + 1; r < n; r++) {
+          if (!m[r][k].isZero) {
+            swapRow = r;
+            break;
+          }
+        }
+        if (swapRow != -1) {
+          final tmp = m[k];
+          m[k] = m[swapRow];
+          m[swapRow] = tmp;
+        }
+      }
+
+      final pivot = m[k][k];
+      if (pivot.isZero) continue;
+
+      final elimNotes = <String>[];
+      for (int r = k + 1; r < n; r++) {
+        final target = m[r][k];
+        if (!target.isZero) {
+          final factor = target / pivot;
+          for (int c = k; c <= n; c++) {
+            m[r][c] = m[r][c] - (factor * m[k][c]);
+          }
+          elimNotes.add('E_{${r + 1}} \\leftarrow E_{${r + 1}} - (${factor.toLatex()}) E_{${k + 1}}');
+        }
+      }
+
+      if (elimNotes.isNotEmpty) {
+        final remainingEqs = [
+          for (int r = 0; r < n; r++)
+            _formatRowLatex(m[r].sublist(0, n), m[r][n], varNames),
+        ];
+        steps.add(
+          MathStep(
+            index: steps.length + 1,
+            shortTitle: 'Eliminar incognita ${varNames[k]} en las ecuaciones inferiores',
+            latexExpression:
+                '${elimNotes.join(", ")} \\implies \\begin{cases} ${remainingEqs.join(" \\\\ ")} \\end{cases}',
+            pedagogicalNote:
+                'Combinamos linealmente las ecuaciones para anular la incognita ${varNames[k]} por debajo del pivote.',
+          ),
+        );
+      }
+    }
+
+    // Comprobación de compatibilidad
+    if (m[n - 1][n - 1].isZero) {
+      if (m[n - 1][n].isZero) {
+        return StepByStepResolution(
+          originalInputLatex: originalInputLatex,
+          steps: steps,
+          exactResultLatex: r'\text{Infinitas soluciones (S.C.I.)}',
+          decimalApproxLatex: r'\text{Infinitas}',
+        );
+      } else {
+        return StepByStepResolution(
+          originalInputLatex: originalInputLatex,
+          steps: steps,
+          exactResultLatex: r'\text{Sin solucion (S.I.)}',
+          decimalApproxLatex: r'\text{Sin sol}',
+        );
+      }
+    }
+
+    // Sustitución hacia atrás
+    final solution = List<Rational>.filled(n, Rational(0));
+    final backSubNotes = <String>[];
+
+    for (int r = n - 1; r >= 0; r--) {
+      var sum = m[r][n];
+      for (int c = r + 1; c < n; c++) {
+        sum = sum - (m[r][c] * solution[c]);
+      }
+      solution[r] = sum / m[r][r];
+      backSubNotes.add('${varNames[r]} = ${solution[r].toLatex()}');
+    }
+
+    steps.add(
+      MathStep(
+        index: steps.length + 1,
+        shortTitle: 'Sustitucion hacia atras (Back-substitution)',
+        latexExpression: backSubNotes.join(', \\quad '),
+        pedagogicalNote:
+            'Despejamos desde la ultima ecuacion triangularizada y sustituimos progresivamente hacia arriba para hallar cada incognita.',
+      ),
+    );
+
+    final exactRes = [
+      for (int i = 0; i < n; i++) '${varNames[i]} = ${solution[i].toLatex()}',
+    ].join(', \\; ');
+
+    return StepByStepResolution(
+      originalInputLatex: originalInputLatex,
+      steps: steps,
+      exactResultLatex: exactRes,
+      decimalApproxLatex: [
+        for (int i = 0; i < n; i++) '${varNames[i]} \\approx ${solution[i].toDecimalLatex()}',
+      ].join(', \\; '),
+    );
+  }
+
+  static String _formatRowLatex(List<Rational> coeffs, Rational constant, List<String> vars) {
+    final buffer = StringBuffer();
+    bool first = true;
+    for (int i = 0; i < coeffs.length; i++) {
+      final c = coeffs[i];
+      if (c.isZero) continue;
+      final v = vars[i];
+      if (first) {
+        if (c.isNegative) buffer.write('-');
+        final absC = c.abs();
+        if (absC != Rational(1)) buffer.write(absC.toLatex());
+        buffer.write(v);
+        first = false;
+      } else {
+        buffer.write(c.isNegative ? ' - ' : ' + ');
+        final absC = c.abs();
+        if (absC != Rational(1)) buffer.write(absC.toLatex());
+        buffer.write(v);
+      }
+    }
+    if (first) buffer.write('0');
+    buffer.write(' = ${constant.toLatex()}');
+    return buffer.toString();
+  }
+
+  /// Resuelve un conjunto de ecuaciones en texto libre con entrada desordenada.
+  static StepByStepResolution solveFromEquations(
+    List<String> rawEquations, {
+    SystemResolutionMethod method = SystemResolutionMethod.sustitucion,
+  }) {
+    final dim = rawEquations.length;
+    final varNames = const ['x', 'y', 'z', 'w'].sublist(0, dim);
+    final parsed = rawEquations.map((e) => parseUnorderedEquation(e, vars: varNames)).toList();
+
+    final augmentedRows = <List<Rational>>[];
+    for (final p in parsed) {
+      final row = <Rational>[];
+      for (final v in varNames) {
+        row.add(p.coefficients[v] ?? Rational(0));
+      }
+      row.add(p.constant);
+      augmentedRows.add(row);
+    }
+
+    final isAnyDisordered = parsed.any((p) => p.originalRaw.trim() != p.orderedLatex.trim());
+    final baseRes = solveNxN(augmentedRows: augmentedRows, method: method);
+    if (!isAnyDisordered) return baseRes;
+
+    final reorderStep = MathStep(
+      index: 1,
+      shortTitle: 'Reordenacion y agrupacion de terminos semejantes',
+      latexExpression: '\\begin{cases} ${parsed.map((p) => p.orderedLatex).join(" \\\\ ")} \\end{cases}',
+      pedagogicalNote:
+          'Agrupamos las incognitas (${varNames.join(", ")}) en el primer miembro y reducimos los terminos independientes en el segundo miembro antes de aplicar el metodo de resolucion.',
+    );
+
+    final renumberedSteps = [
+      reorderStep,
+      for (int i = 0; i < baseRes.steps.length; i++)
+        MathStep(
+          index: i + 2,
+          shortTitle: baseRes.steps[i].shortTitle,
+          latexExpression: baseRes.steps[i].latexExpression,
+          pedagogicalNote: baseRes.steps[i].pedagogicalNote,
+          warningTrick: baseRes.steps[i].warningTrick,
+        ),
+    ];
+
+    return StepByStepResolution(
+      originalInputLatex: '\\begin{cases} ${rawEquations.join(" \\\\ ")} \\end{cases}',
+      steps: renumberedSteps,
+      exactResultLatex: baseRes.exactResultLatex,
+      decimalApproxLatex: baseRes.decimalApproxLatex,
+    );
+  }
 }
+
+/// Representa una ecuación lineal desordenada que ha sido agrupada en forma canónica.
+class ParsedLinearEquation {
+  final Map<String, Rational> coefficients;
+  final Rational constant;
+  final String originalRaw;
+  final String orderedLatex;
+
+  const ParsedLinearEquation({
+    required this.coefficients,
+    required this.constant,
+    required this.originalRaw,
+    required this.orderedLatex,
+  });
+}
+

@@ -9,6 +9,8 @@ class CasioReplayPad extends StatelessWidget {
   final VoidCallback onRight;
   final VoidCallback? onUp;
   final VoidCallback? onDown;
+  final double width;
+  final double height;
 
   const CasioReplayPad({
     super.key,
@@ -16,16 +18,29 @@ class CasioReplayPad extends StatelessWidget {
     required this.onRight,
     this.onUp,
     this.onDown,
+    this.width = 108.0,
+    this.height = 84.0,
   });
 
   @override
   Widget build(BuildContext context) {
+    final double vBtnH = (height * 0.38).clamp(16.0, 32.0);
+    final double vBtnW = (width * 0.38).clamp(24.0, 44.0);
+    final double vBtnLR = ((width - vBtnW) / 2).clamp(0.0, 40.0);
+    final double hBtnW = (width * 0.34).clamp(24.0, 38.0);
+    final double hBtnTB = (height * 0.18).clamp(6.0, 18.0);
+    final double iconVSize = (height * 0.34).clamp(18.0, 28.0);
+    final double iconHSize = (height * 0.38).clamp(20.0, 32.0);
+    final double medallionSize = (height * 0.28).clamp(14.0, 24.0);
+    final double ringW = width * 0.88;
+    final double ringH = height * 0.85;
+
     return Container(
-      width: 108,
-      height: 84,
+      width: width,
+      height: height,
       decoration: BoxDecoration(
         color: const Color(0xFF2A2E37),
-        borderRadius: BorderRadius.circular(42.0),
+        borderRadius: BorderRadius.circular(height / 2),
         border: Border.all(
           color: const Color(0xFF474E5D),
           width: 1.8,
@@ -58,10 +73,10 @@ class CasioReplayPad extends StatelessWidget {
           IgnorePointer(
             child: Center(
               child: Container(
-                width: 96,
-                height: 72,
+                width: ringW,
+                height: ringH,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(36),
+                  borderRadius: BorderRadius.circular(ringH / 2),
                   border: Border.all(
                     color: const Color(0xFF3E4554).withValues(alpha: 0.6),
                     width: 1.0,
@@ -74,13 +89,13 @@ class CasioReplayPad extends StatelessWidget {
           // Flecha Arriba (▲)
           Positioned(
             top: 0,
-            left: 34,
-            right: 34,
-            height: 32,
+            left: vBtnLR,
+            right: vBtnLR,
+            height: vBtnH,
             child: _DPadDirectionButton(
               key: const Key('replay_up'),
               icon: Icons.arrow_drop_up_rounded,
-              size: 28,
+              size: iconVSize,
               alignment: Alignment.topCenter,
               padding: const EdgeInsets.only(top: 1),
               tooltip: 'Arriba / Numerador / Replay',
@@ -91,13 +106,13 @@ class CasioReplayPad extends StatelessWidget {
           // Flecha Abajo (▼)
           Positioned(
             bottom: 0,
-            left: 34,
-            right: 34,
-            height: 32,
+            left: vBtnLR,
+            right: vBtnLR,
+            height: vBtnH,
             child: _DPadDirectionButton(
               key: const Key('replay_down'),
               icon: Icons.arrow_drop_down_rounded,
-              size: 28,
+              size: iconVSize,
               alignment: Alignment.bottomCenter,
               padding: const EdgeInsets.only(bottom: 1),
               tooltip: 'Abajo / Denominador / Replay',
@@ -108,13 +123,13 @@ class CasioReplayPad extends StatelessWidget {
           // Flecha Izquierda (◀)
           Positioned(
             left: 0,
-            top: 16,
-            bottom: 16,
-            width: 36,
+            top: hBtnTB,
+            bottom: hBtnTB,
+            width: hBtnW,
             child: _DPadDirectionButton(
               key: const Key('replay_left'),
               icon: Icons.arrow_left_rounded,
-              size: 32,
+              size: iconHSize,
               alignment: Alignment.centerLeft,
               padding: const EdgeInsets.only(left: 2),
               tooltip: 'Izquierda / Paso anterior',
@@ -125,13 +140,13 @@ class CasioReplayPad extends StatelessWidget {
           // Flecha Derecha (▶)
           Positioned(
             right: 0,
-            top: 16,
-            bottom: 16,
-            width: 36,
+            top: hBtnTB,
+            bottom: hBtnTB,
+            width: hBtnW,
             child: _DPadDirectionButton(
               key: const Key('replay_right'),
               icon: Icons.arrow_right_rounded,
-              size: 32,
+              size: iconHSize,
               alignment: Alignment.centerRight,
               padding: const EdgeInsets.only(right: 2),
               tooltip: 'Derecha / Paso siguiente',
@@ -143,8 +158,8 @@ class CasioReplayPad extends StatelessWidget {
           IgnorePointer(
             child: Center(
               child: Container(
-                width: 24,
-                height: 24,
+                width: medallionSize,
+                height: medallionSize,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(

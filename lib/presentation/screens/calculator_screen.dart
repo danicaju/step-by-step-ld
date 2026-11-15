@@ -17,7 +17,6 @@ import '../../domain/math_engine/solvers/radical_and_factor_solver.dart';
 import '../../domain/math_engine/solvers/ruffini_solver.dart';
 import '../../domain/math_engine/solvers/statistics_solver.dart';
 import '../../domain/math_engine/solvers/step_evaluator.dart';
-import '../../domain/math_engine/solvers/system_3x3_solver.dart';
 import '../../domain/math_engine/solvers/trig_and_angles_solver.dart';
 import '../../domain/math_engine/solvers/vector_solver.dart';
 import '../../domain/services/class_history_service.dart';
@@ -35,7 +34,11 @@ import '../widgets/casio_physical_key.dart';
 import '../widgets/casio_stat_table_view.dart';
 import '../widgets/casio_vector_editor_view.dart';
 import '../widgets/class_history_sheet.dart';
+import '../widgets/feasible_region_canvas.dart';
+import '../widgets/number_line_painter.dart';
 import '../widgets/windows_side_panel.dart';
+import '../../domain/math_engine/models/inequality_models.dart';
+import '../../domain/math_engine/solvers/linear_inequality_2d_solver.dart';
 
 class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
@@ -93,11 +96,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   int _eqRightCursorPos = 0;
   int _eqActiveSide = 0; // 0 = miembro izquierdo, 1 = miembro derecho
 
-  // Estado Modo 3 (Sistemas Unificados: 2x2 y 3x3)
-  int _systemDim = 2; // 2 o 3
+  // Estado Modo 3 (Sistemas Unificados: 2x2, 3x3 y 4x4)
+  int _systemDim = 2; // 2, 3 o 4
   final List<String> _sysValues = ['', '', '', '', '', ''];
   final List<String> _sysLabels = ['a₁', 'b₁', 'c₁', 'a₂', 'b₂', 'c₂'];
   int _sysActiveIndex = 0;
+  final List<String> _sys4Values = List<String>.filled(20, '');
+  final List<String> _sys4Labels = [
+    'a₁', 'b₁', 'c₁', 'd₁', 'e₁',
+    'a₂', 'b₂', 'c₂', 'd₂', 'e₂',
+    'a₃', 'b₃', 'c₃', 'd₃', 'e₃',
+    'a₄', 'b₄', 'c₄', 'd₄', 'e₄',
+  ];
+  int _sys4ActiveIndex = 0;
   SystemResolutionMethod _systemMethod = SystemResolutionMethod.sustitucion;
 
   // Estado Modo 4 (Polinomios: Regla de Ruffini grado 2..6 o Identidades Notables)
@@ -126,24 +137,29 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   FunctionAnalysisResult? _currentGraphAnalysis;
   NotablePoint? _selectedGraphPoint;
 
-  // Estado Modo 6 (Inecuaciones 1.º y 2.º Grado)
-  int _ineqDegree = 1; // 1 = expresión lineal, 2 = plantilla cuadrática
+  // Estado Modo 6 (Inecuaciones: 1 = lineal/valor absoluto, 2 = 2.º grado, 3 = sistemas 1D, 4 = sistemas 2D)
+  int _ineqDegree = 1;
   InequalitySign _inequalitySign = InequalitySign.less;
   final List<String> _ineqQuadValues = ['', '', ''];
   final List<String> _ineqQuadLabels = ['a', 'b', 'c'];
   int _ineqQuadActiveIndex = 0; // 0..2 coeficientes, 3 selector de signo
+  final List<String> _ineqSys1Values = ['', ''];
+  final List<String> _ineqSys2Values = ['x + y <= 4', '2x - y >= 1', 'x >= 0', 'y >= 0'];
+  bool _show2DRegionView = true;
+  Inequality1DVisualData? _activeIneqVisualData;
+  FeasibleRegion2DVisualData? _currentFeasibleRegion;
 
   // Estado Modo 7 (Estadística 1-Var: tabla xi | fi)
   List<({String xi, String fi})> _statRows = [(xi: '', fi: '')];
   int _statActiveRow = 0;
   int _statActiveCol = 0; // 0 = x_i, 1 = f_i
 
-  // Estado Modo 8 (Matrices 2x2 / 3x3)
-  int _matrixDim = 3; // 2 o 3
+  // Estado Modo 8 (Matrices 2x2 / 3x3 / 4x4 / Rectangulares)
+  int _matrixDim = 3; // 2, 3, 4, 34 (3x4), 45 (4x5)
   int _matrixActiveTarget = 0; // 0 = MatA, 1 = MatB, 2 = escalar k
   MatrixOperation _matrixOp = MatrixOperation.determinant;
-  final List<String> _matrixCellsA = List<String>.filled(9, '');
-  final List<String> _matrixCellsB = List<String>.filled(9, '');
+  final List<String> _matrixCellsA = List<String>.filled(25, '');
+  final List<String> _matrixCellsB = List<String>.filled(25, '');
   String _matrixScalarK = '';
   int _matrixActiveRow = 0;
   int _matrixActiveCol = 0;
@@ -156,7 +172,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     'a₃', 'b₃', 'c₃', 'd₃',
   ];
   int _sys3ActiveIndex = 0;
-  System3x3Method _sys3Method = System3x3Method.gauss;
 
   // Estado Modo 9 (Vectores 2D / 3D: Módulo, u·v, u×v)
   int _vectorDim = 3; // 2 o 3
@@ -231,6 +246,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   List<String> get _currentCellValues {
     switch (_calculatorMode) {
       case 3:
+        if (_systemDim == 4) return _sys4Values;
         return _systemDim == 3 ? _sys3Values : _sysValues;
       case 4:
         return _ruffiniValues;
@@ -246,6 +262,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   List<String> get _currentCellLabels {
     switch (_calculatorMode) {
       case 3:
+        if (_systemDim == 4) return _sys4Labels;
         return _systemDim == 3 ? _sys3Labels : _sysLabels;
       case 4:
         return _ruffiniLabels;
@@ -261,6 +278,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   int get _currentActiveIndex {
     switch (_calculatorMode) {
       case 3:
+        if (_systemDim == 4) return _sys4ActiveIndex;
         return _systemDim == 3 ? _sys3ActiveIndex : _sysActiveIndex;
       case 4:
         return _ruffiniActiveIndex;
@@ -276,7 +294,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   set _currentActiveIndex(int val) {
     switch (_calculatorMode) {
       case 3:
-        if (_systemDim == 3) {
+        if (_systemDim == 4) {
+          _sys4ActiveIndex = val;
+        } else if (_systemDim == 3) {
           _sys3ActiveIndex = val;
         } else {
           _sysActiveIndex = val;
@@ -451,7 +471,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     _sysActiveIndex = 0;
 
     _polyIsNotableMode = false;
-    _setRuffiniDegree(3, enterTemplate: mode != 4);
+    _setRuffiniDegree(2, enterTemplate: mode != 4);
 
     for (int i = 0; i < _graphValues.length; i++) {
       _graphValues[i] = '';
@@ -487,6 +507,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       _sys3Values[i] = '';
     }
     _sys3ActiveIndex = 0;
+    for (int i = 0; i < _sys4Values.length; i++) {
+      _sys4Values[i] = '';
+    }
+    _sys4ActiveIndex = 0;
 
     _vectorDim = 3;
     _vectorOp = VectorOperation.dotAndAngle;
@@ -671,6 +695,44 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
 
     if (_calculatorMode == 3) {
+      if (_systemDim == 4) {
+        try {
+          final augmentedRows = List.generate(4, (r) {
+            return List.generate(5, (c) {
+              return _parseRationalCell(
+                _sys4Values[r * 5 + c],
+                defaultValue: Rational(0),
+              );
+            });
+          });
+          final res = LinearSystemSolver.solveNxN(
+            augmentedRows: augmentedRows,
+            method: _systemMethod,
+          );
+          setState(() {
+            _activeResolution = res;
+          });
+          _recordCurrentResolutionToHistory(
+            res,
+            'M3: Sist. 4x4 (${_systemMethod.displayName})',
+          );
+        } on FormatException catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message),
+              backgroundColor: const Color(0xFFB91C1C),
+            ),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error en Sistema 4x4: $e'),
+              backgroundColor: const Color(0xFFB91C1C),
+            ),
+          );
+        }
+        return;
+      }
       if (_systemDim == 3) {
         try {
           final augmentedRows = List.generate(3, (r) {
@@ -681,16 +743,16 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               );
             });
           });
-          final res = System3x3Solver.solve(
+          final res = LinearSystemSolver.solveNxN(
             augmentedRows: augmentedRows,
-            method: _sys3Method,
+            method: _systemMethod,
           );
           setState(() {
             _activeResolution = res;
           });
           _recordCurrentResolutionToHistory(
             res,
-            'M3: Sist. 3x3 (${_sys3Method.displayName})',
+            'M3: Sist. 3x3 (${_systemMethod.displayName})',
           );
         } on FormatException catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -829,7 +891,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         if (trimmed.isEmpty || trimmed == '0') {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Escribe una inecuación (ej: -2x + 4 < 10).'),
+              content: Text('Escribe una inecuación (ej: -2x + 4 < 10 o |x - 5| < 3).'),
               backgroundColor: Color(0xFFB91C1C),
             ),
           );
@@ -840,8 +902,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             _rawInput,
             fallbackSign: _inequalitySign,
           );
+          final visual = InequalitySolver.getVisualData(res);
           setState(() {
             _activeResolution = res;
+            _activeIneqVisualData = visual;
+            _currentFeasibleRegion = null;
           });
           _recordCurrentResolutionToHistory(res, 'M6: Inecuaciones');
         } on FormatException catch (e) {
@@ -860,7 +925,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           );
         }
         return;
-      } else {
+      } else if (_ineqDegree == 2) {
         final a = _parseCoeffValue(_ineqQuadValues[0], defaultValue: 1);
         final b = _parseCoeffValue(_ineqQuadValues[1], defaultValue: 0);
         final c = _parseCoeffValue(_ineqQuadValues[2], defaultValue: 0);
@@ -870,10 +935,74 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           c: c,
           sign: _inequalitySign,
         );
+        final visual = InequalitySolver.getVisualData(res);
         setState(() {
           _activeResolution = res;
+          _activeIneqVisualData = visual;
+          _currentFeasibleRegion = null;
         });
         _recordCurrentResolutionToHistory(res, 'M6: Inecuaciones 2.º Grado');
+        return;
+      } else if (_ineqDegree == 3) {
+        // Sistemas 1D: rayados cruzados
+        List<String> sys1Inputs = _ineqSys1Values.where((s) => s.trim().isNotEmpty).toList();
+        if (sys1Inputs.length < 2 && _rawInput.trim().isNotEmpty && _rawInput != '0') {
+          sys1Inputs = _rawInput.contains(';')
+              ? _rawInput.split(';')
+              : (_rawInput.contains(',') ? _rawInput.split(',') : [_rawInput]);
+        }
+        if (sys1Inputs.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Escribe inecuaciones separadas por coma (ej: 2x - 4 <= 6, -3x + 9 < 3).'),
+              backgroundColor: Color(0xFFB91C1C),
+            ),
+          );
+          return;
+        }
+        try {
+          final outcome = InequalitySolver.solveSystem1D(sys1Inputs);
+          setState(() {
+            _activeResolution = outcome.resolution;
+            _activeIneqVisualData = outcome.visualData;
+            _currentFeasibleRegion = null;
+          });
+          _recordCurrentResolutionToHistory(outcome.resolution, 'M6: Sistema Inecuaciones 1D');
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al resolver sistema 1D: $e'),
+              backgroundColor: const Color(0xFFB91C1C),
+            ),
+          );
+        }
+        return;
+      } else {
+        // Sistemas 2D: Región factible en el plano
+        List<String> sys2Inputs = _ineqSys2Values.where((s) => s.trim().isNotEmpty).toList();
+        if (_rawInput.trim().isNotEmpty && _rawInput != '0' && (_rawInput.contains(';') || _rawInput.contains(','))) {
+          sys2Inputs = _rawInput.contains(';') ? _rawInput.split(';') : _rawInput.split(',');
+        }
+        if (sys2Inputs.isEmpty) {
+          sys2Inputs = ['x + y <= 4', '2x - y >= 1', 'x >= 0', 'y >= 0'];
+        }
+        try {
+          final outcome = LinearInequality2DSolver.solveSystem2D(sys2Inputs);
+          setState(() {
+            _activeResolution = outcome.resolution;
+            _currentFeasibleRegion = outcome.visualData;
+            _activeIneqVisualData = null;
+            _show2DRegionView = true;
+          });
+          _recordCurrentResolutionToHistory(outcome.resolution, 'M6: Región Factible 2D');
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al calcular región factible: $e'),
+              backgroundColor: const Color(0xFFB91C1C),
+            ),
+          );
+        }
         return;
       }
     }
@@ -927,9 +1056,18 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
     if (_calculatorMode == 8) {
       try {
-        final matA = _buildRationalMatrixFromCells(_matrixCellsA, _matrixDim);
+        final int rCountA = _matrixDim == 34 ? 3 : (_matrixDim == 45 ? 4 : _matrixDim);
+        final int cCountA = _matrixDim == 34 ? 4 : (_matrixDim == 45 ? 5 : _matrixDim);
+        final matA = _buildRationalMatrixFromCells(
+          _matrixCellsA,
+          _matrixDim,
+          rows: rCountA,
+          cols: cCountA,
+        );
         final matB = _matrixOp.needsMatrixB
-            ? _buildRationalMatrixFromCells(_matrixCellsB, _matrixDim)
+            ? (_matrixOp == MatrixOperation.cramer
+                ? _buildRationalMatrixFromCells(_matrixCellsB, _matrixDim, rows: rCountA, cols: 1)
+                : _buildRationalMatrixFromCells(_matrixCellsB, _matrixDim, rows: rCountA, cols: cCountA))
             : null;
         final scalarVal = _matrixOp == MatrixOperation.scalarMultiply
             ? _parseRationalCell(_matrixScalarK, defaultValue: Rational(1))
@@ -1095,12 +1233,22 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
-  RationalMatrix _buildRationalMatrixFromCells(List<String> cells, int dim) {
+  RationalMatrix _buildRationalMatrixFromCells(
+    List<String> cells,
+    int dim, {
+    int? rows,
+    int? cols,
+  }) {
+    final int rCount = rows ?? (dim == 34 ? 3 : (dim == 45 ? 4 : dim));
+    final int cCount = cols ?? (dim == 34 ? 4 : (dim == 45 ? 5 : dim));
+    final int stride = cells.length >= 25 ? 5 : (dim <= 3 ? 3 : 4);
     return RationalMatrix.fromRationals(
-      List.generate(dim, (r) {
-        return List.generate(dim, (c) {
+      List.generate(rCount, (r) {
+        return List.generate(cCount, (c) {
+          final idx = r * stride + c;
+          final val = idx < cells.length ? cells[idx] : '';
           return _parseRationalCell(
-            cells[r * 3 + c],
+            val,
             defaultValue: Rational(0),
           );
         });
@@ -1241,6 +1389,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _clearActiveResolutionCursor();
       }
       _applyRawInsertion('x');
+    });
+  }
+
+  void _insertVariableY() {
+    setState(() {
+      _isShiftActive = false;
+      _isAlphaActive = false;
+      if (_activeResolution != null) {
+        _clearActiveResolutionCursor();
+      }
+      _applyRawInsertion('y');
     });
   }
 
@@ -1514,6 +1673,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _isMenuOpen = !_isMenuOpen;
         if (_isMenuOpen) {
           _menuCursorIndex = CasioLcdScreen.menuIndexForMode(_calculatorMode);
+          _activeResolution = null;
+          _activeStepIndex = 0;
+          _showDecimalApprox = false;
         }
         return;
       }
@@ -1846,7 +2008,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               _cursorPos = _rawInput.length;
               _calculusCursorPos = _calculusExprRaw.length;
             }
-            _applyRawInsertion('^(', keepLeadingZero: true);
+            _applyRawInsertion('^(', keepLeadingZero: false);
           }
           return;
         }
@@ -1859,7 +2021,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               _cursorPos = _rawInput.length;
               _calculusCursorPos = _calculusExprRaw.length;
             }
-            _applyRawInsertion('^3', keepLeadingZero: true);
+            _applyRawInsertion('^3', keepLeadingZero: false);
           }
           return;
         }
@@ -1870,7 +2032,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             _cursorPos = _rawInput.length;
             _calculusCursorPos = _calculusExprRaw.length;
           }
-          _applyRawInsertion('^2', keepLeadingZero: true);
+          _applyRawInsertion('^2', keepLeadingZero: false);
           return;
         }
       }
@@ -1960,16 +2122,26 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             _eqRightCursorPos = 0;
           }
           final sideRaw = _eqActiveSide == 0 ? _eqLeftRaw : _eqRightRaw;
+          if (sideRaw.isEmpty || sideRaw == '0') {
+            if (_eqActiveSide == 0) {
+              _eqLeftRaw = '/';
+              _eqLeftCursorPos = 0;
+            } else {
+              _eqRightRaw = '/';
+              _eqRightCursorPos = 0;
+            }
+            return;
+          }
           final sideCur =
               (_eqActiveSide == 0 ? _eqLeftCursorPos : _eqRightCursorPos)
                   .clamp(0, sideRaw.length);
           final stayInNum =
-              sideRaw.isEmpty || sideCur == 0 || '+-*(,;'.contains(sideRaw[sideCur - 1]);
+              sideCur == 0 || '+-*(,;'.contains(sideRaw[sideCur - 1]);
           final (nextRaw, advancedPos) = ExpressionParser.insertAtCursor(
             sideRaw,
             sideCur,
             '/',
-            keepLeadingZero: true,
+            keepLeadingZero: false,
           );
           final finalCur = stayInNum ? sideCur : advancedPos;
           if (_eqActiveSide == 0) {
@@ -2431,12 +2603,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         }
       }
 
-      final keepLeadingZero = effectiveChar == '.' ||
-          effectiveChar == '+' ||
-          effectiveChar == '*' ||
-          effectiveChar == ':' ||
-          effectiveChar == '/' ||
-          effectiveChar == '^2';
+      final keepLeadingZero = effectiveChar == '.';
       _applyRawInsertion(effectiveChar, keepLeadingZero: keepLeadingZero);
     });
   }
@@ -2874,13 +3041,14 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         final sideCur = _eqActiveSide == 0 ? _eqLeftCursorPos : _eqRightCursorPos;
         final mcmRight = ExpressionParser.handleMcmMcdRightArrow(sideRaw, sideCur);
         final slotRight = mcmRight ?? ExpressionParser.handleTwoSlotRightArrow(sideRaw, sideCur);
-        if (slotRight != null) {
+        final blockRight = slotRight ?? ExpressionParser.handleStructuredBlockRightArrow(sideRaw, sideCur);
+        if (blockRight != null) {
           if (_eqActiveSide == 0) {
-            _eqLeftRaw = slotRight.$1;
-            _eqLeftCursorPos = slotRight.$2;
+            _eqLeftRaw = blockRight.$1;
+            _eqLeftCursorPos = blockRight.$2;
           } else {
-            _eqRightRaw = slotRight.$1;
-            _eqRightCursorPos = slotRight.$2;
+            _eqRightRaw = blockRight.$1;
+            _eqRightCursorPos = blockRight.$2;
           }
           _replayIndex = -1;
         } else if (_eqActiveSide == 0 && _eqLeftCursorPos >= _eqLeftRaw.length) {
@@ -2915,7 +3083,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           _cursorPos = slotRight.$2;
           _replayIndex = -1;
         } else {
-          _cursorPos = ExpressionParser.stepCursorRight(_rawInput, _cursorPos);
+          final blockRight = ExpressionParser.handleStructuredBlockRightArrow(
+            _rawInput,
+            _cursorPos,
+          );
+          if (blockRight != null) {
+            _rawInput = blockRight.$1;
+            _cursorPos = blockRight.$2;
+            _replayIndex = -1;
+          } else {
+            _cursorPos = ExpressionParser.stepCursorRight(_rawInput, _cursorPos);
+          }
         }
       }
     });
@@ -3482,10 +3660,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final bool isExpanded = constraints.maxWidth >= 760;
+            final orientation = MediaQuery.of(context).orientation;
+            final bool isLandscape = constraints.maxWidth >= 560 &&
+                (orientation == Orientation.landscape || constraints.maxWidth > constraints.maxHeight);
+            final bool isWideDesktop = constraints.maxWidth >= 760;
 
-            if (!isExpanded) {
-              // Modo Compacto / Móvil (< 760 px): chasis centrado hasta 430 px ocupando el alto
+            if (!isLandscape && !isWideDesktop) {
+              // Modo Compacto / Móvil (< 760 px y portrait): chasis centrado hasta 430 px ocupando el alto
               return Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 430),
@@ -3500,24 +3681,33 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               );
             }
 
-            // Modo Expandido / Estilo Calculadora de Windows (>= 760 px)
+            // Modo Expandido / Horizontal (>= 760 px o Landscape)
+            // Divide la pantalla en 2 columnas equilibradas:
+            // Izquierda (~60-62%): calculadora completa adaptada al alto disponible
+            // Derecha (~38%): WindowsSidePanel con historial en vivo y pasos
             return Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1120),
+                constraints: BoxConstraints(maxWidth: isWideDesktop ? 1120 : double.infinity),
                 child: Padding(
-                  padding: const EdgeInsets.all(10.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      SizedBox(
-                        width: 430,
-                        child: _buildCalculatorChassis(
-                          liveLatex: liveLatex,
-                          modeLabel: modeLabel,
+                      // Columna Izquierda (~60-62%)
+                      Expanded(
+                        flex: 62,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 480),
+                          child: _buildCalculatorChassis(
+                            liveLatex: liveLatex,
+                            modeLabel: modeLabel,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 10),
+                      // Columna Derecha (~38%)
                       Expanded(
+                        flex: 38,
                         child: WindowsSidePanel(
                           activeTabIndex: _sidePanelTabIndex,
                           onTabChanged: (index) {
@@ -3601,11 +3791,20 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 final double maxChassisH = chassisConstraints.maxHeight.isFinite
                     ? chassisConstraints.maxHeight
                     : 700.0;
-                final double targetLcdH =
-                    (maxChassisH * 0.37).clamp(195.0, 290.0);
+                final bool isUltraCompact = maxChassisH < 400.0;
+                final bool isCompactH = maxChassisH < 540.0;
+                final double targetLcdH = isUltraCompact
+                    ? (maxChassisH * 0.20).clamp(56.0, 90.0)
+                    : isCompactH
+                        ? (maxChassisH * 0.25).clamp(70.0, 140.0)
+                        : (maxChassisH * 0.36).clamp(180.0, 290.0);
                 final bool enforceKeyMinHeights = maxChassisH >= 745.0;
                 final double? sciMinH = enforceKeyMinHeights ? 48.0 : null;
                 final double? numMinH = enforceKeyMinHeights ? 56.0 : null;
+                final double controlZoneH = isUltraCompact ? 38.0 : isCompactH ? 48.0 : 84.0;
+                final double dpadW = isUltraCompact ? 72.0 : isCompactH ? 84.0 : 108.0;
+                final double dpadH = isUltraCompact ? 38.0 : isCompactH ? 48.0 : 84.0;
+                final double controlKeyVPad = isUltraCompact ? 1.0 : isCompactH ? 2.0 : 12.0;
 
                 return Column(
                   children: [
@@ -3624,7 +3823,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                             });
                           },
                         )
-                      : CasioLcdScreen(
+                      : (_calculatorMode == 6 &&
+                              _ineqDegree == 4 &&
+                              _show2DRegionView &&
+                              _currentFeasibleRegion != null
+                          ? FeasibleRegionCanvas(
+                              visualData: _currentFeasibleRegion!,
+                              isOledDark: _isOledDark,
+                            )
+                          : CasioLcdScreen(
                           currentInputLatex: liveLatex,
                           currentResolution: _activeResolution,
                           activeStepIndex: _activeStepIndex,
@@ -3854,6 +4061,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                               _cycleInequalitySign();
                             });
                           },
+                          supplementaryVisualView: _calculatorMode == 6 &&
+                                  _activeIneqVisualData != null
+                              ? NumberLineWidget(
+                                  data: _activeIneqVisualData!,
+                                  isOledDark: _isOledDark,
+                                )
+                              : null,
                           coefficientView: _isCoefficientMode
                               ? CasioCoefficientView(
                                   mode: _calculatorMode,
@@ -3875,7 +4089,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                   },
                                 )
                               : null,
-                        ),
+                        )),
                 ),
 
                 // Barra interactiva contextual para Modos 2..11
@@ -3904,7 +4118,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                     children: [
                       _buildMethodTab(
                         key: const Key('sys_dim_2'),
-                        label: '2×2',
+                        label: '2 Ec.',
                         selected: _systemDim == 2,
                         onTap: () {
                           setState(() {
@@ -3918,12 +4132,26 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       const SizedBox(width: 3),
                       _buildMethodTab(
                         key: const Key('sys_dim_3'),
-                        label: '3×3',
+                        label: '3 Ec.',
                         selected: _systemDim == 3,
                         onTap: () {
                           setState(() {
                             _systemDim = 3;
                             _sys3ActiveIndex = 0;
+                            _activeResolution = null;
+                            _activeStepIndex = 0;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 3),
+                      _buildMethodTab(
+                        key: const Key('sys_dim_4'),
+                        label: '4 Ec.',
+                        selected: _systemDim == 4,
+                        onTap: () {
+                          setState(() {
+                            _systemDim = 4;
+                            _sys4ActiveIndex = 0;
                             _activeResolution = null;
                             _activeStepIndex = 0;
                           });
@@ -3973,22 +4201,34 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           },
                         ),
                       ] else ...[
-                        for (final method in System3x3Method.values) ...[
-                          const SizedBox(width: 3),
-                          _buildMethodTab(
-                            key: Key('sys3_method_${method.name}'),
-                            label: method.displayName,
-                            selected: _sys3Method == method,
-                            onTap: () {
-                              setState(() {
-                                _sys3Method = method;
-                              });
+                        const SizedBox(width: 3),
+                        _buildMethodTab(
+                          label: 'Reducción',
+                          selected:
+                              _systemMethod == SystemResolutionMethod.reduccion,
+                          onTap: () {
+                            setState(() {
+                              _systemMethod = SystemResolutionMethod.reduccion;
                               if (_activeResolution != null) {
                                 _solveCurrentMode();
                               }
-                            },
-                          ),
-                        ],
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 3),
+                        _buildMethodTab(
+                          label: 'Sustitución',
+                          selected:
+                              _systemMethod == SystemResolutionMethod.sustitucion,
+                          onTap: () {
+                            setState(() {
+                              _systemMethod = SystemResolutionMethod.sustitucion;
+                              if (_activeResolution != null) {
+                                _solveCurrentMode();
+                              }
+                            });
+                          },
+                        ),
                         const SizedBox(width: 3),
                         _buildMethodTab(
                           key: const Key('sys3_solve_btn'),
@@ -4025,6 +4265,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                             _polyIsNotableMode = true;
                             _activeResolution = null;
                             _activeStepIndex = 0;
+                            _identityType = NotableIdentityType.squareOfSum;
+                            _rawInput = '( + )^2';
+                            _cursorPos = 1;
+                            _replayIndex = -1;
                           });
                         },
                       ),
@@ -4059,11 +4303,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           onTap: () {
                             setState(() {
                               _identityType = NotableIdentityType.squareOfSum;
-                              if (_rawInput == '0' || _activeResolution != null) {
-                                _rawInput = '(x + 1)^2';
-                                _cursorPos = _rawInput.length;
+                              _activeResolution = null;
+                              _activeStepIndex = 0;
+                              if (_rawInput == '0' || _activeResolution != null || _rawInput.contains('(')) {
+                                _rawInput = '( + )^2';
+                                _cursorPos = 1;
                                 _replayIndex = -1;
-                                _activeResolution = null;
                               }
                             });
                           },
@@ -4076,11 +4321,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           onTap: () {
                             setState(() {
                               _identityType = NotableIdentityType.squareOfDiff;
-                              if (_rawInput == '0' || _activeResolution != null) {
-                                _rawInput = '(x - 1)^2';
-                                _cursorPos = _rawInput.length;
+                              _activeResolution = null;
+                              _activeStepIndex = 0;
+                              if (_rawInput == '0' || _activeResolution != null || _rawInput.contains('(')) {
+                                _rawInput = '( - )^2';
+                                _cursorPos = 1;
                                 _replayIndex = -1;
-                                _activeResolution = null;
                               }
                             });
                           },
@@ -4093,11 +4339,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           onTap: () {
                             setState(() {
                               _identityType = NotableIdentityType.sumTimesDiff;
-                              if (_rawInput == '0' || _activeResolution != null) {
-                                _rawInput = '(x + 1)(x - 1)';
-                                _cursorPos = _rawInput.length;
+                              _activeResolution = null;
+                              _activeStepIndex = 0;
+                              if (_rawInput == '0' || _activeResolution != null || _rawInput.contains('(')) {
+                                _rawInput = '( + )( - )';
+                                _cursorPos = 1;
                                 _replayIndex = -1;
-                                _activeResolution = null;
                               }
                             });
                           },
@@ -4110,7 +4357,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   Row(
                     children: [
                       _buildMethodTab(
-                        label: _showGraphView ? '📈 Ver Gráfica' : '📝 Ver Pasos',
+                        key: const Key('mode5_view_toggle'),
+                        icon: _showGraphView
+                            ? Icons.format_list_numbered_rounded
+                            : Icons.show_chart_rounded,
+                        label: _showGraphView ? 'Ver Pasos' : 'Ver Gráfica',
                         selected: true,
                         onTap: () {
                           setState(() {
@@ -4150,13 +4401,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                     children: [
                       _buildMethodTab(
                         key: const Key('ineq_deg_1'),
-                        label: '1.º',
+                        label: '1.º / |x|',
                         selected: _ineqDegree == 1,
                         onTap: () {
                           setState(() {
                             _ineqDegree = 1;
                             _activeResolution = null;
                             _activeStepIndex = 0;
+                            _activeIneqVisualData = null;
+                            _currentFeasibleRegion = null;
                           });
                         },
                       ),
@@ -4170,16 +4423,71 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                             _ineqDegree = 2;
                             _activeResolution = null;
                             _activeStepIndex = 0;
+                            _activeIneqVisualData = null;
+                            _currentFeasibleRegion = null;
                           });
                         },
                       ),
-                      if (_ineqDegree == 1) ...[
+                      const SizedBox(width: 3),
+                      _buildMethodTab(
+                        key: const Key('ineq_deg_3'),
+                        label: 'Sist. 1D',
+                        selected: _ineqDegree == 3,
+                        onTap: () {
+                          setState(() {
+                            _ineqDegree = 3;
+                            _activeResolution = null;
+                            _activeStepIndex = 0;
+                            _activeIneqVisualData = null;
+                            _currentFeasibleRegion = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 3),
+                      _buildMethodTab(
+                        key: const Key('ineq_deg_4'),
+                        label: 'Sist. 2D',
+                        selected: _ineqDegree == 4,
+                        onTap: () {
+                          setState(() {
+                            _ineqDegree = 4;
+                            _activeResolution = null;
+                            _activeStepIndex = 0;
+                            _activeIneqVisualData = null;
+                            _currentFeasibleRegion = null;
+                            _show2DRegionView = true;
+                          });
+                        },
+                      ),
+                      if (_ineqDegree == 4 && _currentFeasibleRegion != null) ...[
+                        const SizedBox(width: 3),
+                        _buildMethodTab(
+                          key: const Key('ineq_2d_toggle_view'),
+                          label: _show2DRegionView ? 'PASOS' : 'PLANO 2D',
+                          selected: _show2DRegionView,
+                          onTap: () {
+                            setState(() {
+                              _show2DRegionView = !_show2DRegionView;
+                            });
+                          },
+                        ),
+                      ],
+                      if (_ineqDegree == 1 || _ineqDegree == 3) ...[
                         const SizedBox(width: 3),
                         _buildMethodTab(
                           key: const Key('ineq_var_x'),
                           label: 'x',
                           selected: false,
                           onTap: _insertVariableX,
+                        ),
+                      ],
+                      if (_ineqDegree == 4) ...[
+                        const SizedBox(width: 3),
+                        _buildMethodTab(
+                          key: const Key('ineq_var_y'),
+                          label: 'y',
+                          selected: false,
+                          onTap: _insertVariableY,
                         ),
                       ],
                       for (final s in InequalitySign.values) ...[
@@ -4413,14 +4721,14 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                 // 2. ZONA DE CONTROL SUPERIOR ERGONÓMICA (3 bloques, D-Pad 108x84)
                 // =========================================================
                 SizedBox(
-                  height: 84,
+                  height: controlZoneH,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // Bloque Izquierdo: Teclas grandes SHIFT y ALPHA
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: EdgeInsets.symmetric(vertical: controlKeyVPad),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -4446,9 +4754,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
                       const SizedBox(width: 6),
 
-                      // Bloque Central: D-Pad Cepillado (108x84 px)
+                      // Bloque Central: D-Pad Cepillado
                       Center(
                         child: CasioReplayPad(
+                          width: dpadW,
+                          height: dpadH,
                           onLeft: _handleDpadLeft,
                           onRight: _handleDpadRight,
                           onUp: _handleDpadUp,
@@ -4461,7 +4771,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       // Bloque Derecho: Teclas grandes MODE (SETUP) y CALC (OPTN)
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: EdgeInsets.symmetric(vertical: controlKeyVPad),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -4824,15 +5134,28 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     if (_calculatorMode == 3 && _systemDim == 3) {
       return 'Introduce x, y, z, d con = o D-Pad (vacío=0) y elige Gauss / Cramer';
     }
-    if (_calculatorMode == 4 && !_polyIsNotableMode) {
+    if (_calculatorMode == 4) {
+      if (_polyIsNotableMode) {
+        return switch (_identityType) {
+          NotableIdentityType.squareOfSum => 'Escribe (a + b)², ej: (2x + 3)², y pulsa =',
+          NotableIdentityType.squareOfDiff => 'Escribe (a - b)², ej: (x - 4)², y pulsa =',
+          NotableIdentityType.sumTimesDiff => 'Escribe (a + b)(a - b), ej: (x + 2)(x - 2), y pulsa =',
+        };
+      }
       return _isChoosingRuffiniDegree
           ? 'Elige grado (2.º–6.º): toca una tarjeta, pulsa 2..6 o ◀ ▶ + ='
           : 'Rellena ${_ruffiniDegree + 1} coef. (0 si falta grado) y pulsa =';
     }
     if (_calculatorMode == 6) {
-      return _ineqDegree == 1
-          ? 'Teclea inecuación (elige < ≤ > ≥ con ▲ ▼ o botón en LCD) y pulsa ='
-          : 'Rellena a, b, c; cambia < ≤ > ≥ en la casilla (▲ ▼) o barra y pulsa =';
+      if (_ineqDegree == 1) {
+        return 'Teclea inecuación o valor absoluto (ej: |x - 5| < 3 o 3x - 5 > 7) y pulsa =';
+      } else if (_ineqDegree == 2) {
+        return 'Rellena a, b, c; cambia < ≤ > ≥ en la casilla (▲ ▼) o barra y pulsa =';
+      } else if (_ineqDegree == 3) {
+        return 'Escribe inecuaciones separadas por coma (ej: 2x - 4 <= 6, -3x + 9 < 3) y pulsa =';
+      } else {
+        return 'Escribe inecuaciones en x e y separadas por coma (ej: x + y <= 4, 2x - y >= 1) y pulsa =';
+      }
     }
     if (_calculatorMode == 7) {
       return 'Introduce xi/fi, pulsa = para bajar fila, ◀ ▶ ▲ ▼ moverte y CALC STAT';
@@ -4853,21 +5176,30 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   String? get _lcdCustomHeaderTitle {
-    if (_calculatorMode == 3 && _systemDim == 3) {
-      return 'SISTEMA 3×3 (${_sys3Method.displayName.toUpperCase()})';
+    if (_calculatorMode == 3) {
+      if (_systemDim == 4) return 'SISTEMA 4×4 (${_systemMethod.displayName.toUpperCase()})';
+      if (_systemDim == 3) return 'SISTEMA 3×3 (${_systemMethod.displayName.toUpperCase()})';
+      return 'SISTEMA 2×2 (${_systemMethod.displayName.toUpperCase()})';
     }
     if (_calculatorMode == 4) {
       if (_polyIsNotableMode) {
-        return 'IDENTIDADES NOTABLES';
+        return switch (_identityType) {
+          NotableIdentityType.squareOfSum => '(A + B)² = A² + 2AB + B²',
+          NotableIdentityType.squareOfDiff => '(A - B)² = A² - 2AB + B²',
+          NotableIdentityType.sumTimesDiff => '(A + B)(A - B) = A² - B²',
+        };
       }
       return _isChoosingRuffiniDegree
           ? 'ELIGE GRADO DE P(x)'
           : 'RUFFINI GRADO $_ruffiniDegree';
     }
     if (_calculatorMode == 6) {
-      return _ineqDegree == 1
-          ? 'INECUACIÓN 1.º GRADO'
-          : 'INECUACIÓN 2.º GRADO';
+      return switch (_ineqDegree) {
+        1 => 'INECUACIÓN 1.º GRADO / |x|',
+        2 => 'INECUACIÓN 2.º GRADO',
+        3 => 'SISTEMA INECUACIONES 1D',
+        _ => 'REGIÓN FACTIBLE 2D',
+      };
     }
     if (_calculatorMode == 7) {
       return 'ESTADÍSTICA 1-VAR';
@@ -5148,6 +5480,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   Widget _buildMethodTab({
     Key? key,
     required String label,
+    IconData? icon,
     required bool selected,
     required VoidCallback onTap,
   }) {
@@ -5169,13 +5502,26 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           ),
           child: FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: selected ? Colors.white : const Color(0xFF94A3B8),
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    size: 13,
+                    color: selected ? Colors.white : const Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? Colors.white : const Color(0xFF94A3B8),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

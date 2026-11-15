@@ -184,13 +184,16 @@ class StepEvaluator {
       );
     }
 
-    final finalRational = (currentTree as ResolvedRationalNode).value.simplify();
+    final resNode = currentTree as ResolvedRationalNode;
+    final finalRational = resNode.value.simplify();
     _lastEvaluatedRational = finalRational;
 
     return StepByStepResolution(
       originalInputLatex: originalLatex,
       steps: List.unmodifiable(_steps),
-      exactResultLatex: finalRational.toLatex(),
+      exactResultLatex: resNode.isApproximateDecimal
+          ? finalRational.toDecimalLatex()
+          : finalRational.toLatex(),
       decimalApproxLatex: finalRational.toDecimalLatex(),
     );
   }
@@ -415,9 +418,16 @@ class StepEvaluator {
         for (final s in res.steps) {
           _steps.add(s);
         }
-        final approxD = _evalToDoubleQuick(node) ?? 0.0;
+        final parsedDec = double.tryParse(res.decimalApproxLatex
+                .replaceAll('°', '')
+                .replaceAll('^\\circ', '')
+                .replaceAll(',', '.')) ??
+            double.tryParse(res.exactResultLatex.replaceAll(',', '.'));
+        final approxD = _evalToDoubleQuick(node) ?? parsedDec ?? 0.0;
+        final info = _rationalFromResultLatexOrDouble(res.exactResultLatex, approxD);
         return ResolvedRationalNode(
-          _rationalFromResultLatexOrDouble(res.exactResultLatex, approxD),
+          info.rational,
+          isApproximateDecimal: info.isApproximateDecimal,
         );
 
       case LogNode():
@@ -425,9 +435,13 @@ class StepEvaluator {
         for (final s in res.steps) {
           _steps.add(s);
         }
-        final approxD = _evalToDoubleQuick(node) ?? 0.0;
+        final parsedDec = double.tryParse(res.decimalApproxLatex.replaceAll(',', '.')) ??
+            double.tryParse(res.exactResultLatex.replaceAll(',', '.'));
+        final approxD = _evalToDoubleQuick(node) ?? parsedDec ?? 0.0;
+        final info = _rationalFromResultLatexOrDouble(res.exactResultLatex, approxD);
         return ResolvedRationalNode(
-          _rationalFromResultLatexOrDouble(res.exactResultLatex, approxD),
+          info.rational,
+          isApproximateDecimal: info.isApproximateDecimal,
         );
 
       case PercentNode(:final operand):
@@ -552,7 +566,7 @@ class StepEvaluator {
           );
         }
 
-        return _evaluateBinaryRational(left.value, op, right.value);
+        return _evaluateBinaryRational(left, op, right);
     }
   }
 
@@ -665,10 +679,44 @@ class StepEvaluator {
   }
 
   ResolvedRationalNode _evaluateBinaryRational(
-    Rational a,
+    ResolvedRationalNode leftNode,
     BinaryOperator op,
-    Rational b,
+    ResolvedRationalNode rightNode,
   ) {
+    final a = leftNode.value;
+    final b = rightNode.value;
+    final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
+
+    if (isApprox) {
+      final result = switch (op) {
+        BinaryOperator.add => a + b,
+        BinaryOperator.subtract => a - b,
+        BinaryOperator.multiply => a * b,
+        BinaryOperator.divide => b.isZero
+            ? throw const FormatException('División por cero.')
+            : a / b,
+      };
+
+      final signSymbol = op == BinaryOperator.add
+          ? '+'
+          : (op == BinaryOperator.subtract
+              ? '-'
+              : (op == BinaryOperator.multiply ? r'\cdot' : ':'));
+
+      final aLatex = leftNode.isApproximateDecimal ? a.toDecimalLatex() : a.toLatex();
+      final bLatex = rightNode.isApproximateDecimal ? b.toDecimalLatex() : b.toLatex();
+      final rightStr = b.isNegative ? '($bLatex)' : bLatex;
+      final resDec = result.toDecimalLatex();
+
+      _addStep(
+        title: 'Operar aproximaciones decimales',
+        latex: '$aLatex $signSymbol $rightStr \\approx $resDec',
+        note: 'Operamos numéricamente manteniendo la precisión decimal.',
+      );
+
+      return ResolvedRationalNode(result, isApproximateDecimal: true);
+    }
+
     switch (op) {
       case BinaryOperator.add:
       case BinaryOperator.subtract:
@@ -775,17 +823,37 @@ class StepEvaluator {
     }
   }
 
-  Rational _rationalFromResultLatexOrDouble(String latex, double fallback) {
+  ({Rational rational, bool isApproximateDecimal}) _rationalFromResultLatexOrDouble(
+    String latex,
+    double fallback,
+  ) {
     final trimmed = latex.trim();
-    if (trimmed == '0') return Rational(0);
-    if (trimmed == '1') return Rational(1);
-    if (trimmed == '-1') return Rational(-1);
+    final intParsed = int.tryParse(trimmed);
+    if (intParsed != null) {
+      return (rational: Rational(intParsed), isApproximateDecimal: false);
+    }
     final fracM = RegExp(r'^(-?)\\frac\{(\d+)\}\{(\d+)\}$').firstMatch(trimmed);
     if (fracM != null) {
       final sign = fracM[1] == '-' ? -1 : 1;
-      return Rational(sign * int.parse(fracM[2]!), int.parse(fracM[3]!));
+      return (
+        rational: Rational(sign * int.parse(fracM[2]!), int.parse(fracM[3]!)),
+        isApproximateDecimal: false,
+      );
     }
-    return Rational.fromDouble(fallback, 1000000);
+    final decParsed = double.tryParse(trimmed.replaceAll(',', '.'));
+    if (decParsed != null && !decParsed.isNaN && !decParsed.isInfinite) {
+      return (
+        rational: Rational.fromDouble(decParsed, 1000000),
+        isApproximateDecimal: true,
+      );
+    }
+    if (!fallback.isNaN && !fallback.isInfinite) {
+      return (
+        rational: Rational.fromDouble(fallback, 1000000),
+        isApproximateDecimal: true,
+      );
+    }
+    return (rational: Rational(0), isApproximateDecimal: false);
   }
 
   List<({DmsValue value, bool isSubtract})>? _tryCollectDmsTerms(ExprNode node) {
@@ -924,9 +992,22 @@ class StepEvaluator {
                 (_angleUnit == AngleUnit.deg ? 180.0 / math.pi : 1.0),
           };
         }(),
+      LogNode(:final base, :final arg, :final isNaturalLn) => () {
+          final a = _evalToDoubleQuick(arg);
+          if (a == null || a <= 0) return null;
+          if (isNaturalLn) return math.log(a);
+          final b = base != null ? _evalToDoubleQuick(base) : 10.0;
+          if (b == null || b <= 0 || (b - 1.0).abs() < 1e-12) return null;
+          return math.log(a) / math.log(b);
+        }(),
       UnaryMinusNode(:final operand) => () {
           final v = _evalToDoubleQuick(operand);
           return v == null ? null : -v;
+        }(),
+      PowerNode(:final base, :final exponent) => () {
+          final b = _evalToDoubleQuick(base);
+          if (b == null) return null;
+          return math.pow(b, exponent).toDouble();
         }(),
       BinaryOpNode(:final left, :final op, :final right) => () {
           final l = _evalToDoubleQuick(left);

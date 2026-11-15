@@ -154,8 +154,8 @@ class FunctionGraphSolver {
         shortTitle: '2. Cálculo del Vértice y Eje de Simetría',
         latexExpression:
             '\\begin{aligned} '
-            'x_v &= \\frac{-b}{2a} = \\frac{-${AlgebraicLatexFormatter.parenIfNegative(b)}}{2 \\cdot ${AlgebraicLatexFormatter.parenIfNegative(a)}} = $xvLatex \\\\[6pt] '
-            'y_v &= f(x_v) = $yvStr1$yvStr2$yvStr3 = ${yvRational.toLatex()} \\\\[6pt] '
+            'x_{v} &= \\frac{-b}{2a} = \\frac{-${AlgebraicLatexFormatter.parenIfNegative(b)}}{2 \\cdot ${AlgebraicLatexFormatter.parenIfNegative(a)}} = $xvLatex \\\\[6pt] '
+            'y_{v} &= f(x_{v}) = $yvStr1$yvStr2$yvStr3 = ${yvRational.toLatex()} \\\\[6pt] '
             'V &= $vertexCoordsLatex \\quad \\left(x = $xvLatex\\right) '
             '\\end{aligned}',
         pedagogicalNote:

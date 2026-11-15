@@ -154,7 +154,7 @@ class StatisticsOneVarSolver {
 
     final step1TableLatex =
         '\\begin{array}{c|c|c|c|c}\n'
-        'x_i & f_i & F_i & x_i \\cdot f_i & x_i^2 \\cdot f_i \\\\\n'
+        'x_{i} & f_{i} & F_{i} & x_{i} \\cdot f_{i} & x_{i}^2 \\cdot f_{i} \\\\\n'
         '\\hline\n'
         '$tableRowsLatex \\\\\n'
         '\\hline\n'
@@ -175,8 +175,8 @@ class StatisticsOneVarSolver {
     // PASO 2: Media aritmética
     final meanSubst = _formatRationalOverN(sumXiFi, nTotal);
     final meanExpr = meanSubst == mean.toLatex()
-        ? '\\bar{x} = \\frac{\\sum x_i \\cdot f_i}{N} = ${mean.toLatex()}'
-        : '\\bar{x} = \\frac{\\sum x_i \\cdot f_i}{N} = $meanSubst = ${mean.toLatex()}';
+        ? '\\bar{x} = \\frac{\\sum x_{i} \\cdot f_{i}}{N} = ${mean.toLatex()}'
+        : '\\bar{x} = \\frac{\\sum x_{i} \\cdot f_{i}}{N} = $meanSubst = ${mean.toLatex()}';
     final meanFullLatex = mean.denominator == 1
         ? meanExpr
         : '$meanExpr \\approx ${mean.toDecimalLatex()}';
@@ -199,7 +199,7 @@ class StatisticsOneVarSolver {
         ? exactLatex
         : '$exactLatex \\approx $stdDevDec';
     final varianceLine =
-        '\\sigma^2 = \\frac{\\sum x_i^2 \\cdot f_i}{N} - \\bar{x}^2 = '
+        '\\sigma^2 = \\frac{\\sum x_{i}^2 \\cdot f_{i}}{N} - \\bar{x}^2 = '
         '$sumSqSubst - $meanBaseWrapped^2 = '
         '${sumSqOverN.toLatex()} - ${meanSq.toLatex()} = ${variance.toLatex()}';
     final stdDevLine = variance.numerator == 0
@@ -230,9 +230,9 @@ class StatisticsOneVarSolver {
 
     final step4Latex =
         '\\begin{aligned}\n'
-        'M_o &= $modeLatex \\\\\n'
-        'M_e &= ${median.toLatex()} \\qquad \\left(\\frac{N}{2} = $nOver2Str\\right) \\\\\n'
-        'Q_1 &= ${q1.toLatex()}, \\quad Q_3 = ${q3.toLatex()}\n'
+        'M_{o} &= $modeLatex \\\\\n'
+        'M_{e} &= ${median.toLatex()} \\qquad \\left(\\frac{N}{2} = $nOver2Str\\right) \\\\\n'
+        'Q_{1} &= ${q1.toLatex()}, \\quad Q_{3} = ${q3.toLatex()}\n'
         '\\end{aligned}';
 
     steps.add(
@@ -241,8 +241,8 @@ class StatisticsOneVarSolver {
         shortTitle: 'Moda (Mo), Mediana (Me) y Cuartiles (Q₁, Q₃)',
         latexExpression: step4Latex,
         pedagogicalNote:
-            'La Moda M_o es el valor con mayor frecuencia fᵢ ($maxFi). '
-            'Para hallar la Mediana M_e buscamos N/2 = $nOver2Str en la columna de frecuencias acumuladas Fᵢ '
+            'La Moda Mₒ es el valor con mayor frecuencia fᵢ ($maxFi). '
+            'Para hallar la Mediana Mₑ buscamos N/2 = $nOver2Str en la columna de frecuencias acumuladas Fᵢ '
             '(el primer Fᵢ ≥ N/2; si coincide exacto con N/2, promediamos ese xᵢ y el siguiente). '
             'Del mismo modo hallamos Q₁ buscando N/4 = $nOver4Str y Q₃ buscando 3N/4 = $threeNOver4Str en Fᵢ.',
       ),
@@ -367,4 +367,158 @@ class StatisticsOneVarSolver {
     }
     return s.replaceAll('.', ',');
   }
+}
+
+/// Punto bidimensional (x, y) para estadística de 2 variables.
+class TwoVarPoint {
+  final Rational x;
+  final Rational y;
+  const TwoVarPoint(this.x, this.y);
+}
+
+class StatisticsTwoVarResult {
+  final Rational meanX;
+  final Rational meanY;
+  final Rational varX;
+  final Rational varY;
+  final Rational covXY;
+  final Rational? slopeM;
+  final Rational? interceptN;
+  final double? pearsonR;
+  final StepByStepResolution resolution;
+
+  const StatisticsTwoVarResult({
+    required this.meanX,
+    required this.meanY,
+    required this.varX,
+    required this.varY,
+    required this.covXY,
+    required this.slopeM,
+    required this.interceptN,
+    required this.pearsonR,
+    required this.resolution,
+  });
+}
+
+/// Solver de Estadística Bidimensional (Regresión lineal, Pearson r y manejo de varianza cero).
+class StatisticsTwoVarSolver {
+  static StatisticsTwoVarResult analyze(List<TwoVarPoint> points) {
+    if (points.length < 2) {
+      throw const FormatException('Se necesitan al menos 2 pares de datos (x, y).');
+    }
+    final n = points.length;
+    Rational sumX = Rational(0);
+    Rational sumY = Rational(0);
+    Rational sumX2 = Rational(0);
+    Rational sumY2 = Rational(0);
+    Rational sumXY = Rational(0);
+
+    for (final p in points) {
+      sumX = sumX + p.x;
+      sumY = sumY + p.y;
+      sumX2 = sumX2 + (p.x * p.x);
+      sumY2 = sumY2 + (p.y * p.y);
+      sumXY = sumXY + (p.x * p.y);
+    }
+
+    final nRat = Rational(n);
+    final meanX = sumX / nRat;
+    final meanY = sumY / nRat;
+
+    final varX = (sumX2 / nRat) - (meanX * meanX);
+    final varY = (sumY2 / nRat) - (meanY * meanY);
+    final covXY = (sumXY / nRat) - (meanX * meanY);
+
+    final steps = <MathStep>[];
+
+    steps.add(
+      MathStep(
+        index: 1,
+        shortTitle: 'Paso 1: Medias marginales',
+        latexExpression:
+            '\\bar{x} = \\frac{\\sum x_{i}}{N} = ${meanX.toLatex()}, \\quad '
+            '\\bar{y} = \\frac{\\sum y_{i}}{N} = ${meanY.toLatex()}',
+        pedagogicalNote:
+            'Calculamos el centro de gravedad (x̄, ȳ) de la distribucion bidimensional.',
+      ),
+    );
+
+    steps.add(
+      MathStep(
+        index: 2,
+        shortTitle: 'Paso 2: Varianzas y covarianza',
+        latexExpression:
+            '\\sigma_{x}^2 = ${varX.toLatex()}, \\quad '
+            '\\sigma_{y}^2 = ${varY.toLatex()}, \\quad '
+            '\\sigma_{xy} = ${covXY.toLatex()}',
+        pedagogicalNote:
+            'Calculamos la dispersion de cada variable y la covarianza que mide la relacion lineal conjunta.',
+      ),
+    );
+
+    Rational? slopeM;
+    Rational? interceptN;
+    double? pearsonR;
+    String regLatex;
+
+    if (varX.isZero) {
+      regLatex = 'x = ${meanX.toLatex()} \\quad (\\text{Varianza } \\sigma_{x}^2 = 0)';
+      steps.add(
+        MathStep(
+          index: 3,
+          shortTitle: 'Paso 3: Varianza cero (Recta vertical)',
+          latexExpression: regLatex,
+          pedagogicalNote:
+              'Al ser la varianza de x igual a cero, todos los valores de x son identicos y la recta de regresion es perfectamente vertical.',
+        ),
+      );
+    } else {
+      slopeM = covXY / varX;
+      interceptN = meanY - (slopeM * meanX);
+
+      final varXDouble = varX.toDouble();
+      final varYDouble = varY.toDouble();
+      if (varXDouble > 0 && varYDouble > 0) {
+        pearsonR = covXY.toDouble() / (math.sqrt(varXDouble) * math.sqrt(varYDouble));
+      }
+
+      final rStr = pearsonR != null ? pearsonR.toStringAsFixed(4) : '0';
+      final nLatex = interceptN.isNegative
+          ? '- ${interceptN.abs().toLatex()}'
+          : '+ ${interceptN.toLatex()}';
+      regLatex = 'y = ${slopeM.toLatex()}x $nLatex';
+
+      steps.add(
+        MathStep(
+          index: 3,
+          shortTitle: 'Paso 3: Recta de regresion y Pearson r',
+          latexExpression: '$regLatex, \\quad r = $rStr',
+          pedagogicalNote:
+              'La pendiente de la recta es m = σ_xy / σ_x² y r mide la fuerza de la correlacion lineal entre -1 y 1.',
+        ),
+      );
+    }
+
+    final res = StepByStepResolution(
+      originalInputLatex: 'N = $n',
+      steps: steps,
+      exactResultLatex: regLatex,
+      decimalApproxLatex: regLatex,
+    );
+
+    return StatisticsTwoVarResult(
+      meanX: meanX,
+      meanY: meanY,
+      varX: varX,
+      varY: varY,
+      covXY: covXY,
+      slopeM: slopeM,
+      interceptN: interceptN,
+      pearsonR: pearsonR,
+      resolution: res,
+    );
+  }
+
+  static StepByStepResolution solve(List<TwoVarPoint> points) =>
+      analyze(points).resolution;
 }

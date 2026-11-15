@@ -414,6 +414,64 @@ class ComplexSolver {
   static StepByStepResolution toPolar(RationalComplex z) =>
       analyzeToPolar(z).resolution;
 
+  /// Potencias de la unidad imaginaria `i^n` con reducción cíclica mod 4.
+  static StepByStepResolution powerOfI(int n) {
+    if (n < 0) {
+      throw const FormatException('Las potencias de i deben tener exponente no negativo.');
+    }
+    final q = n ~/ 4;
+    final r = n % 4;
+
+    final String remainderValLatex;
+    switch (r) {
+      case 0:
+        remainderValLatex = '1';
+        break;
+      case 1:
+        remainderValLatex = 'i';
+        break;
+      case 2:
+        remainderValLatex = '-1';
+        break;
+      case 3:
+        remainderValLatex = '-i';
+        break;
+      default:
+        remainderValLatex = '1';
+    }
+
+    final steps = <MathStep>[
+      MathStep(
+        index: 1,
+        shortTitle: 'División del exponente entre 4',
+        latexExpression: '$n = 4 \\cdot $q + $r',
+        pedagogicalNote:
+            'Las potencias de la unidad imaginaria son ciclicas de periodo 4: i^0 = 1, i^1 = i, i^2 = -1, i^3 = -i. Dividimos el exponente entre 4 para obtener el cociente y el resto.',
+      ),
+      MathStep(
+        index: 2,
+        shortTitle: 'Reducción cíclica: i^n = (i^4)^q · i^r',
+        latexExpression: 'i^{$n} = (i^4)^{$q} \\cdot i^{$r} = 1^{$q} \\cdot i^{$r} = i^{$r}',
+        pedagogicalNote:
+            'Como i^4 = 1, cualquier multiplo de 4 equivale a 1. El resultado depende unicamente del resto de la division.',
+      ),
+      MathStep(
+        index: 3,
+        shortTitle: 'Resultado exacto',
+        latexExpression: 'i^{$n} = $remainderValLatex',
+        pedagogicalNote:
+            'Sustituimos el valor del resto: i^{$r} = $remainderValLatex.',
+      ),
+    ];
+
+    return StepByStepResolution(
+      originalInputLatex: 'i^{$n}',
+      steps: steps,
+      exactResultLatex: remainderValLatex,
+      decimalApproxLatex: remainderValLatex,
+    );
+  }
+
   /// Conversión inversa de Forma Polar `r_α` a Forma Binómica `a + bi`.
   static StepByStepResolution fromPolar({
     required Rational modulus,

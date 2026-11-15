@@ -150,11 +150,11 @@ void main() {
     test('Incompleta Pura (b = 0): x² - 9 = 0 => x = ±3 sin fórmula general', () {
       final res = QuadraticEquationSolver.solve(a: 1, b: 0, c: -9);
 
-      expect(res.exactResultLatex, equals(r'x_1 = 3, \; x_2 = -3'));
+      expect(res.exactResultLatex, equals(r'x_{1} = 3, \; x_{2} = -3'));
       // No debe contener la fórmula general completa
       expect(res.steps[0].pedagogicalNote, contains('sin fórmula general'));
       expect(res.steps[1].latexExpression, contains(r'x = \pm\sqrt{9}'));
-      expect(res.steps[1].latexExpression, contains('x_1 = 3'));
+      expect(res.steps[1].latexExpression, contains('x_{1} = 3'));
     });
 
     test('Incompleta Pura sin soluciones reales: x² + 4 = 0 => x² = -4 ∉ ℝ', () {
@@ -168,7 +168,7 @@ void main() {
     test('Incompleta Mixta (c = 0): x² - 4x = 0 => x(x - 4) = 0 => x1 = 0, x2 = 4', () {
       final res = QuadraticEquationSolver.solve(a: 1, b: -4, c: 0);
 
-      expect(res.exactResultLatex, equals(r'x_1 = 0, \; x_2 = 4'));
+      expect(res.exactResultLatex, equals(r'x_{1} = 0, \; x_{2} = 4'));
       expect(res.steps[0].shortTitle.toLowerCase(), contains('factor común'));
       expect(res.steps[0].pedagogicalNote, contains('sin fórmula general'));
       expect(res.steps[1].shortTitle, contains('factores igualados a cero'));
@@ -177,7 +177,7 @@ void main() {
     test('Completa con 2 soluciones reales: x² - 5x + 6 = 0 => x1 = 3, x2 = 2', () {
       final res = QuadraticEquationSolver.solve(a: 1, b: -5, c: 6);
 
-      expect(res.exactResultLatex, equals(r'x_1 = 3, \; x_2 = 2'));
+      expect(res.exactResultLatex, equals(r'x_{1} = 3, \; x_{2} = 2'));
       expect(res.steps.length, equals(4));
 
       // Paso 1: Coeficientes a, b, c identificados
@@ -192,9 +192,9 @@ void main() {
       expect(res.steps[2].latexExpression, contains(r'\Delta > 0'));
 
       // Paso 4: Dos ramas de soluciones
-      expect(res.steps[3].latexExpression, contains('x_1 ='));
+      expect(res.steps[3].latexExpression, contains('x_{1} ='));
       expect(res.steps[3].latexExpression, contains('= 3'));
-      expect(res.steps[3].latexExpression, contains('x_2 ='));
+      expect(res.steps[3].latexExpression, contains('x_{2} ='));
       expect(res.steps[3].latexExpression, contains('= 2'));
     });
 

@@ -82,6 +82,16 @@ void main() {
       '³√(27)',
       'root(4, 16)',
       '5 / 0',
+      '( + )^2',
+      '( - )^2',
+      '( + )( - )',
+      'sin^2(30)',
+      'sin(30)^2',
+      'sin(cos(x))',
+      'sin(arcsin(0.5))',
+      '√(sin(x))',
+      '2^(2+x)',
+      '2^(2*(x+1))',
     ];
     for (final expr in rawExprs) {
       verifyLatex('rawToLiveLatex($expr)', ExpressionParser.rawToLiveLatex(expr));

@@ -396,6 +396,83 @@ class ExpressionParser {
         }
       }
     }
+
+    // Plantillas de identidades notables: (a + b)^2, (a - b)^2, (a + b)(a - b)
+    final parenMatch = RegExp(r'\(([^)]*)\)').firstMatch(raw);
+    if (parenMatch != null) {
+      final insideStart = parenMatch.start + 1;
+      final insideEnd = parenMatch.end - 1;
+      if (safe >= insideStart && safe <= insideEnd) {
+        final inside = raw.substring(insideStart, insideEnd);
+        final opMatch = RegExp(r'\s*([+\-])\s*').firstMatch(inside);
+        if (opMatch != null) {
+          final sepStart = insideStart + opMatch.start;
+          final sepEnd = insideStart + opMatch.end;
+          if (safe >= insideStart && safe <= sepEnd && safe >= sepStart) {
+            return (raw, sepEnd);
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /// Gestiona la pulsación de `▶` (flecha derecha) al final del contenido interior
+  /// de un bloque estructurado abierto (raíz `√(`, cúbica `³√(`, exponente `^(`,
+  /// o funciones `sin(`, `cos(`, etc.), cerrando el bloque con `)` y situando el cursor
+  /// inmediatamente fuera a su derecha para seguir operando sin necesidad de teclear `)`.
+  static (String raw, int cursor)? handleStructuredBlockRightArrow(
+    String raw,
+    int cursorPos,
+  ) {
+    if (raw.isEmpty) return null;
+    final safe = snapCursorOutsideKeywords(raw, cursorPos).clamp(0, raw.length);
+    if (safe <= 0) return null;
+
+    // Si ya hay un ')' justo delante del cursor, stepCursorRight ya avanzará sobre él.
+    if (safe < raw.length && raw[safe] == ')') {
+      return null;
+    }
+
+    // Buscar el paréntesis abierto más interno no cerrado hasta 'safe'
+    int depth = 0;
+    int? innermostOpenParen;
+    for (int i = safe - 1; i >= 0; i--) {
+      if (raw[i] == ')') {
+        depth++;
+      } else if (raw[i] == '(') {
+        if (depth > 0) {
+          depth--;
+        } else {
+          innermostOpenParen = i;
+          break;
+        }
+      }
+    }
+
+    if (innermostOpenParen == null) return null;
+
+    // Verificar si ese '(' ya tiene un ')' de cierre después de 'safe'
+    int forwardDepth = 1;
+    bool hasClosingParen = false;
+    for (int j = innermostOpenParen + 1; j < raw.length; j++) {
+      if (raw[j] == '(') forwardDepth++;
+      if (raw[j] == ')') {
+        forwardDepth--;
+        if (forwardDepth == 0) {
+          hasClosingParen = true;
+          break;
+        }
+      }
+    }
+
+    // Si no está cerrado y el cursor está al final del bloque abierto
+    if (!hasClosingParen && safe > innermostOpenParen) {
+      final updated = '${raw.substring(0, safe)})${raw.substring(safe)}';
+      return (updated, safe + 1);
+    }
+
     return null;
   }
 
@@ -478,23 +555,53 @@ class ExpressionParser {
       (m) => '\\text{M.C.D.}\\left(${_formatMcmMcdLiveArgs(m[1]!)}\\right)',
     );
 
+    // 0c. Placeholders tenues para huecos a y b en binomios e identidades notables ( + ), ( - )
+    out = out.replaceAllMapped(
+      RegExp(r'\(\s*(' + c + r'?)\s*([+\-])\s*(' + c + r'?)\s*\)'),
+      (m) {
+        final slotA = m[1]!;
+        final sign = m[2]!;
+        final slotB = m[3]!;
+        final formattedA = slotA == c
+            ? _cursorBoxLatex
+            : (slotA.isEmpty ? r'{\color{gray} a}' : slotA);
+        final formattedB = slotB == c
+            ? _cursorBoxLatex
+            : (slotB.isEmpty ? r'{\color{gray} b}' : slotB);
+        return '($formattedA $sign $formattedB)';
+      },
+    );
+    out = out.replaceAllMapped(
+      RegExp(r'\(([^()+\-]+)\s*([+\-])\s*(' + c + r'?)\s*\)'),
+      (m) {
+        final leftExpr = m[1]!;
+        final sign = m[2]!;
+        final slotB = m[3]!;
+        final formattedB = slotB == c
+            ? _cursorBoxLatex
+            : (slotB.isEmpty ? r'{\color{gray} b}' : slotB);
+        return '($leftExpr $sign $formattedB)';
+      },
+    );
+    out = out.replaceAllMapped(
+      RegExp(r'\(\s*(' + c + r'?)\s*([+\-])\s*([^()+\-]+)\)'),
+      (m) {
+        final slotA = m[1]!;
+        final sign = m[2]!;
+        final rightExpr = m[3]!;
+        final formattedA = slotA == c
+            ? _cursorBoxLatex
+            : (slotA.isEmpty ? r'{\color{gray} a}' : slotA);
+        return '($formattedA $sign $rightExpr)';
+      },
+    );
+
     // 3. Potencias con paréntesis libre ^(expr), exponente negativo ^-n y ^n
-    out = out.replaceAllMapped(
-      RegExp(r'\^\(([^)]+)\)'),
-      (m) {
-        final inner = m[1]!;
-        if (inner == c) return '^{$_cursorBoxLatex}';
-        return '^{$inner}';
-      },
-    );
-    out = out.replaceAllMapped(
-      RegExp(r'\^\(([^)]*)'),
-      (m) {
-        final inner = m[1]!;
-        if (inner == c) return '^{$_cursorBoxLatex}';
-        return '^{$inner\\square}';
-      },
-    );
+    out = _replaceBalancedPrefix(out, '^(', (inner, isClosed) {
+      if (inner == c) return '^{$_cursorBoxLatex}';
+      if (!isClosed) return '^{$inner\\square}';
+      return '^{$inner}';
+    });
     out = out.replaceAllMapped(
       RegExp('\\^-($atomPat)'),
       (m) => '^{-${m[1]}}',
@@ -536,22 +643,11 @@ class ExpressionParser {
     );
 
     // 5b. Raíces cúbicas (³√)
-    out = out.replaceAllMapped(
-      RegExp(r'³√\(([^)]+)\)'),
-      (m) {
-        final inner = m[1]!;
-        if (inner == c) return '\\sqrt[3]{$_cursorBoxLatex}';
-        return '\\sqrt[3]{$inner}';
-      },
-    );
-    out = out.replaceAllMapped(
-      RegExp(r'³√\(([^)]*)'),
-      (m) {
-        final inner = m[1]!;
-        if (inner == c) return '\\sqrt[3]{$_cursorBoxLatex}';
-        return '\\sqrt[3]{$inner\\square}';
-      },
-    );
+    out = _replaceBalancedPrefix(out, '³√(', (inner, isClosed) {
+      if (inner == c) return '\\sqrt[3]{$_cursorBoxLatex}';
+      if (!isClosed) return '\\sqrt[3]{$inner\\square}';
+      return '\\sqrt[3]{$inner}';
+    });
     out = out.replaceAllMapped(
       RegExp('³√($numPat)'),
       (m) => '\\sqrt[3]{${m[1]}}',
@@ -560,22 +656,11 @@ class ExpressionParser {
     out = out.replaceAll(RegExp(r'³√(?![\\{])'), r'\sqrt[3]{\square}');
 
     // 5c. Raíces cuadradas
-    out = out.replaceAllMapped(
-      RegExp(r'√\(([^)]+)\)'),
-      (m) {
-        final inner = m[1]!;
-        if (inner == c) return '\\sqrt{$_cursorBoxLatex}';
-        return '\\sqrt{$inner}';
-      },
-    );
-    out = out.replaceAllMapped(
-      RegExp(r'√\(([^)]*)'),
-      (m) {
-        final inner = m[1]!;
-        if (inner == c) return '\\sqrt{$_cursorBoxLatex}';
-        return '\\sqrt{$inner\\square}';
-      },
-    );
+    out = _replaceBalancedPrefix(out, '√(', (inner, isClosed) {
+      if (inner == c) return '\\sqrt{$_cursorBoxLatex}';
+      if (!isClosed) return '\\sqrt{$inner\\square}';
+      return '\\sqrt{$inner}';
+    });
     out = out.replaceAllMapped(
       RegExp('√($numPat)'),
       (m) => '\\sqrt{${m[1]}}',
@@ -952,7 +1037,86 @@ class ExpressionParser {
     return depth == 0;
   }
 
+  static String _replaceBalancedPrefix(
+    String src,
+    String prefix,
+    String Function(String inner, bool isClosed) replacer,
+  ) {
+    String out = src;
+    int searchFrom = 0;
+    while (true) {
+      final idx = out.indexOf(prefix, searchFrom);
+      if (idx == -1) break;
+      final openParen = idx + prefix.length - 1;
+      int depth = 1;
+      int? closeIdx;
+      for (int i = openParen + 1; i < out.length; i++) {
+        if (out[i] == '(') depth++;
+        if (out[i] == ')') {
+          depth--;
+          if (depth == 0) {
+            closeIdx = i;
+            break;
+          }
+        }
+      }
+      if (closeIdx != null) {
+        final inner = out.substring(openParen + 1, closeIdx);
+        final replacement = replacer(inner, true);
+        out = out.substring(0, idx) + replacement + out.substring(closeIdx + 1);
+        searchFrom = idx + replacement.length;
+      } else {
+        final inner = out.substring(openParen + 1);
+        final replacement = replacer(inner, false);
+        out = out.substring(0, idx) + replacement;
+        break;
+      }
+    }
+    return out;
+  }
+
   static String _formatFunctionCalls(String src, String cursorSentinel) {
+    // Soporte para potencias de funciones trigonométricas directas (ej: sin^2(x) o sin^(2)(x))
+    final trigPowerPattern = RegExp(
+      r'\b(sin|cos|tan)\^([0-9]+|\([0-9]+\))\(',
+      caseSensitive: false,
+    );
+    String out = src;
+    int pSearch = 0;
+    while (true) {
+      final m = trigPowerPattern.firstMatch(out.substring(pSearch));
+      if (m == null) break;
+      final fullMatch = m.group(0)!;
+      final matchStart = pSearch + m.start;
+      final fn = m.group(1)!.toLowerCase();
+      final exp = m.group(2)!.replaceAll('(', '').replaceAll(')', '');
+      final openIdx = matchStart + fullMatch.length - 1;
+      int depth = 1;
+      int? closeIdx;
+      for (int i = openIdx + 1; i < out.length; i++) {
+        if (out[i] == '(') depth++;
+        if (out[i] == ')') {
+          depth--;
+          if (depth == 0) {
+            closeIdx = i;
+            break;
+          }
+        }
+      }
+      final inner = closeIdx != null
+          ? out.substring(openIdx + 1, closeIdx)
+          : out.substring(openIdx + 1);
+      final recInner = _formatFunctionCalls(inner, cursorSentinel);
+      final formattedInner = recInner == cursorSentinel
+          ? _cursorBoxLatex
+          : (recInner.isEmpty ? r'\square' : (closeIdx == null ? '$recInner\\square' : recInner));
+      final replacement = '\\$fn^{$exp}\\left($formattedInner\\right)';
+      final endIdx = closeIdx != null ? closeIdx + 1 : out.length;
+      out = out.substring(0, matchStart) + replacement + out.substring(endIdx);
+      pSearch = matchStart + replacement.length;
+      if (closeIdx == null) break;
+    }
+
     final mapping = <String, String>{
       'sin⁻¹(': r'\sin^{-1}',
       'cos⁻¹(': r'\cos^{-1}',
@@ -970,7 +1134,6 @@ class ExpressionParser {
       'ln(': r'\ln',
     };
 
-    String out = src;
     for (final entry in mapping.entries) {
       final token = entry.key;
       final latexFn = entry.value;
@@ -993,17 +1156,19 @@ class ExpressionParser {
         }
         if (closeIdx != null) {
           final inner = out.substring(openIdx + 1, closeIdx);
-          final formattedInner = inner == cursorSentinel
+          final recInner = _formatFunctionCalls(inner, cursorSentinel);
+          final formattedInner = recInner == cursorSentinel
               ? _cursorBoxLatex
-              : (inner.isEmpty ? r'\square' : inner);
+              : (recInner.isEmpty ? r'\square' : recInner);
           final replacement = '$latexFn\\left($formattedInner\\right)';
           out = out.substring(0, idx) + replacement + out.substring(closeIdx + 1);
           searchFrom = idx + replacement.length;
         } else {
           final inner = out.substring(openIdx + 1);
-          final formattedInner = inner == cursorSentinel
+          final recInner = _formatFunctionCalls(inner, cursorSentinel);
+          final formattedInner = recInner == cursorSentinel
               ? _cursorBoxLatex
-              : (inner.isEmpty ? r'\square' : '$inner\\square');
+              : (recInner.isEmpty ? r'\square' : '$recInner\\square');
           final replacement = '$latexFn\\left($formattedInner\\right)';
           out = out.substring(0, idx) + replacement;
           break;
@@ -1364,6 +1529,20 @@ class ExpressionParser {
     final trigFn = _matchTrigFunction(token);
     if (trigFn != null) {
       _consume();
+      if (_current == '^') {
+        _consume(); // '^'
+        int expVal = 2;
+        if (_current == '(') {
+          _consume();
+          final expNode = _parseAddSub();
+          expVal = _evalSimpleInt(expNode) ?? 2;
+          if (_current == ')') _consume();
+        } else if (_current != null && int.tryParse(_current!) != null) {
+          expVal = int.parse(_consume());
+        }
+        final arg = _parsePrimary();
+        return PowerNode(TrigNode(trigFn, arg), expVal);
+      }
       if (_current == '(') {
         _consume();
         final arg = _parseAddSub();

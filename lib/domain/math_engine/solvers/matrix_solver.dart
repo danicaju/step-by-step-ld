@@ -1,15 +1,18 @@
 import '../core/rational.dart';
 import '../models/step_resolution.dart';
 
-/// Operaciones matriciales disponibles en el Modo 10 (Bachillerato / EBAU).
+/// Operaciones matriciales disponibles en el Modo 8 (Bachillerato / EBAU).
 enum MatrixOperation {
-  determinant('|A| (Sarrus)'),
+  determinant('|A| (Det)'),
   inverse('A⁻¹ (Inversa)'),
   adjoint('Adj(A)'),
+  transpose('Aᵀ (Transpuesta)'),
+  scalarMultiply('k·A'),
+  gauss('Gauss / Rango'),
+  cramer('Cramer (AX=B)'),
   multiply('A·B'),
   add('A+B'),
-  subtract('A-B'),
-  scalarMultiply('k·A');
+  subtract('A-B');
 
   final String shortLabel;
   const MatrixOperation(this.shortLabel);
@@ -17,7 +20,8 @@ enum MatrixOperation {
   bool get needsMatrixB =>
       this == MatrixOperation.multiply ||
       this == MatrixOperation.add ||
-      this == MatrixOperation.subtract;
+      this == MatrixOperation.subtract ||
+      this == MatrixOperation.cramer;
 }
 
 /// Matriz inmutable de números racionales exactos ([Rational]) para dimensiones 2x2 y 3x3.
@@ -84,7 +88,7 @@ class RationalMatrix {
     return RationalMatrix.fromRationals(result);
   }
 
-  /// Calcula el determinante exacto para matrices cuadradas 1x1, 2x2 o 3x3.
+  /// Calcula el determinante exacto para matrices cuadradas (hasta 4x4).
   Rational determinantValue() {
     if (!isSquare) {
       throw const FormatException('El determinante solo existe para matrices cuadradas.');
@@ -104,13 +108,26 @@ class RationalMatrix {
       final neg3 = _rows[0][1] * _rows[1][0] * _rows[2][2];
       return (pos1 + pos2 + pos3) - (neg1 + neg2 + neg3);
     }
+    if (rowCount == 4) {
+      // Desarrollo de Laplace por la primera fila
+      var det = Rational(0);
+      for (int c = 0; c < 4; c++) {
+        final coeff = _rows[0][c];
+        if (coeff.isZero) continue;
+        final minor = minorSubmatrix(0, c);
+        final minorDet = minor.determinantValue();
+        final sign = (c % 2 == 0) ? Rational(1) : Rational(-1);
+        det = det + (sign * coeff * minorDet);
+      }
+      return det;
+    }
     throw FormatException('Dimensión $rowCount×$colCount no soportada para determinante directo.');
   }
 
   /// Calcula la matriz de adjuntos Adj(A) aplicando A_ij = (-1)^(i+j) * M_ij.
   RationalMatrix cofactorMatrix() {
-    if (!isSquare || (rowCount != 2 && rowCount != 3)) {
-      throw const FormatException('La matriz adjunta requiere matriz cuadrada 2x2 o 3x3.');
+    if (!isSquare || (rowCount != 2 && rowCount != 3 && rowCount != 4)) {
+      throw const FormatException('La matriz adjunta requiere matriz cuadrada 2x2, 3x3 o 4x4.');
     }
     if (rowCount == 2) {
       return RationalMatrix.fromRationals([
@@ -118,14 +135,31 @@ class RationalMatrix {
         [-_rows[0][1], _rows[0][0]],
       ]);
     }
-    final result = List.generate(3, (r) {
-      return List.generate(3, (c) {
+    final dim = rowCount;
+    final result = List.generate(dim, (r) {
+      return List.generate(dim, (c) {
         final minor = minorSubmatrix(r, c).determinantValue();
         final sign = ((r + c) % 2 == 0) ? 1 : -1;
         return sign == 1 ? minor : -minor;
       });
     });
     return RationalMatrix.fromRationals(result);
+  }
+
+  /// Reemplaza una columna por un vector dado (utilizado en la Regla de Cramer).
+  RationalMatrix replaceColumn(int colIdx, List<Rational> newCol) {
+    if (newCol.length != rowCount) {
+      throw const FormatException('El vector columna debe tener la misma longitud que las filas de A.');
+    }
+    final newRows = <List<Rational>>[];
+    for (int r = 0; r < rowCount; r++) {
+      final row = <Rational>[];
+      for (int c = 0; c < colCount; c++) {
+        row.add(c == colIdx ? newCol[r] : _rows[r][c]);
+      }
+      newRows.add(row);
+    }
+    return RationalMatrix.fromRationals(newRows);
   }
 
   /// Calcula la matriz inversa A⁻¹ = (1 / |A|) · (Adj(A))^t.
@@ -243,6 +277,15 @@ class MatrixSolver {
         return inverse(a);
       case MatrixOperation.adjoint:
         return adjoint(a);
+      case MatrixOperation.transpose:
+        return transpose(a);
+      case MatrixOperation.gauss:
+        return gauss(a, b);
+      case MatrixOperation.cramer:
+        if (b == null) {
+          throw const FormatException('Se necesita el vector B para la Regla de Cramer.');
+        }
+        return cramer(a, b);
       case MatrixOperation.multiply:
         if (b == null) {
           throw const FormatException('Se necesita la matriz B para calcular A·B.');
@@ -345,7 +388,7 @@ class MatrixSolver {
     );
   }
 
-  /// Producto por un escalar `k · A`.
+  /// Producto por un escalar `k · A` con visualización en la LCD en 3 pasos exactos.
   static StepByStepResolution scalarMultiply(Rational k, RationalMatrix a) {
     final result = a.scale(k);
     final colSpec = List.filled(a.colCount, 'c').join();
@@ -363,18 +406,25 @@ class MatrixSolver {
       steps: [
         MathStep(
           index: 1,
-          shortTitle: 'Multiplicar todos los elementos por $kLatex',
-          latexExpression:
-              '$kLatex \\cdot A = \\left(\\begin{array}{$colSpec}\n$multRows\n\\end{array}\\right)',
+          shortTitle: 'Escalar k delante de la matriz A',
+          latexExpression: '$kLatex \\cdot ${a.toLatex()}',
           pedagogicalNote:
-              'Para multiplicar una matriz por un escalar k, multiplicamos CADA uno de los elementos de A por $kLatex.',
+              'Planteamos el producto del escalar k = $kLatex multiplicando delante de toda la matriz A.',
         ),
         MathStep(
           index: 2,
-          shortTitle: 'Resultado simplificado',
-          latexExpression: '$kLatex \\cdot A = ${result.toLatex()}',
+          shortTitle: 'Multiplicar elemento por elemento',
+          latexExpression:
+              '\\left(\\begin{array}{$colSpec}\n$multRows\n\\end{array}\\right)',
           pedagogicalNote:
-              'Simplificamos cada producto a su fracción irreducible.',
+              'Multiplicamos el escalar $kLatex por cada uno de los elementos individuales dentro de la matriz.',
+        ),
+        MathStep(
+          index: 3,
+          shortTitle: 'Matriz resultado simplificada',
+          latexExpression: result.toLatex(),
+          pedagogicalNote:
+              'Operamos cada celda y reducimos las fracciones resultantes a irreducibles.',
         ),
       ],
       exactResultLatex: result.toLatex(),
@@ -447,10 +497,10 @@ class MatrixSolver {
     );
   }
 
-  /// Determinante `|A|` (2x2 directo o 3x3 por Regla de Sarrus en 3 pasos).
+  /// Determinante `|A|` (2x2 directo, 3x3 por Regla de Sarrus o 4x4 por Laplace).
   static StepByStepResolution determinant(RationalMatrix a) {
-    if (!a.isSquare || (a.rowCount != 2 && a.rowCount != 3)) {
-      throw const FormatException('El determinante guiado admite matrices 2x2 o 3x3.');
+    if (!a.isSquare || a.rowCount < 2 || a.rowCount > 4) {
+      throw const FormatException('El determinante guiado admite matrices 2x2, 3x3 o 4x4.');
     }
 
     final det = a.determinantValue();
@@ -492,63 +542,116 @@ class MatrixSolver {
       );
     }
 
-    // 3x3 -> Regla de Sarrus en 3 pasos exactos
-    final pos1 = a.at(0, 0) * a.at(1, 1) * a.at(2, 2);
-    final pos2 = a.at(0, 1) * a.at(1, 2) * a.at(2, 0);
-    final pos3 = a.at(0, 2) * a.at(1, 0) * a.at(2, 1);
-    final posSum = pos1 + pos2 + pos3;
+    if (a.rowCount == 3) {
+      // 3x3 -> Regla de Sarrus en 3 pasos exactos
+      final pos1 = a.at(0, 0) * a.at(1, 1) * a.at(2, 2);
+      final pos2 = a.at(0, 1) * a.at(1, 2) * a.at(2, 0);
+      final pos3 = a.at(0, 2) * a.at(1, 0) * a.at(2, 1);
+      final posSum = pos1 + pos2 + pos3;
 
-    final neg1 = a.at(0, 2) * a.at(1, 1) * a.at(2, 0);
-    final neg2 = a.at(0, 0) * a.at(1, 2) * a.at(2, 1);
-    final neg3 = a.at(0, 1) * a.at(1, 0) * a.at(2, 2);
-    final negSum = neg1 + neg2 + neg3;
+      final neg1 = a.at(0, 2) * a.at(1, 1) * a.at(2, 0);
+      final neg2 = a.at(0, 0) * a.at(1, 2) * a.at(2, 1);
+      final neg3 = a.at(0, 1) * a.at(1, 0) * a.at(2, 2);
+      final negSum = neg1 + neg2 + neg3;
 
-    final posProductsExpr =
-        '${_tripleProduct(a.at(0, 0), a.at(1, 1), a.at(2, 2))} + '
-        '${_tripleProduct(a.at(0, 1), a.at(1, 2), a.at(2, 0))} + '
-        '${_tripleProduct(a.at(0, 2), a.at(1, 0), a.at(2, 1))}';
+      final posProductsExpr =
+          '${_tripleProduct(a.at(0, 0), a.at(1, 1), a.at(2, 2))} + '
+          '${_tripleProduct(a.at(0, 1), a.at(1, 2), a.at(2, 0))} + '
+          '${_tripleProduct(a.at(0, 2), a.at(1, 0), a.at(2, 1))}';
 
-    final negProductsExpr =
-        '${_tripleProduct(a.at(0, 2), a.at(1, 1), a.at(2, 0))} + '
-        '${_tripleProduct(a.at(0, 0), a.at(1, 2), a.at(2, 1))} + '
-        '${_tripleProduct(a.at(0, 1), a.at(1, 0), a.at(2, 2))}';
+      final negProductsExpr =
+          '${_tripleProduct(a.at(0, 2), a.at(1, 1), a.at(2, 0))} + '
+          '${_tripleProduct(a.at(0, 0), a.at(1, 2), a.at(2, 1))} + '
+          '${_tripleProduct(a.at(0, 1), a.at(1, 0), a.at(2, 2))}';
 
-    final step1Latex =
-        'S_+ = \\left($posProductsExpr\\right) = ${_formatSignedSumTerms([pos1, pos2, pos3])} = ${posSum.toLatex()}';
+      final step1Latex =
+          'S_+ = \\left($posProductsExpr\\right) = ${_formatSignedSumTerms([pos1, pos2, pos3])} = ${posSum.toLatex()}';
 
-    final negBlockVal = -negSum;
-    final step2Latex =
-        '-S_- = -\\left($negProductsExpr\\right) = -\\left(${_formatSignedSumTerms([neg1, neg2, neg3])}\\right) = -\\left(${negSum.toLatex()}\\right) = ${negBlockVal.toLatex()}';
+      final negBlockVal = -negSum;
+      final step2Latex =
+          '-S_- = -\\left($negProductsExpr\\right) = -\\left(${_formatSignedSumTerms([neg1, neg2, neg3])}\\right) = -\\left(${negSum.toLatex()}\\right) = ${negBlockVal.toLatex()}';
+
+      final step3Latex =
+          '\\left|A\\right| = ${posSum.toLatex()} ${_formatSignedOperand(-negSum)} = $detLatex \\implies ${det.isZero ? r'\text{Singular (}\nexists A^{-1}\text{)}' : r'\text{Invertible, rg}(A)=3'}';
+
+      return StepByStepResolution(
+        originalInputLatex: a.toDeterminantLatex(),
+        steps: [
+          MathStep(
+            index: 1,
+            shortTitle: 'Regla de Sarrus: 3 diagonales positivas',
+            latexExpression: step1Latex,
+            pedagogicalNote:
+                'Sumamos el producto de la diagonal principal y sus dos triángulos paralelos con sentido positivo: (a₁₁·a₂₂·a₃₃ + a₁₂·a₂₃·a₃₁ + a₁₃·a₂₁·a₃₂).',
+          ),
+          MathStep(
+            index: 2,
+            shortTitle: 'Regla de Sarrus: 3 diagonales negativas',
+            latexExpression: step2Latex,
+            pedagogicalNote:
+                'Calculamos los tres productos de las diagonales secundarias y cambiamos el signo del bloque completo precedido de menos.',
+            warningTrick:
+                'Todo el paréntesis de las diagonales secundarias lleva signo menos delante: cambia el signo de la suma interior.',
+          ),
+          MathStep(
+            index: 3,
+            shortTitle: 'Suma final y clasificación (rango / inversa)',
+            latexExpression: step3Latex,
+            pedagogicalNote: det.isZero
+                ? 'Sumamos ambos bloques: |A| = 0. La matriz es singular, su rango es menor que 3 y NO existe inversa A⁻¹.'
+                : 'Sumamos ambos bloques: |A| = $detLatex ≠ 0. La matriz es regular/invertible y tiene rango máximo 3.',
+          ),
+        ],
+        exactResultLatex: '\\left|A\\right| = $detLatex',
+        decimalApproxLatex: det.denominator == 1 ? '' : '\\left|A\\right| \\approx ${det.toDecimalLatex()}',
+      );
+    }
+
+    // 4x4 -> Desarrollo de Laplace por la primera fila
+    final subDets = <Rational>[];
+    final laplaceTerms = <String>[];
+    for (int c = 0; c < 4; c++) {
+      final coeff = a.at(0, c);
+      final minor = a.minorSubmatrix(0, c);
+      final minorDet = minor.determinantValue();
+      subDets.add(minorDet);
+      final sign = (c % 2 == 0) ? '+' : '-';
+      laplaceTerms.add('$sign ${_wrapNegative(coeff)} \\cdot |M_{1${c + 1}}|');
+    }
+
+    final step1Latex = '\\left|A\\right| = ${laplaceTerms.join(" ")}';
+    final step2Latex = [
+      for (int c = 0; c < 4; c++)
+        '|M_{1${c + 1}}| = ${subDets[c].toLatex()}',
+    ].join(', \\quad ');
 
     final step3Latex =
-        '\\left|A\\right| = ${posSum.toLatex()} ${_formatSignedOperand(-negSum)} = $detLatex \\implies ${det.isZero ? r'\text{Singular (}\nexists A^{-1}\text{)}' : r'\text{Invertible, rg}(A)=3'}';
+        '\\left|A\\right| = $detLatex \\implies ${det.isZero ? r'\text{Singular (}\nexists A^{-1}\text{)}' : r'\text{Invertible, rg}(A)=4'}';
 
     return StepByStepResolution(
       originalInputLatex: a.toDeterminantLatex(),
       steps: [
         MathStep(
           index: 1,
-          shortTitle: 'Regla de Sarrus: 3 diagonales positivas',
+          shortTitle: 'Desarrollo de Laplace por la fila 1',
           latexExpression: step1Latex,
           pedagogicalNote:
-              'Sumamos el producto de la diagonal principal y sus dos triángulos paralelos con sentido positivo: (a₁₁·a₂₂·a₃₃ + a₁₂·a₂₃·a₃₁ + a₁₃·a₂₁·a₃₂).',
+              'Desarrollamos el determinante 4x4 mediante el teorema de Laplace a lo largo de la primera fila, alternando los signos (+ - + -).',
         ),
         MathStep(
           index: 2,
-          shortTitle: 'Regla de Sarrus: 3 diagonales negativas',
+          shortTitle: 'Determinantes de los menores complementarios 3x3',
           latexExpression: step2Latex,
           pedagogicalNote:
-              'Calculamos los tres productos de las diagonales secundarias y cambiamos el signo del bloque completo precedido de menos.',
-          warningTrick:
-              'Todo el paréntesis de las diagonales secundarias lleva signo menos delante: cambia el signo de la suma interior.',
+              'Calculamos cada uno de los cuatro menores complementarios de orden 3 aplicando la Regla de Sarrus.',
         ),
         MathStep(
           index: 3,
-          shortTitle: 'Suma final y clasificación (rango / inversa)',
+          shortTitle: 'Combinación final y clasificación',
           latexExpression: step3Latex,
           pedagogicalNote: det.isZero
-              ? 'Sumamos ambos bloques: |A| = 0. La matriz es singular, su rango es menor que 3 y NO existe inversa A⁻¹.'
-              : 'Sumamos ambos bloques: |A| = $detLatex ≠ 0. La matriz es regular/invertible y tiene rango máximo 3.',
+              ? 'La suma ponderada da |A| = 0. La matriz es singular, su rango es menor que 4 y no admite inversa.'
+              : 'La suma ponderada da |A| = $detLatex ≠ 0. La matriz es regular, su rango es 4 y admite inversa.',
         ),
       ],
       exactResultLatex: '\\left|A\\right| = $detLatex',
@@ -558,8 +661,8 @@ class MatrixSolver {
 
   /// Matriz Adjunta `Adj(A)` calculada mediante menores complementarios y tablero de signos.
   static StepByStepResolution adjoint(RationalMatrix a) {
-    if (!a.isSquare || (a.rowCount != 2 && a.rowCount != 3)) {
-      throw const FormatException('La matriz adjunta solo está disponible para 2x2 o 3x3.');
+    if (!a.isSquare || a.rowCount < 2 || a.rowCount > 4) {
+      throw const FormatException('La matriz adjunta está disponible para 2x2, 3x3 o 4x4.');
     }
     final adj = a.cofactorMatrix();
 
@@ -590,11 +693,52 @@ class MatrixSolver {
       );
     }
 
-    // 3x3: Paso 1 signo board + menores 2x2 detallados, Paso 2 Matriz Adj(A) final
+    if (a.rowCount == 3) {
+      final minorLines = <String>[];
+      for (int r = 0; r < 3; r++) {
+        final lineTerms = <String>[];
+        for (int c = 0; c < 3; c++) {
+          final subDet = a.minorSubmatrix(r, c).determinantValue();
+          final isOdd = (r + c) % 2 == 1;
+          final signStr = isOdd ? '-' : '+';
+          lineTerms.add(
+            'A_{${r + 1}${c + 1}} = $signStr(${subDet.toLatex()}) = ${adj.at(r, c).toLatex()}',
+          );
+        }
+        minorLines.add(lineTerms.join(', \\; '));
+      }
+
+      return StepByStepResolution(
+        originalInputLatex: '\\text{Adj}${a.toLatex()}',
+        steps: [
+          MathStep(
+            index: 1,
+            shortTitle: 'Menores complementarios y tablero de signos',
+            latexExpression:
+                '\\left(\\begin{array}{ccc} + & - & + \\\\ - & + & - \\\\ + & - & + \\end{array}\\right) \\implies \\begin{aligned} ${minorLines.join(' \\\\ ')} \\end{aligned}',
+            pedagogicalNote:
+                'Calculamos los 9 menores Mᵢⱼ (eliminando la fila i y columna j) y aplicamos el tablero de signos (-1)^(i+j).',
+            warningTrick:
+                'Cambia siempre el signo en las 4 posiciones impares en forma de rombo: (1,2), (2,1), (2,3) y (3,2).',
+          ),
+          MathStep(
+            index: 2,
+            shortTitle: 'Matriz de Adjuntos Adj(A)',
+            latexExpression: '\\text{Adj}(A) = ${adj.toLatex()}',
+            pedagogicalNote:
+                'Colocamos cada cofactor Aᵢⱼ en su fila i y columna j correspondiente.',
+          ),
+        ],
+        exactResultLatex: adj.toLatex(),
+        decimalApproxLatex: adj.toDecimalLatex(),
+      );
+    }
+
+    // 4x4
     final minorLines = <String>[];
-    for (int r = 0; r < 3; r++) {
+    for (int r = 0; r < 4; r++) {
       final lineTerms = <String>[];
-      for (int c = 0; c < 3; c++) {
+      for (int c = 0; c < 4; c++) {
         final subDet = a.minorSubmatrix(r, c).determinantValue();
         final isOdd = (r + c) % 2 == 1;
         final signStr = isOdd ? '-' : '+';
@@ -610,20 +754,18 @@ class MatrixSolver {
       steps: [
         MathStep(
           index: 1,
-          shortTitle: 'Menores complementarios y tablero de signos',
+          shortTitle: 'Menores complementarios 3x3 y tablero de signos 4x4',
           latexExpression:
-              '\\left(\\begin{array}{ccc} + & - & + \\\\ - & + & - \\\\ + & - & + \\end{array}\\right) \\implies \\begin{aligned} ${minorLines.join(' \\\\ ')} \\end{aligned}',
+              '\\begin{aligned} ${minorLines.take(2).join(" \\\\ ")} \\\\ \\dots \\end{aligned}',
           pedagogicalNote:
-              'Calculamos los 9 menores Mᵢⱼ (eliminando la fila i y columna j) y aplicamos el tablero de signos (-1)^(i+j).',
-          warningTrick:
-              'Cambia siempre el signo en las 4 posiciones impares en forma de rombo: (1,2), (2,1), (2,3) y (3,2).',
+              'Calculamos los 16 menores Mᵢⱼ de orden 3 y aplicamos el tablero de signos alternos (-1)^(i+j).',
         ),
         MathStep(
           index: 2,
           shortTitle: 'Matriz de Adjuntos Adj(A)',
           latexExpression: '\\text{Adj}(A) = ${adj.toLatex()}',
           pedagogicalNote:
-              'Colocamos cada cofactor Aᵢⱼ en su fila i y columna j correspondiente.',
+              'Construimos la matriz de adjuntos completa de dimension 4x4.',
         ),
       ],
       exactResultLatex: adj.toLatex(),
@@ -633,8 +775,8 @@ class MatrixSolver {
 
   /// Matriz Inversa `A⁻¹ = (1/|A|) · (Adj(A))^t` paso a paso estilo PAU/EBAU.
   static StepByStepResolution inverse(RationalMatrix a) {
-    if (!a.isSquare || (a.rowCount != 2 && a.rowCount != 3)) {
-      throw const FormatException('La inversa solo está disponible para matrices 2x2 o 3x3.');
+    if (!a.isSquare || a.rowCount < 2 || a.rowCount > 4) {
+      throw const FormatException('La inversa está disponible para matrices 2x2, 3x3 o 4x4.');
     }
 
     final detRes = determinant(a);
@@ -642,7 +784,7 @@ class MatrixSolver {
 
     // Paso 1: Comprobar determinante
     if (det.isZero) {
-      final step1Expr = a.rowCount == 3
+      final step1Expr = a.rowCount >= 3
           ? detRes.steps[2].latexExpression
           : '\\left|A\\right| = 0 \\implies \\nexists A^{-1}';
       return StepByStepResolution(
@@ -663,7 +805,7 @@ class MatrixSolver {
       );
     }
 
-    final detSummary = a.rowCount == 3
+    final detSummary = a.rowCount >= 3
         ? detRes.steps[2].latexExpression
         : '\\left|A\\right| = ${det.toLatex()} \\neq 0 \\implies \\exists A^{-1}';
 
@@ -694,8 +836,6 @@ class MatrixSolver {
           latexExpression: adjRes.steps.first.latexExpression,
           pedagogicalNote:
               'Calculamos los cofactores con el tablero de signos alternos hasta formar Adj(A) = ${adj.toLatex()}.',
-          warningTrick:
-              'Aplica el signo menos en las posiciones impares (1,2), (2,1), (2,3) y (3,2).',
         ),
         MathStep(
           index: 3,
@@ -717,6 +857,269 @@ class MatrixSolver {
       exactResultLatex: invMatrix.toLatex(),
       decimalApproxLatex: invMatrix.toDecimalLatex(),
     );
+  }
+
+  /// Traspuesta de una matriz A^t.
+  static StepByStepResolution transpose(RationalMatrix a) {
+    final t = a.transpose();
+    return StepByStepResolution(
+      originalInputLatex: 'A^t',
+      steps: [
+        MathStep(
+          index: 1,
+          shortTitle: 'Definicion de matriz traspuesta',
+          latexExpression: '(A^t)_{ij} = A_{ji} \\implies A^t = ${t.toLatex()}',
+          pedagogicalNote:
+              'La matriz traspuesta se obtiene intercambiando ordenadamente las filas por columnas: la fila 1 se convierte en la columna 1.',
+        ),
+      ],
+      exactResultLatex: t.toLatex(),
+      decimalApproxLatex: t.toDecimalLatex(),
+    );
+  }
+
+  /// Regla de Cramer para resolver el sistema matricial A · X = B.
+  static StepByStepResolution cramer(RationalMatrix a, RationalMatrix b) {
+    if (!a.isSquare || a.rowCount < 2 || a.rowCount > 4) {
+      throw const FormatException('La Regla de Cramer requiere una matriz cuadrada de orden 2, 3 o 4.');
+    }
+    // Vector b puede ser n x 1 o 1 x n
+    final bCol = <Rational>[];
+    if (b.colCount == 1 && b.rowCount == a.rowCount) {
+      for (int i = 0; i < a.rowCount; i++) {
+        bCol.add(b.at(i, 0));
+      }
+    } else if (b.rowCount == 1 && b.colCount == a.rowCount) {
+      for (int i = 0; i < a.rowCount; i++) {
+        bCol.add(b.at(0, i));
+      }
+    } else {
+      throw const FormatException('Las dimensiones de B deben coincidir con las filas de A.');
+    }
+
+    final detA = a.determinantValue();
+    final detALatex = detA.toLatex();
+    final varNames = const ['x', 'y', 'z', 'w'].sublist(0, a.rowCount);
+
+    final steps = <MathStep>[];
+    final originalLatex = '${a.toLatex()} \\cdot X = ${b.toLatex()}';
+
+    final isZero = detA.isZero;
+    final detNote = isZero
+        ? 'El determinante de la matriz de coeficientes es cero (|A| = 0). No es aplicable la Regla de Cramer porque el sistema no es compatible determinado.'
+        : 'Calculamos el determinante de la matriz de coeficientes |A|. Como |A| = $detALatex ≠ 0, el sistema es Compatible Determinado y admite solucion unica segun la Regla de Cramer.';
+
+    steps.add(
+      MathStep(
+        index: 1,
+        shortTitle: 'Determinante principal |A|',
+        latexExpression: '\\left|A\\right| = $detALatex ${isZero ? "\\implies \\text{No aplicable Cramer}" : "\\neq 0 \\implies \\text{S.C.D.}"}',
+        pedagogicalNote: detNote,
+      ),
+    );
+
+    if (isZero) {
+      return StepByStepResolution(
+        originalInputLatex: originalLatex,
+        steps: steps,
+        exactResultLatex: r'\text{No aplicable Cramer (}\left|A\right|=0\text{)}',
+        decimalApproxLatex: '',
+      );
+    }
+
+    final subDets = <Rational>[];
+    final subLatexLines = <String>[];
+    for (int i = 0; i < a.rowCount; i++) {
+      final v = varNames[i];
+      final matAi = a.replaceColumn(i, bCol);
+      final detAi = matAi.determinantValue();
+      subDets.add(detAi);
+      subLatexLines.add('\\left|A_{$v}\\right| = ${detAi.toLatex()}');
+    }
+
+    steps.add(
+      MathStep(
+        index: 2,
+        shortTitle: 'Determinantes de matrices sustituidas |A_i|',
+        latexExpression: subLatexLines.join(', \\quad '),
+        pedagogicalNote:
+            'Para cada incognita, sustituimos su columna en A por el vector de terminos independientes B y calculamos su determinante.',
+      ),
+    );
+
+    final solutions = <Rational>[];
+    final solLatexLines = <String>[];
+    for (int i = 0; i < a.rowCount; i++) {
+      final v = varNames[i];
+      final sol = subDets[i] / detA;
+      solutions.add(sol);
+      solLatexLines.add('$v = \\frac{\\left|A_{$v}\\right|}{\\left|A\\right|} = \\frac{${subDets[i].toLatex()}}{$detALatex} = ${sol.toLatex()}');
+    }
+
+    steps.add(
+      MathStep(
+        index: 3,
+        shortTitle: 'Cocientes de Cramer y solucion',
+        latexExpression: solLatexLines.join(', \\quad '),
+        pedagogicalNote:
+            'Dividimos el determinante de cada matriz sustituida entre |A| y simplificamos a fracciones irreducibles.',
+      ),
+    );
+
+    final exactResult = [
+      for (int i = 0; i < a.rowCount; i++) '${varNames[i]} = ${solutions[i].toLatex()}',
+    ].join(', \\quad ');
+
+    return StepByStepResolution(
+      originalInputLatex: originalLatex,
+      steps: steps,
+      exactResultLatex: exactResult,
+      decimalApproxLatex: [
+        for (int i = 0; i < a.rowCount; i++) '${varNames[i]} \\approx ${solutions[i].toDecimalLatex()}',
+      ].join(', \\quad '),
+    );
+  }
+
+  /// Eliminación Gaussiana y cálculo de rango / compatibilidad.
+  static StepByStepResolution gauss(RationalMatrix a, [RationalMatrix? b]) {
+    final bool isAugmented = b != null;
+    final int m = a.rowCount;
+    final int nA = a.colCount;
+    final int nTotal = isAugmented ? nA + b.colCount : nA;
+
+    final rows = <List<Rational>>[];
+    for (int r = 0; r < m; r++) {
+      final row = <Rational>[];
+      for (int c = 0; c < nA; c++) {
+        row.add(a.at(r, c));
+      }
+      if (isAugmented) {
+        for (int c = 0; c < b.colCount; c++) {
+          row.add(b.at(r, c));
+        }
+      }
+      rows.add(row);
+    }
+
+    final steps = <MathStep>[];
+    final originalLatex = isAugmented ? '\\left(A \\;\\middle|\\; B\\right)' : a.toLatex();
+
+    steps.add(
+      MathStep(
+        index: 1,
+        shortTitle: 'Matriz inicial para eliminacion gaussiana',
+        latexExpression: _matrixRowsToLatex(rows),
+        pedagogicalNote: isAugmented
+            ? 'Construimos la matriz ampliada (A|B) con la matriz de coeficientes a la izquierda y los terminos independientes a la derecha.'
+            : 'Partimos de la matriz original A para obtener una matriz escalonada equivalente mediante transformaciones por filas.',
+      ),
+    );
+
+    int pivotRow = 0;
+    int pivotCol = 0;
+    final transformNotes = <String>[];
+
+    while (pivotRow < m && pivotCol < nA) {
+      int nonZeroRow = -1;
+      for (int r = pivotRow; r < m; r++) {
+        if (!rows[r][pivotCol].isZero) {
+          nonZeroRow = r;
+          break;
+        }
+      }
+
+      if (nonZeroRow == -1) {
+        pivotCol++;
+        continue;
+      }
+
+      if (nonZeroRow != pivotRow) {
+        final tmp = rows[pivotRow];
+        rows[pivotRow] = rows[nonZeroRow];
+        rows[nonZeroRow] = tmp;
+        transformNotes.add('F_{${pivotRow + 1}} \\leftrightarrow F_{${nonZeroRow + 1}}');
+      }
+
+      final pivotVal = rows[pivotRow][pivotCol];
+
+      for (int r = pivotRow + 1; r < m; r++) {
+        final targetVal = rows[r][pivotCol];
+        if (!targetVal.isZero) {
+          final factor = targetVal / pivotVal;
+          for (int c = pivotCol; c < nTotal; c++) {
+            rows[r][c] = rows[r][c] - (factor * rows[pivotRow][c]);
+          }
+          final factorLatex = factor.toLatex();
+          transformNotes.add(
+            factor.isNegative
+                ? 'F_{${r + 1}} \\leftarrow F_{${r + 1}} + (${factor.abs().toLatex()}) F_{${pivotRow + 1}}'
+                : 'F_{${r + 1}} \\leftarrow F_{${r + 1}} - ($factorLatex) F_{${pivotRow + 1}}',
+          );
+        }
+      }
+
+      pivotRow++;
+      pivotCol++;
+    }
+
+    if (transformNotes.isNotEmpty) {
+      steps.add(
+        MathStep(
+          index: 2,
+          shortTitle: 'Transformaciones elementales por filas',
+          latexExpression: transformNotes.join(', \\quad '),
+          pedagogicalNote:
+              'Realizamos combinaciones lineales por filas para anular los coeficientes situados por debajo de la diagonal principal.',
+        ),
+      );
+    }
+
+    int rankA = 0;
+    int rankAug = 0;
+    for (int r = 0; r < m; r++) {
+      bool nonZeroA = false;
+      bool nonZeroTotal = false;
+      for (int c = 0; c < nA; c++) {
+        if (!rows[r][c].isZero) nonZeroA = true;
+      }
+      for (int c = 0; c < nTotal; c++) {
+        if (!rows[r][c].isZero) nonZeroTotal = true;
+      }
+      if (nonZeroA) rankA++;
+      if (nonZeroTotal) rankAug++;
+    }
+
+    final echelonLatex = _matrixRowsToLatex(rows);
+    final classificationLatex = isAugmented
+        ? '\\text{rg}(A) = $rankA, \\; \\text{rg}(A|B) = $rankAug \\implies ${rankA == rankAug ? (rankA == nA ? "\\text{S.C.D.}" : "\\text{S.C.I.}") : "\\text{S.I.}"}'
+        : '\\text{rg}(A) = $rankA';
+
+    steps.add(
+      MathStep(
+        index: steps.length + 1,
+        shortTitle: 'Matriz escalonada y rango',
+        latexExpression: '$echelonLatex \\quad \\implies $classificationLatex',
+        pedagogicalNote: isAugmented
+            ? 'Segun el Teorema de Rouche-Frobenius: si rg(A) = rg(A|B) = n el sistema tiene solucion unica (S.C.D.); si rg(A) = rg(A|B) < n tiene infinitas soluciones (S.C.I.); y si rg(A) < rg(A|B) no tiene solucion (S.I.).'
+            : 'El rango de la matriz es igual al numero de filas no completamente nulas de su forma escalonada: rg(A) = $rankA.',
+      ),
+    );
+
+    return StepByStepResolution(
+      originalInputLatex: originalLatex,
+      steps: steps,
+      exactResultLatex: classificationLatex,
+      decimalApproxLatex: '',
+    );
+  }
+
+  static String _matrixRowsToLatex(List<List<Rational>> rows) {
+    if (rows.isEmpty || rows.first.isEmpty) return '()';
+    final colSpec = List.filled(rows.first.length, 'c').join();
+    final rowLines = rows
+        .map((r) => r.map((v) => v.toLatex()).join(' & '))
+        .join(' \\\\\n');
+    return '\\left(\\begin{array}{$colSpec}\n$rowLines\n\\end{array}\\right)';
   }
 
   static String _wrapNegative(Rational r) {

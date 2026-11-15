@@ -108,7 +108,7 @@ class QuadraticEquationSolver {
             index: steps.length + 1,
             shortTitle: 'Extraer raíz cuadrada a ambos lados',
             latexExpression:
-                'x = \\pm\\sqrt{$val} \\implies x_1 = $rootInt, \\; x_2 = -$rootInt',
+                'x = \\pm\\sqrt{$val} \\implies x_{1} = $rootInt, \\; x_{2} = -$rootInt',
             pedagogicalNote:
                 'Al sacar la raíz cuadrada siempre surgen dos soluciones con signos opuestos: la rama positiva y la rama negativa (±).',
             warningTrick:
@@ -118,8 +118,8 @@ class QuadraticEquationSolver {
         return StepByStepResolution(
           originalInputLatex: originalLatex,
           steps: steps,
-          exactResultLatex: 'x_1 = $rootInt, \\; x_2 = -$rootInt',
-          decimalApproxLatex: 'x_1 = $rootInt, \\; x_2 = -$rootInt',
+          exactResultLatex: 'x_{1} = $rootInt, \\; x_{2} = -$rootInt',
+          decimalApproxLatex: 'x_{1} = $rootInt, \\; x_{2} = -$rootInt',
         );
       }
     }
@@ -172,14 +172,14 @@ class QuadraticEquationSolver {
 
     final String branch2Latex;
     if (a == 1) {
-      branch2Latex = '$linearInside = 0 \\implies x_2 = $simpLatex';
+      branch2Latex = '$linearInside = 0 \\implies x_{2} = $simpLatex';
     } else if (a == -1) {
-      branch2Latex = '$linearInside = 0 \\implies -x = ${-b} \\implies x_2 = $simpLatex';
+      branch2Latex = '$linearInside = 0 \\implies -x = ${-b} \\implies x_{2} = $simpLatex';
     } else {
       final aX = AlgebraicLatexFormatter.monomialTerm(a, 'x');
       final rawFrac = AlgebraicLatexFormatter.signedFraction(-b, a);
       final solChain = rawFrac == simpLatex ? simpLatex : '$rawFrac = $simpLatex';
-      branch2Latex = '$linearInside = 0 \\implies $aX = ${-b} \\implies x_2 = $solChain';
+      branch2Latex = '$linearInside = 0 \\implies $aX = ${-b} \\implies x_{2} = $solChain';
     }
 
     steps.add(
@@ -187,7 +187,7 @@ class QuadraticEquationSolver {
         index: 2,
         shortTitle: 'Separar los dos factores igualados a cero',
         latexExpression:
-            '\\begin{cases} x_1 = 0 \\\\ $branch2Latex \\end{cases}',
+            '\\begin{cases} x_{1} = 0 \\\\ $branch2Latex \\end{cases}',
         pedagogicalNote:
             'El primer factor nos da directamente la primera solución: x₁ = 0. '
             'El segundo factor es una ecuación de primer grado que despejamos para obtener x₂.',
@@ -199,8 +199,8 @@ class QuadraticEquationSolver {
     return StepByStepResolution(
       originalInputLatex: originalLatex,
       steps: steps,
-      exactResultLatex: 'x_1 = 0, \\; x_2 = $simpLatex',
-      decimalApproxLatex: 'x_1 = 0, \\; x_2 = ${simplifiedRoot2.toDecimalLatex()}',
+      exactResultLatex: 'x_{1} = 0, \\; x_{2} = $simpLatex',
+      decimalApproxLatex: 'x_{1} = 0, \\; x_{2} = ${simplifiedRoot2.toDecimalLatex()}',
     );
   }
 
@@ -210,14 +210,14 @@ class QuadraticEquationSolver {
       MathStep(
         index: 1,
         shortTitle: 'Solución doble en el origen',
-        latexExpression: 'x^2 = 0 \\implies x_1 = x_2 = 0',
+        latexExpression: 'x^2 = 0 \\implies x_{1} = x_{2} = 0',
         pedagogicalNote: 'La única solución real es x = 0 (con multiplicidad 2).',
       ),
     ];
     return StepByStepResolution(
       originalInputLatex: originalLatex,
       steps: steps,
-      exactResultLatex: 'x_1 = x_2 = 0',
+      exactResultLatex: 'x_{1} = x_{2} = 0',
       decimalApproxLatex: '0',
     );
   }
@@ -267,7 +267,7 @@ class QuadraticEquationSolver {
     if (discriminant > 0) {
       discType = '\\Delta > 0 \\implies \\text{Existen 2 soluciones reales distintas.}';
     } else if (discriminant == 0) {
-      discType = '\\Delta = 0 \\implies \\text{Existe 1 solucion real doble } (x_1 = x_2)';
+      discType = '\\Delta = 0 \\implies \\text{Existe 1 solucion real doble } (x_{1} = x_{2})';
     } else {
       discType = '\\Delta < 0 \\implies \\text{No tiene soluciones reales (raiz de numero negativo).}';
     }
@@ -325,8 +325,8 @@ class QuadraticEquationSolver {
           latexExpression:
               'x = \\frac{${-b} \\pm $sqrtDiscInt}{$twoA} \\implies '
               '\\begin{cases} '
-              'x_1 = \\frac{${-b} + $sqrtDiscInt}{$twoA} = $eq1 \\\\[6pt] '
-              'x_2 = \\frac{${-b} - $sqrtDiscInt}{$twoA} = $eq2 '
+              'x_{1} = \\frac{${-b} + $sqrtDiscInt}{$twoA} = $eq1 \\\\[6pt] '
+              'x_{2} = \\frac{${-b} - $sqrtDiscInt}{$twoA} = $eq2 '
               '\\end{cases}',
           pedagogicalNote:
               'Separamos la rama positiva (+) y la rama negativa (-), operamos los numeradores y simplificamos cada fracción a su forma irreducible.',
@@ -335,10 +335,10 @@ class QuadraticEquationSolver {
 
       final exact = root1 == root2
           ? 'x = ${root1.toLatex()}'
-          : 'x_1 = ${root1.toLatex()}, \\; x_2 = ${root2.toLatex()}';
+          : 'x_{1} = ${root1.toLatex()}, \\; x_{2} = ${root2.toLatex()}';
       final dec = root1 == root2
           ? root1.toDecimalLatex()
-          : 'x_1 = ${root1.toDecimalLatex()}, \\; x_2 = ${root2.toDecimalLatex()}';
+          : 'x_{1} = ${root1.toDecimalLatex()}, \\; x_{2} = ${root2.toDecimalLatex()}';
 
       return StepByStepResolution(
         originalInputLatex: originalLatex,
@@ -367,7 +367,7 @@ class QuadraticEquationSolver {
       MathStep(
         index: 4,
         shortTitle: 'Soluciones exactas con radical',
-        latexExpression: 'x_1 = $exactR1, \\quad x_2 = $exactR2',
+        latexExpression: 'x_{1} = $exactR1, \\quad x_{2} = $exactR2',
         pedagogicalNote:
             'Al no ser el discriminante un cuadrado perfecto, expresamos el resultado exacto manteniendo el radical.',
       ),
@@ -377,7 +377,7 @@ class QuadraticEquationSolver {
       originalInputLatex: originalLatex,
       steps: steps,
       exactResultLatex: 'x = $exactPlusMinus',
-      decimalApproxLatex: 'x_1 = $decRoot1, \\; x_2 = $decRoot2',
+      decimalApproxLatex: 'x_{1} = $decRoot1, \\; x_{2} = $decRoot2',
     );
   }
 }

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import '../core/algebraic_latex_formatter.dart';
 import '../core/rational.dart';
+import '../models/inequality_models.dart';
 import '../models/step_resolution.dart';
 import 'linear_equation_solver.dart';
 
@@ -62,12 +63,14 @@ enum InequalitySign {
 }
 
 class InequalitySolver {
-  /// Resuelve una inecuación escrita como cadena de texto (de 1.º o 2.º grado).
-  ///
-  /// Ejemplos admitidos:
-  /// - `-2x + 4 < 10`
-  /// - `(x - 2)/3 - (x + 1)/4 <= 2`
-  /// - `x^2 - 4x + 3 <= 0`
+  static final Expando<Inequality1DVisualData> _visualDataExpando =
+      Expando<Inequality1DVisualData>();
+
+  /// Obtiene los datos de renderizado visual asociados a una resolución de inecuación.
+  static Inequality1DVisualData? getVisualData(StepByStepResolution res) =>
+      _visualDataExpando[res];
+
+  /// Resuelve una inecuación escrita como cadena de texto (de 1.º, 2.º grado o con valor absoluto).
   static StepByStepResolution solveString(
     String rawInput, {
     InequalitySign? fallbackSign,
@@ -87,6 +90,11 @@ class InequalitySolver {
       throw const FormatException('Escribe una inecuación válida.');
     }
 
+    // Detectar si contiene valor absoluto: |...| o \left|...\right|
+    if (cleaned.contains('|') || cleaned.contains(r'\left|')) {
+      return _solveAbsoluteValue(cleaned, fallbackSign: fallbackSign);
+    }
+
     final split = _splitByInequalitySign(cleaned, fallbackSign: fallbackSign);
     final lhs = split.lhs;
     final rhs = split.rhs;
@@ -99,7 +107,8 @@ class InequalitySolver {
       final a = leftPoly.a - rightPoly.a;
       final b = leftPoly.b - rightPoly.b;
       final c = leftPoly.c - rightPoly.c;
-      final customOrig = '${_formatSideFromRawPolyOrFallback(lhs)} ${sign.latex} ${_formatSideFromRawPolyOrFallback(rhs)}';
+      final customOrig =
+          '${_formatSideFromRawPolyOrFallback(lhs)} ${sign.latex} ${_formatSideFromRawPolyOrFallback(rhs)}';
       if (a == 0) {
         return solveLinearTerms(
           leftTerms: [LinearTerm(xCoeff: b, constant: c)],
@@ -139,6 +148,21 @@ class InequalitySolver {
     );
   }
 
+  /// Resuelve con datos visuales incluidos de forma directa.
+  static ({StepByStepResolution resolution, Inequality1DVisualData visualData}) solveWithVisual(
+    String rawInput, {
+    InequalitySign? fallbackSign,
+  }) {
+    final res = solveString(rawInput, fallbackSign: fallbackSign);
+    final visual = getVisualData(res) ??
+        Inequality1DVisualData(
+          criticalPoints: const [],
+          primaryIntervals: const [],
+          solutionLatex: res.exactResultLatex,
+        );
+    return (resolution: res, visualData: visual);
+  }
+
   /// Resuelve una inecuación de 1.º grado en forma `ax + b ≶ cx + d`.
   static StepByStepResolution solveLinearCoeffs({
     required int a,
@@ -154,7 +178,7 @@ class InequalitySolver {
     );
   }
 
-  /// Resuelve una inecuación de 1.º grado con fracciones paso a paso.
+  /// Resuelve una inecuación de 1.º grado con fracciones y términos paso a paso.
   static StepByStepResolution solveLinearTerms({
     required List<LinearTerm> leftTerms,
     required List<LinearTerm> rightTerms,
@@ -271,12 +295,22 @@ class InequalitySolver {
         ),
       );
 
-      return StepByStepResolution(
+      final res = StepByStepResolution(
         originalInputLatex: originalLatex,
         steps: steps,
         exactResultLatex: intervalLatex,
         decimalApproxLatex: intervalLatex,
       );
+
+      final visualData = Inequality1DVisualData(
+        criticalPoints: const [],
+        primaryIntervals: holds
+            ? const [InequalityInterval(start: double.negativeInfinity, end: double.infinity)]
+            : const [],
+        solutionLatex: intervalLatex,
+      );
+      _visualDataExpando[res] = visualData;
+      return res;
     }
 
     // Despeje de x con regla crítica del signo negativo
@@ -335,12 +369,492 @@ class InequalitySolver {
       ),
     );
 
-    return StepByStepResolution(
+    final res = StepByStepResolution(
       originalInputLatex: originalLatex,
       steps: steps,
       exactResultLatex: '$ineqResultLatex, \\; $intervalLatex',
       decimalApproxLatex: 'x ${finalSign.latex} $solDecLatex, \\; $intervalLatex',
     );
+
+    // Generar datos visuales 1D
+    final solDouble = solution.toDouble();
+    final isLess = finalSign == InequalitySign.less || finalSign == InequalitySign.lessOrEqual;
+    final isClosed = !finalSign.isStrict;
+
+    final visualInterval = isLess
+        ? InequalityInterval(
+            start: double.negativeInfinity,
+            end: solDouble,
+            includeStart: false,
+            includeEnd: isClosed,
+            endLabel: solLatex,
+          )
+        : InequalityInterval(
+            start: solDouble,
+            end: double.infinity,
+            includeStart: isClosed,
+            includeEnd: false,
+            startLabel: solLatex,
+          );
+
+    final visualData = Inequality1DVisualData(
+      criticalPoints: [
+        CriticalPoint(value: solDouble, label: solLatex, isClosed: isClosed),
+      ],
+      primaryIntervals: [visualInterval],
+      solutionLatex: intervalLatex,
+    );
+
+    _visualDataExpando[res] = visualData;
+    return res;
+  }
+
+  /// Resuelve una inecuación con valor absoluto `|ax + b| ≶ c`.
+  static StepByStepResolution _solveAbsoluteValue(
+    String raw, {
+    InequalitySign? fallbackSign,
+  }) {
+    final cleaned = raw
+        .replaceAll(r'\left|', '|')
+        .replaceAll(r'\right|', '|');
+
+    final split = _splitByInequalitySign(cleaned, fallbackSign: fallbackSign);
+    final lhs = split.lhs;
+    final rhs = split.rhs;
+    final sign = split.sign;
+
+    final firstBar = lhs.indexOf('|');
+    final secondBar = lhs.indexOf('|', firstBar + 1);
+
+    if (firstBar == -1 || secondBar == -1) {
+      throw const FormatException('Falta cerrar la barra de valor absoluto |...|.');
+    }
+
+    final inside = lhs.substring(firstBar + 1, secondBar);
+    final prefix = lhs.substring(0, firstBar);
+    final suffix = lhs.substring(secondBar + 1);
+
+    // Multiplicador k y constante d: k|A| + d
+    double k = 1.0;
+    if (prefix.isNotEmpty && prefix != '+') {
+      if (prefix == '-') {
+        k = -1.0;
+      } else {
+        k = double.tryParse(prefix.replaceAll('*', '')) ?? 1.0;
+      }
+    }
+
+    double extraConst = 0.0;
+    if (suffix.isNotEmpty) {
+      extraConst = double.tryParse(suffix) ?? 0.0;
+    }
+
+    final rhsVal = double.tryParse(rhs) ?? 0.0;
+    final isolatedC = (rhsVal - extraConst) / k;
+    final effectiveSign = k < 0 ? sign.flipped() : sign;
+
+    final parsedLinear = _parseLinearExpr(inside);
+    final a = parsedLinear.xCoeff;
+    final b = parsedLinear.constant;
+    final insideLatex = AlgebraicLatexFormatter.linearExpression(a, b);
+
+    final steps = <MathStep>[];
+    final originalLatex = '$lhs ${sign.latex} $rhs';
+
+    // Paso 1: Aislar el valor absoluto si había coeficientes fuera
+    if (k != 1.0 || extraConst != 0.0) {
+      steps.add(
+        MathStep(
+          index: steps.length + 1,
+          shortTitle: 'Aislar el valor absoluto',
+          latexExpression: '|$insideLatex| ${effectiveSign.latex} ${_fmt(isolatedC)}',
+          pedagogicalNote:
+              'Dejamos el valor absoluto solo en el primer miembro pasando las sumas restando y dividiendo entre $k. '
+              '${k < 0 ? 'Al dividir por un número negativo ($k), el sentido de la desigualdad se invierte.' : ''}',
+        ),
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // CASO 1: |A| < C o |A| <= C
+    // -------------------------------------------------------------------------
+    if (effectiveSign == InequalitySign.less || effectiveSign == InequalitySign.lessOrEqual) {
+      if (isolatedC < 0) {
+        steps.add(
+          MathStep(
+            index: steps.length + 1,
+            shortTitle: 'Desigualdad imposible (Sin solución)',
+            latexExpression: '|$insideLatex| ${effectiveSign.latex} ${_fmt(isolatedC)} \\implies \\text{Sin solucion} \\quad (\\emptyset)',
+            pedagogicalNote:
+                'El valor absoluto de cualquier número real es siempre mayor o igual a cero (|A| ≥ 0). Nunca puede ser estrictamente menor ni menor o igual que un número negativo ($isolatedC).',
+            warningTrick: 'Un valor absoluto nunca puede ser menor que un número negativo. La solución es el conjunto vacío (∅).',
+          ),
+        );
+
+        final res = StepByStepResolution(
+          originalInputLatex: originalLatex,
+          steps: steps,
+          exactResultLatex: r'\emptyset',
+          decimalApproxLatex: r'\emptyset',
+        );
+        _visualDataExpando[res] = Inequality1DVisualData(
+          criticalPoints: const [],
+          primaryIntervals: const [],
+          solutionLatex: r'\emptyset',
+        );
+        return res;
+      }
+
+      final isStrict = effectiveSign.isStrict;
+      final leftBracket = isStrict ? '(' : '[';
+      final rightBracket = isStrict ? ')' : ']';
+
+      // Propiedad: |A| <= C <=> -C <= A <= C
+      steps.add(
+        MathStep(
+          index: steps.length + 1,
+          shortTitle: 'Propiedad del valor absoluto (|A| ≤ C)',
+          latexExpression: '|$insideLatex| ${effectiveSign.latex} ${_fmt(isolatedC)} \\iff -${_fmt(isolatedC)} ${effectiveSign.latex} $insideLatex ${effectiveSign.latex} ${_fmt(isolatedC)}',
+          pedagogicalNote:
+              'Para cualquier C ≥ 0, la desigualdad |A| ≤ C significa que la expresión A está a una distancia menor o igual que C del origen, es decir, comprendida entre -C y C.',
+        ),
+      );
+
+      // Resolver las dos ramas:
+      // Rama 1: A >= -C <=> ax + b >= -C => ax >= -C - b
+      final r1 = (-isolatedC - b) / a;
+      // Rama 2: A <= C <=> ax + b <= C => ax <= C - b
+      final r2 = (isolatedC - b) / a;
+
+      final minR = math.min(r1, r2);
+      final maxR = math.max(r1, r2);
+      final minRLatex = _fmt(minR);
+      final maxRLatex = _fmt(maxR);
+
+      steps.add(
+        MathStep(
+          index: steps.length + 1,
+          shortTitle: 'Despejar la incógnita x en la desigualdad doble',
+          latexExpression:
+              '-${_fmt(isolatedC)} - $b ${effectiveSign.latex} ${a}x ${effectiveSign.latex} ${_fmt(isolatedC)} - $b \\implies '
+              '$minRLatex ${effectiveSign.latex} x ${effectiveSign.latex} $maxRLatex',
+          pedagogicalNote:
+              'Restamos $b en los tres miembros y luego dividimos entre $a para despejar la x.',
+        ),
+      );
+
+      final solInterval = '$leftBracket$minRLatex, $maxRLatex$rightBracket';
+      steps.add(
+        MathStep(
+          index: steps.length + 1,
+          shortTitle: 'Solución en notación de intervalos',
+          latexExpression: 'x \\in $solInterval',
+          pedagogicalNote:
+              'La solución es el intervalo acotado que contiene todos los números comprendidos entre $minRLatex y $maxRLatex. '
+              '${isStrict ? 'Lleva paréntesis ( ) porque los extremos no se incluyen.' : 'Lleva corchetes [ ] porque los extremos sí se incluyen.'}',
+        ),
+      );
+
+      final res = StepByStepResolution(
+        originalInputLatex: originalLatex,
+        steps: steps,
+        exactResultLatex: 'x \\in $solInterval',
+        decimalApproxLatex: 'x \\in $solInterval',
+      );
+
+      final visualData = Inequality1DVisualData(
+        criticalPoints: [
+          CriticalPoint(value: minR, label: minRLatex, isClosed: !isStrict),
+          CriticalPoint(value: maxR, label: maxRLatex, isClosed: !isStrict),
+        ],
+        primaryIntervals: [
+          InequalityInterval(
+            start: minR,
+            end: maxR,
+            includeStart: !isStrict,
+            includeEnd: !isStrict,
+            startLabel: minRLatex,
+            endLabel: maxRLatex,
+          ),
+        ],
+        solutionLatex: solInterval,
+      );
+
+      _visualDataExpando[res] = visualData;
+      return res;
+    }
+
+    // -------------------------------------------------------------------------
+    // CASO 2: |A| > C o |A| >= C
+    // -------------------------------------------------------------------------
+    if (isolatedC < 0) {
+      steps.add(
+        MathStep(
+          index: steps.length + 1,
+          shortTitle: 'Desigualdad siempre cierta (Todos los reales)',
+          latexExpression: '|$insideLatex| ${effectiveSign.latex} ${_fmt(isolatedC)} \\implies x \\in (-\\infty, +\\infty) = \\mathbb{R}',
+          pedagogicalNote:
+              'El valor absoluto de cualquier número real es mayor o igual a cero (|A| ≥ 0). Por tanto, siempre es estrictamente mayor que cualquier número negativo ($isolatedC).',
+        ),
+      );
+
+      final res = StepByStepResolution(
+        originalInputLatex: originalLatex,
+        steps: steps,
+        exactResultLatex: r'(-\infty, +\infty)',
+        decimalApproxLatex: r'(-\infty, +\infty)',
+      );
+      _visualDataExpando[res] = Inequality1DVisualData(
+        criticalPoints: const [],
+        primaryIntervals: const [
+          InequalityInterval(start: double.negativeInfinity, end: double.infinity)
+        ],
+        solutionLatex: r'(-\infty, +\infty)',
+      );
+      return res;
+    }
+
+    final isStrict = effectiveSign.isStrict;
+    final leftBracket = isStrict ? ')' : ']';
+    final rightBracket = isStrict ? '(' : '[';
+
+    steps.add(
+      MathStep(
+        index: steps.length + 1,
+        shortTitle: 'Propiedad del valor absoluto (|A| ≥ C)',
+        latexExpression: '|$insideLatex| ${effectiveSign.latex} ${_fmt(isolatedC)} \\iff $insideLatex ${isStrict ? '<' : r'\le'} -${_fmt(isolatedC)} \\quad \\text{o} \\quad $insideLatex ${isStrict ? '>' : r'\ge'} ${_fmt(isolatedC)}',
+        pedagogicalNote:
+            'Para cualquier C ≥ 0, la desigualdad |A| ≥ C significa que la expresión A dista al menos C del origen, es decir, está a la izquierda de -C o a la derecha de C.',
+      ),
+    );
+
+    // Rama 1: A <= -C
+    final r1 = (-isolatedC - b) / a;
+    // Rama 2: A >= C
+    final r2 = (isolatedC - b) / a;
+
+    final minR = math.min(r1, r2);
+    final maxR = math.max(r1, r2);
+    final minRLatex = _fmt(minR);
+    final maxRLatex = _fmt(maxR);
+
+    steps.add(
+      MathStep(
+        index: steps.length + 1,
+        shortTitle: 'Resolver ambas ramas independientes',
+        latexExpression:
+            'x ${isStrict ? '<' : r'\le'} $minRLatex \\quad \\text{o} \\quad x ${isStrict ? '>' : r'\ge'} $maxRLatex',
+        pedagogicalNote:
+            'Despejamos x en cada una de las dos ramas. La solución total es la unión de ambas semirrectas disjuntas.',
+      ),
+    );
+
+    final solInterval = '(-\\infty, $minRLatex$leftBracket \\cup $rightBracket$maxRLatex, +\\infty)';
+    steps.add(
+      MathStep(
+        index: steps.length + 1,
+        shortTitle: 'Solución en unión de intervalos',
+        latexExpression: 'x \\in $solInterval',
+        pedagogicalNote:
+            'La solución se compone de dos tramos infinitos separados por el hueco central ($minRLatex, $maxRLatex).',
+      ),
+    );
+
+    final res = StepByStepResolution(
+      originalInputLatex: originalLatex,
+      steps: steps,
+      exactResultLatex: 'x \\in $solInterval',
+      decimalApproxLatex: 'x \\in $solInterval',
+    );
+
+    final visualData = Inequality1DVisualData(
+      criticalPoints: [
+        CriticalPoint(value: minR, label: minRLatex, isClosed: !isStrict),
+        CriticalPoint(value: maxR, label: maxRLatex, isClosed: !isStrict),
+      ],
+      primaryIntervals: [
+        InequalityInterval(
+          start: double.negativeInfinity,
+          end: minR,
+          includeStart: false,
+          includeEnd: !isStrict,
+          endLabel: minRLatex,
+        ),
+        InequalityInterval(
+          start: maxR,
+          end: double.infinity,
+          includeStart: !isStrict,
+          includeEnd: false,
+          startLabel: maxRLatex,
+        ),
+      ],
+      solutionLatex: solInterval,
+    );
+
+    _visualDataExpando[res] = visualData;
+    return res;
+  }
+
+  /// Resuelve un sistema de 2 o más inecuaciones de 1 incógnita con intersección de intervalos.
+  static ({StepByStepResolution resolution, Inequality1DVisualData visualData}) solveSystem1D(
+    List<String> rawInequalities,
+  ) {
+    if (rawInequalities.isEmpty) {
+      throw const FormatException('Introduce al menos una inecuación para el sistema.');
+    }
+
+    final singleResolutions = <StepByStepResolution>[];
+    final visualDataList = <Inequality1DVisualData>[];
+
+    for (final raw in rawInequalities) {
+      final res = solveString(raw);
+      singleResolutions.add(res);
+      final v = getVisualData(res);
+      if (v != null) visualDataList.add(v);
+    }
+
+    final steps = <MathStep>[];
+
+    // Paso 1 y Paso 2: Resolución de cada inecuación por separado
+    for (int i = 0; i < singleResolutions.length; i++) {
+      final r = singleResolutions[i];
+      final ineqName = '(${i + 1})';
+      final solText = r.exactResultLatex;
+      steps.add(
+        MathStep(
+          index: steps.length + 1,
+          shortTitle: 'Resolver inecuación $ineqName',
+          latexExpression: '${r.originalInputLatex} \\implies S_{${i + 1}} = $solText',
+          pedagogicalNote:
+              'Resolvemos la inecuación $ineqName por separado. Si en algún despeje se multiplica o divide por un número negativo, se invierte el sentido de la desigualdad.',
+          warningTrick:
+              'Recuerda: al dividir o multiplicar por un número negativo se cambia el sentido de la desigualdad (< pasa a > y ≤ pasa a ≥).',
+        ),
+      );
+    }
+
+    // Calcular la intersección de intervalos
+    final intervals1 = visualDataList.isNotEmpty ? visualDataList[0].primaryIntervals : <InequalityInterval>[];
+    final intervals2 = visualDataList.length > 1 ? visualDataList[1].primaryIntervals : <InequalityInterval>[];
+
+    final intersection = _intersectIntervalLists(intervals1, intervals2);
+
+    final s1Latex = singleResolutions[0].exactResultLatex;
+    final s2Latex = singleResolutions.length > 1 ? singleResolutions[1].exactResultLatex : '';
+    final sfLatex = intersection.isEmpty
+        ? r'\emptyset'
+        : intersection.map((i) => i.toIntervalLatex()).join(r' \cup ');
+
+    // Paso 3: Representación en la recta e intersección con rayado
+    steps.add(
+      MathStep(
+        index: steps.length + 1,
+        shortTitle: 'Representación en la recta e intersección',
+        latexExpression:
+            'S_{1} = $s1Latex \\quad (\\text{rayado } / / /) \\\\\n'
+            'S_{2} = $s2Latex \\quad (\\text{rayado } \\backslash \\backslash \\backslash) \\\\\n'
+            'S_{f} = S_{1} \\cap S_{2} = $sfLatex \\quad (\\text{zona en malla XXX})',
+        pedagogicalNote:
+            'Dibujamos sobre la recta real los puntos críticos ordenados. Trazamos la solución S₁ con rayado inclinado (///) '
+            'y la solución S₂ con rayado inclinado opuesto (\\\\\\). La solución final es la zona común donde ambos rayados se cruzan formando una malla (XXX).',
+      ),
+    );
+
+    // Paso 4: Solución final
+    final isNone = intersection.isEmpty;
+    steps.add(
+      MathStep(
+        index: steps.length + 1,
+        shortTitle: 'Solución final del sistema',
+        latexExpression: isNone
+            ? r'S_{f} = S_{1} \cap S_{2} = \emptyset \quad (\text{Sin solucion})'
+            : 'x \\in S_{f} = $sfLatex',
+        pedagogicalNote: isNone
+            ? 'Los intervalos no tienen ningún punto en común: el sistema de inecuaciones es incompatible y no tiene solución (conjunto vacío ∅).'
+            : 'Cualquier número real dentro del intervalo solución cumple simultáneamente todas las inecuaciones del sistema.',
+      ),
+    );
+
+    // Recoger todos los puntos críticos de ambas inecuaciones
+    final allCritPoints = <CriticalPoint>[];
+    for (final v in visualDataList) {
+      allCritPoints.addAll(v.criticalPoints);
+    }
+    allCritPoints.sort((a, b) => a.value.compareTo(b.value));
+
+    final originalLatex = rawInequalities.join(r' \quad \text{y} \quad ');
+
+    final res = StepByStepResolution(
+      originalInputLatex: originalLatex,
+      steps: steps,
+      exactResultLatex: 'S_{f} = $sfLatex',
+      decimalApproxLatex: 'S_{f} = $sfLatex',
+    );
+
+    final visualData = Inequality1DVisualData(
+      criticalPoints: allCritPoints,
+      primaryIntervals: intervals1,
+      secondaryIntervals: intervals2,
+      intersectionIntervals: intersection,
+      solutionLatex: 'S_1 \\cap S_2 = $sfLatex',
+      label1: 'S_1',
+      label2: 'S_2',
+    );
+
+    _visualDataExpando[res] = visualData;
+    return (resolution: res, visualData: visualData);
+  }
+
+  static List<InequalityInterval> _intersectIntervalLists(
+    List<InequalityInterval> list1,
+    List<InequalityInterval> list2,
+  ) {
+    if (list1.isEmpty || list2.isEmpty) return const [];
+    final result = <InequalityInterval>[];
+
+    for (final i1 in list1) {
+      for (final i2 in list2) {
+        final start = math.max(i1.start, i2.start);
+        final end = math.min(i1.end, i2.end);
+
+        if (start < end) {
+          final incStart = (start == i1.start ? i1.includeStart : true) &&
+              (start == i2.start ? i2.includeStart : true);
+          final incEnd = (end == i1.end ? i1.includeEnd : true) &&
+              (end == i2.end ? i2.includeEnd : true);
+
+          final sLabel = start == i1.start ? i1.startLabel : i2.startLabel;
+          final eLabel = end == i1.end ? i1.endLabel : i2.endLabel;
+
+          result.add(
+            InequalityInterval(
+              start: start,
+              end: end,
+              includeStart: incStart,
+              includeEnd: incEnd,
+              startLabel: sLabel,
+              endLabel: eLabel,
+            ),
+          );
+        } else if (start == end) {
+          final incBoth = (start == i1.start ? i1.includeStart : i1.includeEnd) &&
+              (start == i2.start ? i2.includeStart : i2.includeEnd);
+          if (incBoth) {
+            result.add(
+              InequalityInterval(
+                start: start,
+                end: end,
+                includeStart: true,
+                includeEnd: true,
+                startLabel: _fmt(start),
+                endLabel: _fmt(end),
+              ),
+            );
+          }
+        }
+      }
+    }
+    return result;
   }
 
   /// Resuelve una inecuación de 2.º grado `ax² + bx + c ≶ 0` con tabla de signos.
@@ -379,7 +893,7 @@ class InequalitySolver {
           index: 1,
           shortTitle: 'Resolver la ecuación asociada (= 0)',
           latexExpression:
-              '$eqLatex \\implies \\Delta = $discriminant > 0 \\implies x_1 = ${r1.latex}, \\; x_2 = ${r2.latex}',
+              '$eqLatex \\implies \\Delta = $discriminant > 0 \\implies x_{1} = ${r1.latex}, \\; x_{2} = ${r2.latex}',
           pedagogicalNote:
               'Igualamos a cero para localizar los puntos críticos que dividen la recta real en tres intervalos: (-∞, x₁), (x₁, x₂) y (x₂, +∞).',
         ),
@@ -448,12 +962,54 @@ class InequalitySolver {
         ),
       );
 
-      return StepByStepResolution(
+      final res = StepByStepResolution(
         originalInputLatex: originalLatex,
         steps: steps,
         exactResultLatex: solInterval,
         decimalApproxLatex: solInterval,
       );
+
+      // Intervalos para el pintor de signos (SÍ / NO)
+      final sat0 = sign.matchesSign(v0.numerator.sign);
+      final sat1 = sign.matchesSign(v1.numerator.sign);
+      final sat2 = sign.matchesSign(v2.numerator.sign);
+
+      final signIntervals = [
+        InequalityInterval(
+          start: double.negativeInfinity,
+          end: r1.approx,
+          endLabel: r1.latex,
+          isSatisfied: sat0,
+        ),
+        InequalityInterval(
+          start: r1.approx,
+          end: r2.approx,
+          startLabel: r1.latex,
+          endLabel: r2.latex,
+          isSatisfied: sat1,
+        ),
+        InequalityInterval(
+          start: r2.approx,
+          end: double.infinity,
+          startLabel: r2.latex,
+          isSatisfied: sat2,
+        ),
+      ];
+
+      final primIntervals = signIntervals.where((i) => i.isSatisfied).toList();
+
+      final visualData = Inequality1DVisualData(
+        criticalPoints: [
+          CriticalPoint(value: r1.approx, label: r1.latex, isClosed: !sign.isStrict),
+          CriticalPoint(value: r2.approx, label: r2.latex, isClosed: !sign.isStrict),
+        ],
+        primaryIntervals: primIntervals,
+        signTestIntervals: signIntervals,
+        solutionLatex: solInterval,
+      );
+
+      _visualDataExpando[res] = visualData;
+      return res;
     }
 
     // -----------------------------------------------------------------
@@ -468,7 +1024,7 @@ class InequalitySolver {
           index: 1,
           shortTitle: 'Resolver la ecuación asociada (Δ = 0)',
           latexExpression:
-              '${AlgebraicLatexFormatter.quadraticExpression(a, b, c)} = 0 \\implies \\Delta = 0 \\implies x_0 = $rLatex',
+              '${AlgebraicLatexFormatter.quadraticExpression(a, b, c)} = 0 \\implies \\Delta = 0 \\implies x_{0} = $rLatex',
           pedagogicalNote:
               'El discriminante es nulo: existe una única raíz doble x₀ = $rLatex donde la parábola toca el eje X sin cambiar de signo a los lados.',
         ),
@@ -525,12 +1081,38 @@ class InequalitySolver {
         ),
       );
 
-      return StepByStepResolution(
+      final res = StepByStepResolution(
         originalInputLatex: originalLatex,
         steps: steps,
         exactResultLatex: solInterval,
         decimalApproxLatex: solInterval,
       );
+
+      final visualData = Inequality1DVisualData(
+        criticalPoints: [
+          CriticalPoint(value: root.toDouble(), label: rLatex, isClosed: rootSatisfies),
+        ],
+        primaryIntervals: outerSatisfies
+            ? [
+                InequalityInterval(
+                  start: double.negativeInfinity,
+                  end: root.toDouble(),
+                  endLabel: rLatex,
+                  includeEnd: rootSatisfies,
+                ),
+                InequalityInterval(
+                  start: root.toDouble(),
+                  end: double.infinity,
+                  startLabel: rLatex,
+                  includeStart: rootSatisfies,
+                )
+              ]
+            : const [],
+        solutionLatex: solInterval,
+      );
+
+      _visualDataExpando[res] = visualData;
+      return res;
     }
 
     // -----------------------------------------------------------------
@@ -584,12 +1166,23 @@ class InequalitySolver {
       ),
     );
 
-    return StepByStepResolution(
+    final res = StepByStepResolution(
       originalInputLatex: originalLatex,
       steps: steps,
       exactResultLatex: solInterval,
       decimalApproxLatex: solInterval,
     );
+
+    final visualData = Inequality1DVisualData(
+      criticalPoints: const [],
+      primaryIntervals: alwaysTrue
+          ? const [InequalityInterval(start: double.negativeInfinity, end: double.infinity)]
+          : const [],
+      solutionLatex: solInterval,
+    );
+
+    _visualDataExpando[res] = visualData;
+    return res;
   }
 
   // ---------------------------------------------------------------------------
@@ -615,7 +1208,6 @@ class InequalitySolver {
     for (final pat in patterns) {
       final idx = cleaned.indexOf(pat);
       if (idx != -1) {
-        // Evitar detectar '>' como si fuera '>=' si ya buscamos patrones más largos antes
         final sign = InequalitySign.tryParse(pat)!;
         final lhs = cleaned.substring(0, idx);
         final rhs = cleaned.substring(idx + pat.length);
@@ -926,25 +1518,21 @@ class InequalitySolver {
   static int _lcm(int a, int b) => (a.abs() ~/ _gcd(a, b)) * b.abs();
 
   static Rational _evalPolyAt(int a, int b, int c, Rational x) =>
-      Rational(a) * x * x + Rational(b) * x + Rational(c);
+    Rational(a) * x * x + Rational(b) * x + Rational(c);
 
   static Rational _pickTestPoint({double? low, double? high}) {
     if (low == null && high == null) return Rational(0);
     if (low == null) {
-      // (-infty, high) -> elegir entero <= floor - 1, prefiriendo 0 o -1 si cabe
       if (0 < high!) return Rational(0);
       return Rational(high.ceil() - 1);
     }
     if (high == null) {
-      // (low, +infty)
       if (0 > low) return Rational(0);
       return Rational(low.floor() + 1);
     }
-    // Intervalo acotado (low, high): si 0 está dentro, usarlo; si hay otro entero, usarlo
     if (low < 0 && 0 < high) return Rational(0);
     final intFirst = low.floor() + 1;
     if (intFirst < high) {
-      // Preferir el entero más cercano a 0 dentro de (low, high)
       final intLast = high.ceil() - 1;
       if (intLast >= intFirst) {
         int best = intFirst;
@@ -954,7 +1542,6 @@ class InequalitySolver {
         return Rational(best);
       }
     }
-    // Si no hay enteros entre medias, tomar punto medio con denominador potencia de 2
     final midDouble = (low + high) / 2.0;
     for (final den in [2, 4, 8, 10]) {
       final candidateNum = (midDouble * den).round();
@@ -983,7 +1570,6 @@ class InequalitySolver {
       return (list[0], list[1]);
     }
 
-    // Raíces irracionales exactas simplificadas: (-b ± k√rad) / (2a)
     int outFactor = 1;
     int rad = discriminant;
     for (int f = math.sqrt(discriminant).toInt(); f >= 2; f--) {
@@ -999,7 +1585,6 @@ class InequalitySolver {
     final int k = outFactor ~/ common;
     final int den = (2 * a) ~/ common;
 
-    // Normalizar denominador positivo para la presentación LaTeX
     final int normB = den < 0 ? -numB : numB;
     final int normDen = den.abs();
 
@@ -1013,7 +1598,6 @@ class InequalitySolver {
 
     final v1 = (-b - sqrtD) / (2 * a);
     final v2 = (-b + sqrtD) / (2 * a);
-    // Si 2*a < 0, v2 < v1
     if (2 * a > 0) {
       return (
         _QuadRoot(latex: formatRoot(-1), approx: v1),
@@ -1024,6 +1608,11 @@ class InequalitySolver {
       _QuadRoot(latex: formatRoot(-1), approx: v2),
       _QuadRoot(latex: formatRoot(1), approx: v1),
     );
+  }
+
+  static String _fmt(double v) {
+    if (v == v.roundToDouble()) return v.toInt().toString();
+    return v.toStringAsFixed(2);
   }
 }
 

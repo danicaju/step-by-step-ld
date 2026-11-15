@@ -32,6 +32,7 @@ class CasioLcdScreen extends StatelessWidget {
   final String calcValueRaw;
   final String? inequalitySignBadge;
   final VoidCallback? onCycleInequalitySign;
+  final Widget? supplementaryVisualView;
 
   const CasioLcdScreen({
     super.key,
@@ -64,6 +65,7 @@ class CasioLcdScreen extends StatelessWidget {
     this.calcValueRaw = '',
     this.inequalitySignBadge,
     this.onCycleInequalitySign,
+    this.supplementaryVisualView,
   });
 
   /// Número de módulos visibles por página en el MENU paginado (2×2).
@@ -248,6 +250,8 @@ class CasioLcdScreen extends StatelessWidget {
                 final double maxNoteHeight = lcdConstraints.maxHeight.isFinite
                     ? (lcdConstraints.maxHeight * 0.34).clamp(28.0, 68.0)
                     : 68.0;
+                final bool showBottomNote = lcdConstraints.maxHeight >= 118.0 &&
+                    (coefficientView == null || lcdConstraints.maxHeight >= 140.0);
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -460,46 +464,89 @@ class CasioLcdScreen extends StatelessWidget {
                   )
                 : Stack(
                     children: [
-                      Align(
-                        alignment: isMultiLineLatex
-                            ? Alignment.center
-                            : Alignment.centerRight,
-                        child: LayoutBuilder(
+                      if (supplementaryVisualView != null && hasSteps)
+                        LayoutBuilder(
                           builder: (context, constraints) {
                             final cleanDisplay =
                                 CasioLcdScreen.sanitizeForMathTex(displayLatex);
-                            return ConstrainedBox(
-                              constraints: BoxConstraints(
-                                maxWidth: constraints.maxWidth,
-                                maxHeight: constraints.maxHeight,
-                              ),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: isMultiLineLatex
-                                    ? Alignment.center
-                                    : Alignment.centerRight,
-                                child: Math.tex(
-                                  cleanDisplay,
-                                  textStyle: TextStyle(
-                                    fontSize: latexFontSize,
-                                    color: formulaColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  onErrorFallback: (err) => Text(
-                                    cleanDisplay,
-                                    style: TextStyle(
-                                      fontSize: latexFontSize * 0.75,
-                                      color: formulaColor,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'monospace',
+                            return Column(
+                              children: [
+                                Expanded(
+                                  flex: 4,
+                                  child: Align(
+                                    alignment: Alignment.center,
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Math.tex(
+                                        cleanDisplay,
+                                        textStyle: TextStyle(
+                                          fontSize: latexFontSize * 0.9,
+                                          color: formulaColor,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        onErrorFallback: (err) => Text(
+                                          cleanDisplay,
+                                          style: TextStyle(
+                                            fontSize: latexFontSize * 0.7,
+                                            color: formulaColor,
+                                            fontWeight: FontWeight.w600,
+                                            fontFamily: 'monospace',
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
+                                const SizedBox(height: 3),
+                                Expanded(
+                                  flex: 6,
+                                  child: supplementaryVisualView!,
+                                ),
+                              ],
                             );
                           },
+                        )
+                      else
+                        Align(
+                          alignment: isMultiLineLatex
+                              ? Alignment.center
+                              : Alignment.centerRight,
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final cleanDisplay =
+                                  CasioLcdScreen.sanitizeForMathTex(displayLatex);
+                              return ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: constraints.maxWidth,
+                                  maxHeight: constraints.maxHeight,
+                                ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: isMultiLineLatex
+                                      ? Alignment.center
+                                      : Alignment.centerRight,
+                                  child: Math.tex(
+                                    cleanDisplay,
+                                    textStyle: TextStyle(
+                                      fontSize: latexFontSize,
+                                      color: formulaColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    onErrorFallback: (err) => Text(
+                                      cleanDisplay,
+                                      style: TextStyle(
+                                        fontSize: latexFontSize * 0.75,
+                                        color: formulaColor,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'monospace',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
-                      ),
                       if (inequalitySignBadge != null && !hasSteps)
                         Positioned(
                           top: 0,
@@ -538,47 +585,49 @@ class CasioLcdScreen extends StatelessWidget {
                   ),
           ),
 
-          const SizedBox(height: 4),
+          if (showBottomNote) ...[
+            const SizedBox(height: 4),
 
-          // 4. Caja inferior de explicación pedagógica o alerta de examen
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            decoration: BoxDecoration(
-              color: warningBg,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: warningBorder,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  warningTrick != null
-                      ? Icons.warning_amber_rounded
-                      : Icons.info_outline_rounded,
-                  size: 15,
-                  color: warningIconColor,
+            // 4. Caja inferior de explicación pedagógica o alerta de examen
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              decoration: BoxDecoration(
+                color: warningBg,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: warningBorder,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: maxNoteHeight),
-                    child: SingleChildScrollView(
-                      child: Text(
-                        warningTrick ?? pedagogicalNote,
-                        style: TextStyle(
-                          color: warningTextColor,
-                          fontSize: 11.5,
-                          height: 1.25,
-                          fontWeight: FontWeight.w600,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    warningTrick != null
+                        ? Icons.warning_amber_rounded
+                        : Icons.info_outline_rounded,
+                    size: 15,
+                    color: warningIconColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: maxNoteHeight),
+                      child: SingleChildScrollView(
+                        child: Text(
+                          warningTrick ?? pedagogicalNote,
+                          style: TextStyle(
+                            color: warningTextColor,
+                            fontSize: 11.5,
+                            height: 1.25,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       );
               },
@@ -604,164 +653,181 @@ class CasioLcdScreen extends StatelessWidget {
       onMenuCursorChanged?.call(nextPage * menuItemsPerPage);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Barra de estado superior del menú con paginador PÁGINA X/3 ◀ ▶
-        Row(
+    return LayoutBuilder(
+      builder: (context, menuConstraints) {
+        final content = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _StatusBadge(
-              label: 'S',
-              active: isShiftActive,
-              activeColor: const Color(0xFFD99B26),
-              isOledDark: isOledDark,
-            ),
-            const SizedBox(width: 4),
-            _StatusBadge(
-              label: 'A',
-              active: isAlphaActive,
-              activeColor: const Color(0xFFD64545),
-              isOledDark: isOledDark,
-            ),
-            const SizedBox(width: 4),
-            _StatusBadge(
-              label: 'M',
-              active: isMemoryActive,
-              activeColor: const Color(0xFF10B981),
-              isOledDark: isOledDark,
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              decoration: BoxDecoration(
-                color: isOledDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
-                borderRadius: BorderRadius.circular(3),
-              ),
-              child: const Text(
-                'MENU',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.0,
+            // Barra de estado superior del menú con paginador PÁGINA X/3 ◀ ▶
+            Row(
+              children: [
+                _StatusBadge(
+                  label: 'S',
+                  active: isShiftActive,
+                  activeColor: const Color(0xFFD99B26),
+                  isOledDark: isOledDark,
                 ),
-              ),
-            ),
-            const Spacer(),
-            GestureDetector(
-              key: const Key('menu_page_prev'),
-              onTap: () => goToPage(-1),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                child: Text(
-                  '◀',
-                  style: TextStyle(
-                    color: formulaColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                const SizedBox(width: 4),
+                _StatusBadge(
+                  label: 'A',
+                  active: isAlphaActive,
+                  activeColor: const Color(0xFFD64545),
+                  isOledDark: isOledDark,
+                ),
+                const SizedBox(width: 4),
+                _StatusBadge(
+                  label: 'M',
+                  active: isMemoryActive,
+                  activeColor: const Color(0xFF10B981),
+                  isOledDark: isOledDark,
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: isOledDark ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
+                    borderRadius: BorderRadius.circular(3),
                   ),
-                ),
-              ),
-            ),
-            Text(
-              'PÁGINA ${currentPage + 1}/$totalPages',
-              key: const Key('menu_page_indicator'),
-              style: TextStyle(
-                color: formulaColor,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'monospace',
-                letterSpacing: 0.5,
-              ),
-            ),
-            GestureDetector(
-              key: const Key('menu_page_next'),
-              onTap: () => goToPage(1),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                child: Text(
-                  '▶',
-                  style: TextStyle(
-                    color: formulaColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-
-        // Cuadrícula 2×2 espaciosa y legible (4 módulos por página)
-        Expanded(
-          child: Column(
-            children: [
-              for (int row = 0; row < 2; row++) ...[
-                if (row > 0) const SizedBox(height: 6),
-                Expanded(
-                  child: Row(
-                    children: [
-                      for (int col = 0; col < 2; col++) ...[
-                        if (col > 0) const SizedBox(width: 6),
-                        Expanded(
-                          child: (pageStart + row * 2 + col) < _classWizMenuItems.length
-                              ? _buildMenuTile(pageStart + row * 2 + col, formulaColor)
-                              : const SizedBox.shrink(),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 6),
-
-        // Barra inferior con el nombre del modo seleccionado y ayuda de navegación
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: isOledDark ? const Color(0xFF1E293B) : const Color(0xFFCBD5CE),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: isOledDark ? const Color(0xFF334155) : const Color(0xFF94A39B),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: FittedBox(
-                  alignment: Alignment.centerLeft,
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    selectedItem.fullTitle,
+                  child: const Text(
+                    'MENU',
                     style: TextStyle(
-                      color: formulaColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'monospace',
-                      letterSpacing: 0.4,
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ),
+                const Spacer(),
+                GestureDetector(
+                  key: const Key('menu_page_prev'),
+                  onTap: () => goToPage(-1),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    child: Text(
+                      '◀',
+                      style: TextStyle(
+                        color: formulaColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                Text(
+                  'PÁGINA ${currentPage + 1}/$totalPages',
+                  key: const Key('menu_page_indicator'),
+                  style: TextStyle(
+                    color: formulaColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'monospace',
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                GestureDetector(
+                  key: const Key('menu_page_next'),
+                  onTap: () => goToPage(1),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    child: Text(
+                      '▶',
+                      style: TextStyle(
+                        color: formulaColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+
+            // Cuadrícula 2×2 espaciosa y legible (4 módulos por página)
+            Expanded(
+              child: Column(
+                children: [
+                  for (int row = 0; row < 2; row++) ...[
+                    if (row > 0) const SizedBox(height: 6),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          for (int col = 0; col < 2; col++) ...[
+                            if (col > 0) const SizedBox(width: 6),
+                            Expanded(
+                              child: (pageStart + row * 2 + col) < _classWizMenuItems.length
+                                  ? _buildMenuTile(pageStart + row * 2 + col, formulaColor)
+                                  : const SizedBox.shrink(),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                '[◀ ▶] o [1-9, =]',
-                style: TextStyle(
-                  color: formulaColor.withValues(alpha: 0.72),
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w600,
+            ),
+
+            const SizedBox(height: 6),
+
+            // Barra inferior con el nombre del modo seleccionado y ayuda de navegación
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: isOledDark ? const Color(0xFF1E293B) : const Color(0xFFCBD5CE),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: isOledDark ? const Color(0xFF334155) : const Color(0xFF94A39B),
                 ),
               ),
-            ],
-          ),
-        ),
-      ],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: FittedBox(
+                      alignment: Alignment.centerLeft,
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        selectedItem.fullTitle,
+                        style: TextStyle(
+                          color: formulaColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'monospace',
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '[◀ ▶] o [1-9, =]',
+                    style: TextStyle(
+                      color: formulaColor.withValues(alpha: 0.72),
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+
+        if (menuConstraints.maxHeight < 140) {
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.center,
+            child: SizedBox(
+              width: menuConstraints.maxWidth,
+              height: 140,
+              child: content,
+            ),
+          );
+        }
+        return content;
+      },
     );
   }
 

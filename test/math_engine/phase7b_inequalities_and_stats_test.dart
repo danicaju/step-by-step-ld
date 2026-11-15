@@ -116,8 +116,8 @@ void main() {
       final res = InequalitySolver.solveString('x^2 - 4x + 3 <= 0');
 
       expect(res.steps.length, equals(3));
-      expect(res.steps[0].latexExpression, contains('x_1 = 1'));
-      expect(res.steps[0].latexExpression, contains('x_2 = 3'));
+      expect(res.steps[0].latexExpression, contains('x_{1} = 1'));
+      expect(res.steps[0].latexExpression, contains('x_{2} = 3'));
       expect(res.steps[1].latexExpression, contains(r'\begin{array}{c|ccc}'));
       expect(res.exactResultLatex, contains('[1, 3]'));
       _expectValidResolution(res, 'x^2 - 4x + 3 <= 0');
@@ -216,10 +216,10 @@ void main() {
       expect(res.steps[2].latexExpression, contains(r'\sigma^2'));
       expect(res.steps[2].latexExpression, contains(r'\sqrt{2}'));
       expect(res.steps[2].warningTrick, isNotNull);
-      expect(res.steps[3].latexExpression, contains('M_o &= 4'));
-      expect(res.steps[3].latexExpression, contains('M_e &= 4'));
-      expect(res.steps[3].latexExpression, contains('Q_1 &= 3'));
-      expect(res.steps[3].latexExpression, contains('Q_3 = 5'));
+      expect(res.steps[3].latexExpression, contains('M_{o} &= 4'));
+      expect(res.steps[3].latexExpression, contains('M_{e} &= 4'));
+      expect(res.steps[3].latexExpression, contains('Q_{1} &= 3'));
+      expect(res.steps[3].latexExpression, contains('Q_{3} = 5'));
       expect(res.exactResultLatex, contains(r'\bar{x} = 4'));
       expect(res.exactResultLatex, contains(r'\sigma = \sqrt{2}'));
 

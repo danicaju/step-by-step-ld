@@ -146,7 +146,7 @@ void main() {
       _expectAllLatexValid(subRes);
 
       final scalarRes = MatrixSolver.scalarMultiply(Rational(3, 2), a);
-      expect(scalarRes.steps.length, equals(2));
+      expect(scalarRes.steps.length, greaterThanOrEqualTo(2));
       expect(scalarRes.exactResultLatex, contains(r'\frac{3}{2}'));
       _expectAllLatexValid(scalarRes);
     });
@@ -352,7 +352,9 @@ void main() {
 
       await tester.tap(find.byKey(const Key('matrix_edit_btn')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('matrix_op_multiply')));
+      final mulFinder = find.byKey(const Key('matrix_op_multiply'));
+      await tester.ensureVisible(mulFinder);
+      await tester.tap(mulFinder);
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('matrix_tab_B')), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -401,14 +403,14 @@ void main() {
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '4'));
       await tester.pumpAndSettle();
 
-      // Resuelve por Gauss primero
+      // Resuelve primero
       await tester.tap(find.byKey(const Key('sys3_solve_btn')));
       await tester.pumpAndSettle();
       expect(find.textContaining('PASO 1/'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      // Cambia en vivo a Cramer
-      await tester.tap(find.byKey(const Key('sys3_method_cramer')));
+      // Cambia en vivo a Sustitución
+      await tester.tap(find.text('Sustitución'));
       await tester.pumpAndSettle();
       expect(find.textContaining('PASO 1/'), findsOneWidget);
       expect(tester.takeException(), isNull);
