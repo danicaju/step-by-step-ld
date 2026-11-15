@@ -250,7 +250,8 @@ class CasioLcdScreen extends StatelessWidget {
                 final double maxNoteHeight = lcdConstraints.maxHeight.isFinite
                     ? (lcdConstraints.maxHeight * 0.34).clamp(28.0, 68.0)
                     : 68.0;
-                final bool showBottomNote = lcdConstraints.maxHeight >= 118.0 &&
+                final bool showBottomNote = lcdConstraints.maxHeight >=
+                        (supplementaryVisualView != null ? 190.0 : 118.0) &&
                     (coefficientView == null || lcdConstraints.maxHeight >= 140.0);
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1181,6 +1182,13 @@ const List<_ClassWizMenuItem> _classWizMenuItems = [
     shortTitle: 'Derivadas e Integrales',
     fullTitle: '11:Derivadas e Integrales',
     icon: Icons.calculate_rounded,
+  ),
+  _ClassWizMenuItem(
+    modeId: 12,
+    number: '12',
+    shortTitle: 'Sistemas Inec.',
+    fullTitle: '12:Sistemas de Inecuaciones (1D / 2D)',
+    icon: Icons.alt_route_rounded,
   ),
 ];
 

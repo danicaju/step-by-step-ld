@@ -736,38 +736,52 @@ class InequalitySolver {
     // Calcular la intersección de intervalos
     final intervals1 = visualDataList.isNotEmpty ? visualDataList[0].primaryIntervals : <InequalityInterval>[];
     final intervals2 = visualDataList.length > 1 ? visualDataList[1].primaryIntervals : <InequalityInterval>[];
-
-    final intersection = _intersectIntervalLists(intervals1, intervals2);
+    var intersection = _intersectIntervalLists(intervals1, intervals2);
+    if (visualDataList.length > 2) {
+      final intervals3 = visualDataList[2].primaryIntervals;
+      intersection = _intersectIntervalLists(intersection, intervals3);
+    }
 
     final s1Latex = singleResolutions[0].exactResultLatex;
     final s2Latex = singleResolutions.length > 1 ? singleResolutions[1].exactResultLatex : '';
+    final s3Latex = singleResolutions.length > 2 ? singleResolutions[2].exactResultLatex : '';
     final sfLatex = intersection.isEmpty
         ? r'\emptyset'
         : intersection.map((i) => i.toIntervalLatex()).join(r' \cup ');
 
-    // Paso 3: Representación en la recta e intersección con rayado
+    final capLatex = singleResolutions.length > 2
+        ? r'S_{1} \cap S_{2} \cap S_{3}'
+        : r'S_{1} \cap S_{2}';
+
+    // Paso de representación en la recta e intersección con rayado
+    final repLatex = singleResolutions.length > 2
+        ? 'S_{1} = $s1Latex \\quad (\\text{rayado } / / /) \\\\\n'
+          'S_{2} = $s2Latex \\quad (\\text{rayado } \\backslash \\backslash \\backslash) \\\\\n'
+          'S_{3} = $s3Latex \\quad (\\text{rayado horizontal}) \\\\\n'
+          'S_{f} = $capLatex = $sfLatex'
+        : 'S_{1} = $s1Latex \\quad (\\text{rayado } / / /) \\\\\n'
+          'S_{2} = $s2Latex \\quad (\\text{rayado } \\backslash \\backslash \\backslash) \\\\\n'
+          'S_{f} = $capLatex = $sfLatex \\quad (\\text{zona en malla XXX})';
+
     steps.add(
       MathStep(
         index: steps.length + 1,
         shortTitle: 'Representación en la recta e intersección',
-        latexExpression:
-            'S_{1} = $s1Latex \\quad (\\text{rayado } / / /) \\\\\n'
-            'S_{2} = $s2Latex \\quad (\\text{rayado } \\backslash \\backslash \\backslash) \\\\\n'
-            'S_{f} = S_{1} \\cap S_{2} = $sfLatex \\quad (\\text{zona en malla XXX})',
+        latexExpression: repLatex,
         pedagogicalNote:
-            'Dibujamos sobre la recta real los puntos críticos ordenados. Trazamos la solución S₁ con rayado inclinado (///) '
-            'y la solución S₂ con rayado inclinado opuesto (\\\\\\). La solución final es la zona común donde ambos rayados se cruzan formando una malla (XXX).',
+            'Dibujamos sobre la recta real los puntos críticos ordenados. Trazamos cada solución con su rayado correspondiente. '
+            'La solución final es la zona común donde todos los rayados coinciden.',
       ),
     );
 
-    // Paso 4: Solución final
+    // Paso final: Solución final
     final isNone = intersection.isEmpty;
     steps.add(
       MathStep(
         index: steps.length + 1,
         shortTitle: 'Solución final del sistema',
         latexExpression: isNone
-            ? r'S_{f} = S_{1} \cap S_{2} = \emptyset \quad (\text{Sin solucion})'
+            ? '$capLatex = \\emptyset \\quad (\\text{Sin solucion})'
             : 'x \\in S_{f} = $sfLatex',
         pedagogicalNote: isNone
             ? 'Los intervalos no tienen ningún punto en común: el sistema de inecuaciones es incompatible y no tiene solución (conjunto vacío ∅).'
@@ -775,7 +789,7 @@ class InequalitySolver {
       ),
     );
 
-    // Recoger todos los puntos críticos de ambas inecuaciones
+    // Recoger todos los puntos críticos de todas las inecuaciones
     final allCritPoints = <CriticalPoint>[];
     for (final v in visualDataList) {
       allCritPoints.addAll(v.criticalPoints);
@@ -796,9 +810,9 @@ class InequalitySolver {
       primaryIntervals: intervals1,
       secondaryIntervals: intervals2,
       intersectionIntervals: intersection,
-      solutionLatex: 'S_1 \\cap S_2 = $sfLatex',
-      label1: 'S_1',
-      label2: 'S_2',
+      solutionLatex: '$capLatex = $sfLatex',
+      label1: 'S_{1}',
+      label2: 'S_{2}',
     );
 
     _visualDataExpando[res] = visualData;
@@ -876,7 +890,25 @@ class InequalitySolver {
 
     final originalLatex = customOriginalLatex ??
         '${AlgebraicLatexFormatter.quadraticExpression(a, b, c)} ${sign.latex} 0';
+    final canonicalLatex =
+        '${AlgebraicLatexFormatter.quadraticExpression(a, b, c)} ${sign.latex} 0';
     final List<MathStep> steps = [];
+
+    // Paso de transposición si la entrada original no está igualada a 0
+    final bool needsTransposition = customOriginalLatex != null &&
+        customOriginalLatex.replaceAll(' ', '') != canonicalLatex.replaceAll(' ', '');
+    if (needsTransposition) {
+      steps.add(
+        MathStep(
+          index: steps.length + 1,
+          shortTitle: 'Transponer terminos e igualar a cero',
+          latexExpression: '$originalLatex \\implies $canonicalLatex',
+          pedagogicalNote:
+              'Pasamos todos los términos al primer miembro para dejar el segundo miembro igual a cero.',
+        ),
+      );
+    }
+
     final int discriminant = b * b - 4 * a * c;
 
     // -----------------------------------------------------------------
@@ -890,7 +922,7 @@ class InequalitySolver {
       final eqLatex = '${AlgebraicLatexFormatter.quadraticExpression(a, b, c)} = 0';
       steps.add(
         MathStep(
-          index: 1,
+          index: steps.length + 1,
           shortTitle: 'Resolver la ecuación asociada (= 0)',
           latexExpression:
               '$eqLatex \\implies \\Delta = $discriminant > 0 \\implies x_{1} = ${r1.latex}, \\; x_{2} = ${r2.latex}',
@@ -908,29 +940,6 @@ class InequalitySolver {
       final v1 = _evalPolyAt(a, b, c, t1);
       final v2 = _evalPolyAt(a, b, c, t2);
 
-      final s0 = v0.numerator >= 0 ? '+' : '-';
-      final s1 = v1.numerator >= 0 ? '+' : '-';
-      final s2 = v2.numerator >= 0 ? '+' : '-';
-
-      final signTableLatex =
-          '\\begin{array}{c|ccc}\n'
-          '\\text{Intervalo} & (-\\infty, ${r1.latex}) & (${r1.latex}, ${r2.latex}) & (${r2.latex}, +\\infty) \\\\\n'
-          '\\hline\n'
-          '\\text{Prueba } x & ${t0.toLatex()} & ${t1.toLatex()} & ${t2.toLatex()} \\\\\n'
-          '\\text{Valor } P(x) & ${v0.toLatex()} & ${v1.toLatex()} & ${v2.toLatex()} \\\\\n'
-          '\\text{Signo} & $s0 & $s1 & $s2\n'
-          '\\end{array}';
-
-      steps.add(
-        MathStep(
-          index: 2,
-          shortTitle: 'Tabla de signos en la recta real',
-          latexExpression: signTableLatex,
-          pedagogicalNote:
-              'Elegimos un valor de prueba en cada tramo, lo sustituimos en P(x) y anotamos si el resultado es positivo (+) o negativo (-).',
-        ),
-      );
-
       final bool wantOuter = sign.matchesSign(a > 0 ? 1 : -1);
       final String solInterval;
       if (wantOuter) {
@@ -944,21 +953,17 @@ class InequalitySolver {
         solInterval = '$leftBracket${r1.latex}, ${r2.latex}$rightBracket';
       }
 
-      final wantedSymbol =
-          (sign == InequalitySign.greater || sign == InequalitySign.greaterOrEqual)
-              ? 'positivos (+)'
-              : 'negativos (-)';
       final boundExplain = sign.isStrict
           ? 'Como la desigualdad es estricta (${sign.symbol}), los extremos quedan abiertos con paréntesis ( ).'
           : 'Como incluye el igual (${sign.symbol}), las raíces donde P(x)=0 se incluyen con corchetes [ ].';
 
       steps.add(
         MathStep(
-          index: 3,
-          shortTitle: 'Solución en notación de intervalos',
+          index: steps.length + 1,
+          shortTitle: 'Estudio de zonas en la recta real y solución',
           latexExpression: 'x \\in $solInterval',
           pedagogicalNote:
-              'Seleccionamos los tramos $wantedSymbol de la tabla. $boundExplain',
+              'La recta real con carteles SÍ y NO sustituye a la tabla tradicional de signos. $boundExplain',
         ),
       );
 
@@ -1021,37 +1026,12 @@ class InequalitySolver {
 
       steps.add(
         MathStep(
-          index: 1,
+          index: steps.length + 1,
           shortTitle: 'Resolver la ecuación asociada (Δ = 0)',
           latexExpression:
               '${AlgebraicLatexFormatter.quadraticExpression(a, b, c)} = 0 \\implies \\Delta = 0 \\implies x_{0} = $rLatex',
           pedagogicalNote:
               'El discriminante es nulo: existe una única raíz doble x₀ = $rLatex donde la parábola toca el eje X sin cambiar de signo a los lados.',
-        ),
-      );
-
-      final t0 = _pickTestPoint(low: null, high: root.toDouble());
-      final t1 = _pickTestPoint(low: root.toDouble(), high: null);
-      final v0 = _evalPolyAt(a, b, c, t0);
-      final v1 = _evalPolyAt(a, b, c, t1);
-      final s0 = v0.numerator >= 0 ? '+' : '-';
-      final s1 = v1.numerator >= 0 ? '+' : '-';
-
-      final signTableLatex =
-          '\\begin{array}{c|cc}\n'
-          '\\text{Intervalo} & (-\\infty, $rLatex) & ($rLatex, +\\infty) \\\\\n'
-          '\\hline\n'
-          '\\text{Prueba } x & ${t0.toLatex()} & ${t1.toLatex()} \\\\\n'
-          '\\text{Signo} & $s0 & $s1\n'
-          '\\end{array}';
-
-      steps.add(
-        MathStep(
-          index: 2,
-          shortTitle: 'Tabla de signos alrededor de la raíz doble',
-          latexExpression: signTableLatex,
-          pedagogicalNote:
-              'A ambos lados de una raíz doble el signo es constante e igual al del coeficiente a = $a.',
         ),
       );
 
@@ -1070,11 +1050,11 @@ class InequalitySolver {
 
       steps.add(
         MathStep(
-          index: 3,
-          shortTitle: 'Solución en intervalos',
+          index: steps.length + 1,
+          shortTitle: 'Estudio de zonas alrededor de la raíz doble y solución',
           latexExpression: 'x \\in $solInterval',
           pedagogicalNote:
-              'Combinamos los tramos válidos con la comprobación de si la raíz x₀ = $rLatex cumple la desigualdad en el punto exacto.',
+              'A ambos lados de la raíz doble el signo de la parábola es constante. La recta real visual muestra la solución.',
           warningTrick: solInterval == r'\emptyset'
               ? 'Un cuadrado real nunca puede ser estrictamente negativo.'
               : null,
@@ -1120,7 +1100,7 @@ class InequalitySolver {
     // -----------------------------------------------------------------
     steps.add(
       MathStep(
-        index: 1,
+        index: steps.length + 1,
         shortTitle: 'Ecuación asociada sin raíces reales (Δ < 0)',
         latexExpression:
             '\\Delta = $discriminant < 0 \\implies \\text{Sin raices reales}',
@@ -1129,37 +1109,16 @@ class InequalitySolver {
       ),
     );
 
-    final vTest = _evalPolyAt(a, b, c, Rational(0));
-    final signStr = a > 0 ? '+' : '-';
-    final tableLatex =
-        '\\begin{array}{c|c}\n'
-        '\\text{Intervalo} & (-\\infty, +\\infty) \\\\\n'
-        '\\hline\n'
-        '\\text{Prueba } x & 0 \\\\\n'
-        '\\text{Valor } P(0) & ${vTest.toLatex()} \\\\\n'
-        '\\text{Signo} & $signStr\n'
-        '\\end{array}';
-
-    steps.add(
-      MathStep(
-        index: 2,
-        shortTitle: 'Tabla de signo único en toda la recta',
-        latexExpression: tableLatex,
-        pedagogicalNote:
-            'Evaluando en cualquier punto (por ejemplo x = 0), vemos que P(x) siempre tiene signo $signStr.',
-      ),
-    );
-
     final bool alwaysTrue = sign.matchesSign(a > 0 ? 1 : -1);
     final String solInterval = alwaysTrue ? r'(-\infty, +\infty)' : r'\emptyset';
 
     steps.add(
       MathStep(
-        index: 3,
-        shortTitle: 'Solución final',
+        index: steps.length + 1,
+        shortTitle: 'Estudio de signo en toda la recta y solución',
         latexExpression: alwaysTrue
             ? r'x \in (-\infty, +\infty) = \mathbb{R}'
-            : r'\text{Solucion: } \emptyset',
+            : r'\text{Sin solucion}',
         pedagogicalNote: alwaysTrue
             ? 'El signo del polinomio cumple la desigualdad en cualquier x real: solución (-∞, +∞).'
             : 'Ningún número real hace que el signo cumpla la desigualdad: el conjunto solución es vacío (∅).',

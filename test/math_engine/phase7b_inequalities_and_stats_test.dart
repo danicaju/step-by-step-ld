@@ -9,7 +9,6 @@ import 'package:casio_tutor_calc/domain/math_engine/parser/expression_parser.dar
 import 'package:casio_tutor_calc/domain/math_engine/solvers/inequality_solver.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/statistics_solver.dart';
 import 'package:casio_tutor_calc/presentation/screens/calculator_screen.dart';
-import 'package:casio_tutor_calc/presentation/widgets/casio_coefficient_view.dart';
 import 'package:casio_tutor_calc/presentation/widgets/casio_lcd_screen.dart';
 import 'package:casio_tutor_calc/presentation/widgets/casio_physical_key.dart';
 import 'package:casio_tutor_calc/presentation/widgets/casio_stat_table_view.dart';
@@ -112,13 +111,14 @@ void main() {
       _expectValidResolution(impossible, 'deg-impossible');
     });
 
-    test('2.º grado con tabla de signos: x^2 - 4x + 3 <= 0 => [1, 3]', () {
+    test('2.º grado con recta real visual: x^2 - 4x + 3 <= 0 => [1, 3]', () {
       final res = InequalitySolver.solveString('x^2 - 4x + 3 <= 0');
 
-      expect(res.steps.length, equals(3));
+      expect(res.steps.length, equals(2));
       expect(res.steps[0].latexExpression, contains('x_{1} = 1'));
       expect(res.steps[0].latexExpression, contains('x_{2} = 3'));
-      expect(res.steps[1].latexExpression, contains(r'\begin{array}{c|ccc}'));
+      // Verificamos que la tabla antigua \begin{array} ha sido eliminada a favor de la recta real
+      expect(res.steps[1].latexExpression.contains(r'\begin{array}'), isFalse);
       expect(res.exactResultLatex, contains('[1, 3]'));
       _expectValidResolution(res, 'x^2 - 4x + 3 <= 0');
     });
@@ -132,7 +132,7 @@ void main() {
       );
 
       expect(res.exactResultLatex, contains(r'(-\infty, 1) \cup (3, +\infty)'));
-      expect(res.steps[1].latexExpression, contains(r'\begin{array}{c|ccc}'));
+      expect(res.steps[1].latexExpression.contains(r'\begin{array}'), isFalse);
       _expectValidResolution(res, 'x^2 - 4x + 3 > 0');
     });
 
@@ -331,33 +331,30 @@ void main() {
       expect(find.byType(Math), findsWidgets);
       expect(tester.takeException(), isNull);
 
-      // Cambiar a 2.º grado en Modo 6 -> plantilla CasioCoefficientView con celda de signo
+      // Cambiar a 2.º grado en Modo 6 -> entrada libre en editor natural
       await tester.tap(find.byKey(const Key('ineq_deg_2')));
       await tester.pumpAndSettle();
 
       expect(find.text('M6: INEC. 2°'), findsOneWidget);
-      expect(find.byType(CasioCoefficientView), findsOneWidget);
-      expect(find.byKey(const Key('ineq_quad_sign_cell')), findsOneWidget);
 
-      // Ciclar signo con la celda de signo en CasioCoefficientView (< -> <=)
-      await tester.tap(find.byKey(const Key('ineq_quad_sign_cell')));
-      await tester.pumpAndSettle();
-
-      // Introducir a=1, b=-4, c=3 y resolver x² - 4x + 3 <= 0
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, '1'));
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
+      // Escribir x^2 - 4x + 3 <= 0 en el editor natural y resolver
+      await tester.tap(find.byKey(const Key('ineq_var_x')));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, 'x²'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '-'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '4'));
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
+      await tester.tap(find.byKey(const Key('ineq_var_x')));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '+'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '3'));
+      await tester.tap(find.byKey(const Key('ineq_sign_lessOrEqual')));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '0'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('PASO 1/3'), findsOneWidget);
-      // Avanzar con D-Pad ▶ hasta paso 2 (tabla de signos) y comprobar cero excepciones
+      expect(find.textContaining('PASO 1/'), findsOneWidget);
+      // Avanzar con D-Pad ▶ hasta paso 2 (recta real visual) y comprobar cero excepciones
       await tester.tap(find.byKey(const Key('replay_right')));
       await tester.pumpAndSettle();
-      expect(find.textContaining('PASO 2/3'), findsOneWidget);
+      expect(find.textContaining('PASO 2/'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

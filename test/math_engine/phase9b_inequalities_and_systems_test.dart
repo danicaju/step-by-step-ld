@@ -157,5 +157,43 @@ void main() {
         }
       }
     });
+
+    test('9. Inecuación de 2.º grado desordenada desde string y sin tabla de signos antigua', () {
+      // 2x^2 + 5x > 4 => 2x^2 + 5x - 4 > 0
+      final res = InequalitySolver.solveString('2x^2 + 5x > 4');
+      expect(res.steps.isNotEmpty, isTrue);
+      // Comprobar que el paso 1 transpone e iguala a 0
+      expect(res.steps.first.shortTitle, contains('igualar a cero'));
+      expect(res.steps.first.latexExpression, contains('2x^{2} + 5x - 4 > 0'));
+
+      // Verificar que NO hay tabla antigua \begin{array}
+      for (final step in res.steps) {
+        expect(step.latexExpression.contains(r'\begin{array}'), isFalse,
+            reason: 'Se detectó tabla antigua array en lugar de la recta visual');
+      }
+
+      // Comprobar que genera visualización con carteles SÍ / NO
+      final visual = InequalitySolver.getVisualData(res);
+      expect(visual, isNotNull);
+      expect(visual!.signTestIntervals, isNotNull);
+      expect(visual.signTestIntervals!.length, equals(3));
+    });
+
+    test('10. Sistema de 3 inecuaciones 1D con intersección visual', () {
+      final outcome = InequalitySolver.solveSystem1D([
+        'x > 1',
+        r'x \le 6',
+        '2x + 1 >= 5', // 2x >= 4 => x >= 2
+      ]);
+
+      expect(outcome.resolution.exactResultLatex, contains('[2, 6]'));
+      final visual = outcome.visualData;
+      expect(visual.isSystem, isTrue);
+      expect(visual.primaryIntervals.isNotEmpty, isTrue);
+      expect(visual.secondaryIntervals?.isNotEmpty, isTrue);
+      expect(visual.intersectionIntervals?.isNotEmpty, isTrue);
+      expect(visual.intersectionIntervals!.first.start, closeTo(2.0, 1e-4));
+      expect(visual.intersectionIntervals!.first.end, closeTo(6.0, 1e-4));
+    });
   });
 }

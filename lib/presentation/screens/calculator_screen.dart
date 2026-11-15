@@ -137,16 +137,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   FunctionAnalysisResult? _currentGraphAnalysis;
   NotablePoint? _selectedGraphPoint;
 
-  // Estado Modo 6 (Inecuaciones: 1 = lineal/valor absoluto, 2 = 2.º grado, 3 = sistemas 1D, 4 = sistemas 2D)
+  // Estado Modo 6 (Inecuaciones individuales: 1 = 1.º Grado, 2 = 2.º Grado, 3 = Valor Absoluto / Racional)
   int _ineqDegree = 1;
   InequalitySign _inequalitySign = InequalitySign.less;
-  final List<String> _ineqQuadValues = ['', '', ''];
-  final List<String> _ineqQuadLabels = ['a', 'b', 'c'];
-  int _ineqQuadActiveIndex = 0; // 0..2 coeficientes, 3 selector de signo
-  final List<String> _ineqSys1Values = ['', ''];
-  final List<String> _ineqSys2Values = ['x + y <= 4', '2x - y >= 1', 'x >= 0', 'y >= 0'];
-  bool _show2DRegionView = true;
   Inequality1DVisualData? _activeIneqVisualData;
+
+  // Estado Modo 12 (Sistemas de Inecuaciones: 1D o 2D)
+  int _ineqSysUnknowns = 1; // 1 = 1 Incóg. (x), 2 = 2 Incóg. (x, y)
+  int _ineqSysRows = 2; // 2 o 3 inecuaciones
+  final List<String> _ineqSysRowInputs = ['', '', ''];
+  int _ineqSysActiveRow = 0;
+  bool _show2DRegionView = true;
   FeasibleRegion2DVisualData? _currentFeasibleRegion;
 
   // Estado Modo 7 (Estadística 1-Var: tabla xi | fi)
@@ -224,8 +225,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       (_calculatorMode == 4 &&
           !_polyIsNotableMode &&
           !_isChoosingRuffiniDegree) ||
-      _calculatorMode == 5 ||
-      (_calculatorMode == 6 && _ineqDegree == 2);
+      _calculatorMode == 5;
 
   /// Modos con celdas estructuradas donde solo entran tokens numéricos (`0-9`, `-`, `/`, `.`).
   bool get _isGridOrStructuredMode =>
@@ -237,7 +237,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   /// Verdadero cuando el cursor activo edita una expresión simbólica (`f(x)`, Modo 1, 2, 4 Notables, 6 lineal).
   bool get _supportsExpressionInput =>
-      !_isCoefficientMode && !_isGridOrStructuredMode;
+      !_isCoefficientMode && !_isGridOrStructuredMode && _calculatorMode != 12;
 
   /// Verdadero solo en modos de expresión general con funciones científicas (`sin`, `log`, `√`, `mcm`).
   bool get _supportsScientificFns =>
@@ -252,8 +252,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return _ruffiniValues;
       case 5:
         return _graphValues;
-      case 6:
-        return _ineqDegree == 2 ? _ineqQuadValues : [];
       default:
         return [];
     }
@@ -268,8 +266,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return _ruffiniLabels;
       case 5:
         return _graphLabels;
-      case 6:
-        return _ineqDegree == 2 ? _ineqQuadLabels : [];
       default:
         return [];
     }
@@ -284,8 +280,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return _ruffiniActiveIndex;
       case 5:
         return _graphActiveIndex;
-      case 6:
-        return _ineqQuadActiveIndex;
       default:
         return 0;
     }
@@ -307,9 +301,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         break;
       case 5:
         _graphActiveIndex = val;
-        break;
-      case 6:
-        _ineqQuadActiveIndex = val;
         break;
     }
   }
@@ -420,7 +411,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _selectModeFromMenu(int mode) {
-    if (mode >= 1 && mode <= 11) {
+    if (mode >= 1 && mode <= 12) {
       setState(() {
         _isMenuOpen = false;
         _resetFieldsForMode(mode);
@@ -483,10 +474,16 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
     _ineqDegree = 1;
     _inequalitySign = InequalitySign.less;
-    for (int i = 0; i < _ineqQuadValues.length; i++) {
-      _ineqQuadValues[i] = '';
+    _activeIneqVisualData = null;
+
+    _ineqSysUnknowns = 1;
+    _ineqSysRows = 2;
+    for (int i = 0; i < _ineqSysRowInputs.length; i++) {
+      _ineqSysRowInputs[i] = '';
     }
-    _ineqQuadActiveIndex = 0;
+    _ineqSysActiveRow = 0;
+    _show2DRegionView = true;
+    _currentFeasibleRegion = null;
 
     _statRows = [(xi: '', fi: '')];
     _statActiveRow = 0;
@@ -886,54 +883,25 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
 
     if (_calculatorMode == 6) {
-      if (_ineqDegree == 1) {
-        final trimmed = _rawInput.trim();
-        if (trimmed.isEmpty || trimmed == '0') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Escribe una inecuación (ej: -2x + 4 < 10 o |x - 5| < 3).'),
-              backgroundColor: Color(0xFFB91C1C),
-            ),
-          );
-          return;
-        }
-        try {
-          final res = InequalitySolver.solveString(
-            _rawInput,
-            fallbackSign: _inequalitySign,
-          );
-          final visual = InequalitySolver.getVisualData(res);
-          setState(() {
-            _activeResolution = res;
-            _activeIneqVisualData = visual;
-            _currentFeasibleRegion = null;
-          });
-          _recordCurrentResolutionToHistory(res, 'M6: Inecuaciones');
-        } on FormatException catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error en inecuación: ${e.message}'),
-              backgroundColor: const Color(0xFFB91C1C),
-            ),
-          );
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al resolver: $e'),
-              backgroundColor: const Color(0xFFB91C1C),
-            ),
-          );
-        }
+      final trimmed = _rawInput.trim();
+      if (trimmed.isEmpty || trimmed == '0') {
+        final hint = _ineqDegree == 2
+            ? 'Escribe una inecuación de 2.º grado (ej: 2x^2 + 5x > 4 o x^2 - 4 <= 0).'
+            : (_ineqDegree == 3
+                ? 'Escribe una inecuación con valor absoluto o racional (ej: |x - 5| < 3 o (x-2)/(x+1) >= 0).'
+                : 'Escribe una inecuación de 1.º grado (ej: 3x - 5 >= 7 - x).');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(hint),
+            backgroundColor: const Color(0xFFB91C1C),
+          ),
+        );
         return;
-      } else if (_ineqDegree == 2) {
-        final a = _parseCoeffValue(_ineqQuadValues[0], defaultValue: 1);
-        final b = _parseCoeffValue(_ineqQuadValues[1], defaultValue: 0);
-        final c = _parseCoeffValue(_ineqQuadValues[2], defaultValue: 0);
-        final res = InequalitySolver.solveQuadratic(
-          a: a,
-          b: b,
-          c: c,
-          sign: _inequalitySign,
+      }
+      try {
+        final res = InequalitySolver.solveString(
+          _rawInput,
+          fallbackSign: _inequalitySign,
         );
         final visual = InequalitySolver.getVisualData(res);
         setState(() {
@@ -941,33 +909,59 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           _activeIneqVisualData = visual;
           _currentFeasibleRegion = null;
         });
-        _recordCurrentResolutionToHistory(res, 'M6: Inecuaciones 2.º Grado');
+        _recordCurrentResolutionToHistory(res, switch (_ineqDegree) {
+          2 => 'M6: Inecuaciones 2.º Grado',
+          3 => 'M6: Valor Absoluto / Racional',
+          _ => 'M6: Inecuaciones 1.º Grado',
+        });
+      } on FormatException catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error en inecuación: ${e.message}'),
+            backgroundColor: const Color(0xFFB91C1C),
+          ),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al resolver: $e'),
+            backgroundColor: const Color(0xFFB91C1C),
+          ),
+        );
+      }
+      return;
+    }
+
+    if (_calculatorMode == 12) {
+      final activeRows = _ineqSysRowInputs
+          .take(_ineqSysRows)
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty && s != '0')
+          .toList();
+
+      if (activeRows.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Introduce las inecuaciones del sistema en las filas de la llave.'),
+            backgroundColor: Color(0xFFB91C1C),
+          ),
+        );
         return;
-      } else if (_ineqDegree == 3) {
-        // Sistemas 1D: rayados cruzados
-        List<String> sys1Inputs = _ineqSys1Values.where((s) => s.trim().isNotEmpty).toList();
-        if (sys1Inputs.length < 2 && _rawInput.trim().isNotEmpty && _rawInput != '0') {
-          sys1Inputs = _rawInput.contains(';')
-              ? _rawInput.split(';')
-              : (_rawInput.contains(',') ? _rawInput.split(',') : [_rawInput]);
-        }
-        if (sys1Inputs.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Escribe inecuaciones separadas por coma (ej: 2x - 4 <= 6, -3x + 9 < 3).'),
-              backgroundColor: Color(0xFFB91C1C),
-            ),
-          );
-          return;
-        }
+      }
+
+      if (_ineqSysUnknowns == 1) {
+        // Sistemas 1D: Intersección y rayado sobre la recta real
         try {
-          final outcome = InequalitySolver.solveSystem1D(sys1Inputs);
+          final outcome = InequalitySolver.solveSystem1D(activeRows);
           setState(() {
             _activeResolution = outcome.resolution;
             _activeIneqVisualData = outcome.visualData;
             _currentFeasibleRegion = null;
           });
-          _recordCurrentResolutionToHistory(outcome.resolution, 'M6: Sistema Inecuaciones 1D');
+          _recordCurrentResolutionToHistory(
+            outcome.resolution,
+            'M12: Sistema Inecuaciones 1D ($_ineqSysRows Inec.)',
+          );
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -978,27 +972,23 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         }
         return;
       } else {
-        // Sistemas 2D: Región factible en el plano
-        List<String> sys2Inputs = _ineqSys2Values.where((s) => s.trim().isNotEmpty).toList();
-        if (_rawInput.trim().isNotEmpty && _rawInput != '0' && (_rawInput.contains(';') || _rawInput.contains(','))) {
-          sys2Inputs = _rawInput.contains(';') ? _rawInput.split(';') : _rawInput.split(',');
-        }
-        if (sys2Inputs.isEmpty) {
-          sys2Inputs = ['x + y <= 4', '2x - y >= 1', 'x >= 0', 'y >= 0'];
-        }
+        // Sistemas 2D: Región factible en el plano cartesiano
         try {
-          final outcome = LinearInequality2DSolver.solveSystem2D(sys2Inputs);
+          final outcome = LinearInequality2DSolver.solveSystem2D(activeRows);
           setState(() {
             _activeResolution = outcome.resolution;
             _currentFeasibleRegion = outcome.visualData;
             _activeIneqVisualData = null;
             _show2DRegionView = true;
           });
-          _recordCurrentResolutionToHistory(outcome.resolution, 'M6: Región Factible 2D');
+          _recordCurrentResolutionToHistory(
+            outcome.resolution,
+            'M12: Región Factible 2D ($_ineqSysRows Inec.)',
+          );
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error al calcular región factible: $e'),
+              content: Text('Error al calcular región factible 2D: $e'),
               backgroundColor: const Color(0xFFB91C1C),
             ),
           );
@@ -1290,7 +1280,21 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   void _setInequalitySign(InequalitySign sign, {bool insertIfMissing = true}) {
     _inequalitySign = sign;
-    if (_calculatorMode == 6 && _ineqDegree == 1) {
+    if (_calculatorMode == 12) {
+      if (_activeResolution != null) {
+        _activeResolution = null;
+        _activeStepIndex = 0;
+      }
+      final cur = _ineqSysRowInputs[_ineqSysActiveRow];
+      final existing = RegExp(r'(<=|>=|[≤≥<>])');
+      if (existing.hasMatch(cur)) {
+        _ineqSysRowInputs[_ineqSysActiveRow] = cur.replaceFirst(existing, sign.symbol);
+      } else if (insertIfMissing && cur.trim().isNotEmpty) {
+        _ineqSysRowInputs[_ineqSysActiveRow] = '$cur ${sign.symbol} ';
+      }
+      return;
+    }
+    if (_calculatorMode == 6) {
       if (_activeResolution != null) {
         _activeResolution = null;
         _activeStepIndex = 0;
@@ -1303,8 +1307,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       } else if (insertIfMissing && _rawInput != '0' && _rawInput.trim().isNotEmpty) {
         _applyRawInsertion(sign.symbol, keepLeadingZero: true);
       }
-    } else if (_calculatorMode == 6 && _ineqDegree == 2 && _activeResolution != null) {
-      _solveCurrentMode();
     }
   }
 
@@ -1334,6 +1336,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _applyRawInsertion(String token, {bool keepLeadingZero = false}) {
+    if (_calculatorMode == 12) {
+      _replayIndex = -1;
+      final cur = _ineqSysRowInputs[_ineqSysActiveRow];
+      _ineqSysRowInputs[_ineqSysActiveRow] = cur == '0' ? token : cur + token;
+      return;
+    }
     if (_calculatorMode == 2) {
       _replayIndex = -1;
       if (_eqActiveSide == 0) {
@@ -1844,6 +1852,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           _calculusLimitARaw = '';
           _calculusLimitBRaw = '';
           _calculusActiveField = 0;
+        } else if (_calculatorMode == 12) {
+          _activeResolution = null;
+          _activeStepIndex = 0;
+          _activeIneqVisualData = null;
+          _currentFeasibleRegion = null;
+          if (_ineqSysRowInputs[_ineqSysActiveRow].isNotEmpty) {
+            _ineqSysRowInputs[_ineqSysActiveRow] = '';
+          } else {
+            for (int i = 0; i < _ineqSysRowInputs.length; i++) {
+              _ineqSysRowInputs[i] = '';
+            }
+            _ineqSysActiveRow = 0;
+          }
         } else if (_isCoefficientMode) {
           final cells = _currentCellValues;
           for (int i = 0; i < cells.length; i++) {
@@ -1893,6 +1914,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         }
         if (_calculatorMode == 11) {
           _calculusBackspace();
+          return;
+        }
+        if (_calculatorMode == 12) {
+          final cur = _ineqSysRowInputs[_ineqSysActiveRow];
+          if (cur.isNotEmpty) {
+            _ineqSysRowInputs[_ineqSysActiveRow] = cur.substring(0, cur.length - 1);
+          }
           return;
         }
 
@@ -2406,6 +2434,26 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             return;
           }
           _calculusAdvanceOnEquals();
+          return;
+        }
+
+        // En Modo 12 (Sistemas de Inecuaciones)
+        if (_calculatorMode == 12) {
+          if (_activeResolution != null) {
+            if (_activeStepIndex < _activeResolution!.steps.length - 1) {
+              _activeStepIndex++;
+            } else {
+              _activeStepIndex = 0;
+            }
+            return;
+          }
+          if (_ineqSysActiveRow < _ineqSysRows - 1 &&
+              _ineqSysRowInputs[_ineqSysActiveRow].trim().isNotEmpty &&
+              _ineqSysRowInputs[_ineqSysActiveRow + 1].trim().isEmpty) {
+            _ineqSysActiveRow++;
+            return;
+          }
+          _solveCurrentMode();
           return;
         }
 
@@ -3147,6 +3195,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _calculusMoveDpad(dRow: -1, dCol: 0);
         return;
       }
+      if (_calculatorMode == 12 && _activeResolution == null) {
+        if (_ineqSysActiveRow > 0) {
+          _ineqSysActiveRow--;
+        }
+        return;
+      }
       if (_isCoefficientMode) {
         if (_calculatorMode == 3 && _systemDim == 2) {
           if (_sysActiveIndex >= 3) {
@@ -3156,8 +3210,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           if (_sys3ActiveIndex >= 4) {
             _sys3ActiveIndex -= 4;
           }
-        } else if (_calculatorMode == 6 && _ineqDegree == 2 && _currentActiveIndex == 3) {
-          _cycleInequalitySign(backwards: true);
         } else {
           if (_currentActiveIndex > 0) {
             _currentActiveIndex--;
@@ -3188,7 +3240,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       );
       if (jumped != null) {
         _cursorPos = jumped;
-      } else if (_calculatorMode == 6 && _ineqDegree == 1 && _replayIndex == -1) {
+      } else if (_calculatorMode == 6 && _replayIndex == -1) {
         _cycleInequalitySign(backwards: true);
       } else {
         _cycleHistoryReplayUp();
@@ -3234,6 +3286,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _calculusMoveDpad(dRow: 1, dCol: 0);
         return;
       }
+      if (_calculatorMode == 12 && _activeResolution == null) {
+        if (_ineqSysActiveRow < _ineqSysRows - 1) {
+          _ineqSysActiveRow++;
+        }
+        return;
+      }
       if (_isCoefficientMode) {
         if (_calculatorMode == 3 && _systemDim == 2) {
           if (_sysActiveIndex < 3) {
@@ -3242,12 +3300,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         } else if (_calculatorMode == 3 && _systemDim == 3) {
           if (_sys3ActiveIndex < 8) {
             _sys3ActiveIndex += 4;
-          }
-        } else if (_calculatorMode == 6 && _ineqDegree == 2) {
-          if (_currentActiveIndex == 3) {
-            _cycleInequalitySign();
-          } else {
-            _currentActiveIndex++;
           }
         } else {
           if (_currentActiveIndex < _currentCellValues.length - 1) {
@@ -3279,7 +3331,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       );
       if (jumped != null) {
         _cursorPos = jumped;
-      } else if (_calculatorMode == 6 && _ineqDegree == 1 && _replayIndex == -1) {
+      } else if (_calculatorMode == 6 && _replayIndex == -1) {
         _cycleInequalitySign();
       } else {
         _cycleHistoryReplayDown();
@@ -3450,7 +3502,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       _isMenuOpen = false;
       if (entry.calculatorMode != null &&
           entry.calculatorMode! >= 1 &&
-          entry.calculatorMode! <= 11) {
+          entry.calculatorMode! <= 12) {
         _calculatorMode = entry.calculatorMode!;
       }
       _activeResolution = entry.resolution;
@@ -3462,12 +3514,39 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       } else if (_calculatorMode == 11) {
         _calculusExprRaw = entry.rawExpression ?? '';
         _calculusCursorPos = _calculusExprRaw.length;
+      } else if (_calculatorMode == 12) {
+        final rawRows = (entry.rawExpression ?? restored)
+            .split(RegExp(r'[;,]'))
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList();
+        for (int i = 0; i < _ineqSysRowInputs.length; i++) {
+          _ineqSysRowInputs[i] = i < rawRows.length ? rawRows[i] : '';
+        }
+        _ineqSysRows = rawRows.length.clamp(2, 3);
+        _ineqSysUnknowns = (entry.rawExpression ?? restored).contains('y') ? 2 : 1;
+        _ineqSysActiveRow = 0;
       } else {
         _rawInput = restored;
         _cursorPos = _rawInput.length;
+        if (_calculatorMode == 6) {
+          if (restored.contains('^2') || restored.contains('²')) {
+            _ineqDegree = 2;
+          } else if (restored.contains('|') || restored.contains('/')) {
+            _ineqDegree = 3;
+          } else {
+            _ineqDegree = 1;
+          }
+        }
       }
       _replayIndex = -1;
     });
+
+    // Re-evaluar con el motor y vistas visuales actualizadas de la app
+    if (_calculatorMode == 1 || _calculatorMode == 2 || _calculatorMode == 6 || _calculatorMode == 12) {
+      _solveCurrentMode();
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Cargado ejercicio de clase: ${entry.modeName}'),
@@ -3566,7 +3645,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       liveLatex = '$leftTex = $rightTex';
     } else if (_calculatorMode == 1 ||
         (_calculatorMode == 4 && _polyIsNotableMode) ||
-        (_calculatorMode == 6 && _ineqDegree == 1)) {
+        _calculatorMode == 6) {
       liveLatex = ExpressionParser.rawToLiveLatex(
         _rawInput,
         cursorPos: showLiveCursor ? _cursorPos : null,
@@ -3585,12 +3664,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               ? 'M4: RUFFINI'
               : 'M4: RUFFINI ($_ruffiniDegree.º)'),
       5: 'M5: PARÁBOLAS',
-      6: _ineqDegree == 1 ? 'M6: INEC. 1°' : 'M6: INEC. 2°',
+      6: switch (_ineqDegree) {
+        1 => 'M6: INEC. 1°',
+        2 => 'M6: INEC. 2°',
+        _ => 'M6: |x| / RAC.',
+      },
       7: 'M7: ESTADÍST.',
       8: 'M8: MATRICES ($_matrixDim×$_matrixDim)',
       9: 'M9: VECTORES ${_vectorDim}D',
       10: 'M10: COMPLEJOS',
       11: 'M11: CÁLCULO',
+      12: _ineqSysUnknowns == 1 ? 'M12: SIST. INEC 1D' : 'M12: REGIÓN 2D',
     };
     final modeLabel = modeLabels[_calculatorMode] ?? 'M1: CALC & √';
 
@@ -3823,8 +3907,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                             });
                           },
                         )
-                      : (_calculatorMode == 6 &&
-                              _ineqDegree == 4 &&
+                      : (_calculatorMode == 12 &&
+                              _ineqSysUnknowns == 2 &&
                               _show2DRegionView &&
                               _currentFeasibleRegion != null
                           ? FeasibleRegionCanvas(
@@ -4031,7 +4115,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                                         });
                                                       },
                                                     )
-                                                  : null))))),
+                                                  : (_calculatorMode == 12 && _activeResolution == null
+                                                      ? _buildInequalitySystemEditorView()
+                                                      : null)))))),
                           isMenuOpen: _isMenuOpen,
                           menuCursorIndex: _menuCursorIndex,
                           onSelectMenuMode: _selectModeFromMenu,
@@ -4052,22 +4138,25 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                               ? ExpressionParser.rawToLiveLatex(_calcExpressionRaw)
                               : null,
                           calcValueRaw: _calcValueRaw,
-                          inequalitySignBadge:
-                              _calculatorMode == 6 && _ineqDegree == 1
-                                  ? _inequalitySign.symbol
-                                  : null,
+                          inequalitySignBadge: _calculatorMode == 6
+                              ? _inequalitySign.symbol
+                              : null,
                           onCycleInequalitySign: () {
                             setState(() {
                               _cycleInequalitySign();
                             });
                           },
-                          supplementaryVisualView: _calculatorMode == 6 &&
-                                  _activeIneqVisualData != null
-                              ? NumberLineWidget(
-                                  data: _activeIneqVisualData!,
-                                  isOledDark: _isOledDark,
-                                )
-                              : null,
+                          supplementaryVisualView:
+                              (_calculatorMode == 6 || _calculatorMode == 12) &&
+                                      _activeIneqVisualData != null &&
+                                      (_activeResolution == null ||
+                                          _activeResolution!.steps.length <= 1 ||
+                                          _activeStepIndex > 0)
+                                  ? NumberLineWidget(
+                                      data: _activeIneqVisualData!,
+                                      isOledDark: _isOledDark,
+                                    )
+                                  : null,
                           coefficientView: _isCoefficientMode
                               ? CasioCoefficientView(
                                   mode: _calculatorMode,
@@ -4401,7 +4490,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                     children: [
                       _buildMethodTab(
                         key: const Key('ineq_deg_1'),
-                        label: '1.º / |x|',
+                        label: '1.º Grado',
                         selected: _ineqDegree == 1,
                         onTap: () {
                           setState(() {
@@ -4416,7 +4505,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       const SizedBox(width: 3),
                       _buildMethodTab(
                         key: const Key('ineq_deg_2'),
-                        label: '2.º',
+                        label: '2.º Grado',
                         selected: _ineqDegree == 2,
                         onTap: () {
                           setState(() {
@@ -4431,7 +4520,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       const SizedBox(width: 3),
                       _buildMethodTab(
                         key: const Key('ineq_deg_3'),
-                        label: 'Sist. 1D',
+                        label: 'Valor Absoluto / Racional',
                         selected: _ineqDegree == 3,
                         onTap: () {
                           setState(() {
@@ -4445,51 +4534,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       ),
                       const SizedBox(width: 3),
                       _buildMethodTab(
-                        key: const Key('ineq_deg_4'),
-                        label: 'Sist. 2D',
-                        selected: _ineqDegree == 4,
-                        onTap: () {
-                          setState(() {
-                            _ineqDegree = 4;
-                            _activeResolution = null;
-                            _activeStepIndex = 0;
-                            _activeIneqVisualData = null;
-                            _currentFeasibleRegion = null;
-                            _show2DRegionView = true;
-                          });
-                        },
+                        key: const Key('ineq_var_x'),
+                        label: 'x',
+                        selected: false,
+                        onTap: _insertVariableX,
                       ),
-                      if (_ineqDegree == 4 && _currentFeasibleRegion != null) ...[
-                        const SizedBox(width: 3),
-                        _buildMethodTab(
-                          key: const Key('ineq_2d_toggle_view'),
-                          label: _show2DRegionView ? 'PASOS' : 'PLANO 2D',
-                          selected: _show2DRegionView,
-                          onTap: () {
-                            setState(() {
-                              _show2DRegionView = !_show2DRegionView;
-                            });
-                          },
-                        ),
-                      ],
-                      if (_ineqDegree == 1 || _ineqDegree == 3) ...[
-                        const SizedBox(width: 3),
-                        _buildMethodTab(
-                          key: const Key('ineq_var_x'),
-                          label: 'x',
-                          selected: false,
-                          onTap: _insertVariableX,
-                        ),
-                      ],
-                      if (_ineqDegree == 4) ...[
-                        const SizedBox(width: 3),
-                        _buildMethodTab(
-                          key: const Key('ineq_var_y'),
-                          label: 'y',
-                          selected: false,
-                          onTap: _insertVariableY,
-                        ),
-                      ],
                       for (final s in InequalitySign.values) ...[
                         const SizedBox(width: 3),
                         _buildMethodTab(
@@ -4711,6 +4760,127 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                         selected: false,
                         onTap: _solveCurrentMode,
                       ),
+                    ],
+                  ),
+                ] else if (_calculatorMode == 12) ...[
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      if (_activeResolution != null) ...[
+                        _buildMethodTab(
+                          key: const Key('ineq_sys_edit_btn'),
+                          label: 'Editar',
+                          selected: false,
+                          onTap: () {
+                            setState(() {
+                              _activeResolution = null;
+                            });
+                          },
+                        ),
+                        const SizedBox(width: 3),
+                      ],
+                      _buildMethodTab(
+                        key: const Key('ineq_sys_rows_2'),
+                        label: '2 Inec.',
+                        selected: _ineqSysRows == 2,
+                        onTap: () {
+                          setState(() {
+                            _ineqSysRows = 2;
+                            _activeResolution = null;
+                            _activeStepIndex = 0;
+                            _activeIneqVisualData = null;
+                            _currentFeasibleRegion = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 3),
+                      _buildMethodTab(
+                        key: const Key('ineq_sys_rows_3'),
+                        label: '3 Inec.',
+                        selected: _ineqSysRows == 3,
+                        onTap: () {
+                          setState(() {
+                            _ineqSysRows = 3;
+                            _activeResolution = null;
+                            _activeStepIndex = 0;
+                            _activeIneqVisualData = null;
+                            _currentFeasibleRegion = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 3),
+                      _buildMethodTab(
+                        key: const Key('ineq_sys_unk_1'),
+                        label: '1 Incóg. (x)',
+                        selected: _ineqSysUnknowns == 1,
+                        onTap: () {
+                          setState(() {
+                            _ineqSysUnknowns = 1;
+                            _activeResolution = null;
+                            _activeStepIndex = 0;
+                            _activeIneqVisualData = null;
+                            _currentFeasibleRegion = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 3),
+                      _buildMethodTab(
+                        key: const Key('ineq_sys_unk_2'),
+                        label: '2 Incóg. (x, y)',
+                        selected: _ineqSysUnknowns == 2,
+                        onTap: () {
+                          setState(() {
+                            _ineqSysUnknowns = 2;
+                            _activeResolution = null;
+                            _activeStepIndex = 0;
+                            _activeIneqVisualData = null;
+                            _currentFeasibleRegion = null;
+                            _show2DRegionView = true;
+                          });
+                        },
+                      ),
+                      if (_ineqSysUnknowns == 2 && _currentFeasibleRegion != null) ...[
+                        const SizedBox(width: 3),
+                        _buildMethodTab(
+                          key: const Key('ineq_sys_2d_toggle_view'),
+                          label: _show2DRegionView ? 'PASOS' : 'PLANO 2D',
+                          selected: _show2DRegionView,
+                          onTap: () {
+                            setState(() {
+                              _show2DRegionView = !_show2DRegionView;
+                            });
+                          },
+                        ),
+                      ],
+                      const SizedBox(width: 3),
+                      _buildMethodTab(
+                        key: const Key('ineq_sys_var_x'),
+                        label: 'x',
+                        selected: false,
+                        onTap: _insertVariableX,
+                      ),
+                      if (_ineqSysUnknowns == 2) ...[
+                        const SizedBox(width: 3),
+                        _buildMethodTab(
+                          key: const Key('ineq_sys_var_y'),
+                          label: 'y',
+                          selected: false,
+                          onTap: _insertVariableY,
+                        ),
+                      ],
+                      for (final s in InequalitySign.values) ...[
+                        const SizedBox(width: 3),
+                        _buildMethodTab(
+                          key: Key('ineq_sys_sign_${s.name}'),
+                          label: s.symbol,
+                          selected: _inequalitySign == s,
+                          onTap: () {
+                            setState(() {
+                              _setInequalitySign(s, insertIfMissing: true);
+                            });
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -5148,14 +5318,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
     if (_calculatorMode == 6) {
       if (_ineqDegree == 1) {
-        return 'Teclea inecuación o valor absoluto (ej: |x - 5| < 3 o 3x - 5 > 7) y pulsa =';
+        return 'Teclea inecuación lineal (ej: 3x - 5 > 7 + x) y pulsa =';
       } else if (_ineqDegree == 2) {
-        return 'Rellena a, b, c; cambia < ≤ > ≥ en la casilla (▲ ▼) o barra y pulsa =';
-      } else if (_ineqDegree == 3) {
-        return 'Escribe inecuaciones separadas por coma (ej: 2x - 4 <= 6, -3x + 9 < 3) y pulsa =';
+        return 'Escribe inecuación de 2.º grado (ej: 2x² + 5x > 4) y pulsa =';
       } else {
-        return 'Escribe inecuaciones en x e y separadas por coma (ej: x + y <= 4, 2x - y >= 1) y pulsa =';
+        return 'Teclea valor absoluto o racional (ej: |x - 5| < 3) y pulsa =';
       }
+    }
+    if (_calculatorMode == 12) {
+      return 'Rellena cada inecuación (▲ ▼ o = para saltar fila) y pulsa = para resolver';
     }
     if (_calculatorMode == 7) {
       return 'Introduce xi/fi, pulsa = para bajar fila, ◀ ▶ ▲ ▼ moverte y CALC STAT';
@@ -5195,11 +5366,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
     if (_calculatorMode == 6) {
       return switch (_ineqDegree) {
-        1 => 'INECUACIÓN 1.º GRADO / |x|',
+        1 => 'INECUACIÓN 1.º GRADO',
         2 => 'INECUACIÓN 2.º GRADO',
-        3 => 'SISTEMA INECUACIONES 1D',
-        _ => 'REGIÓN FACTIBLE 2D',
+        _ => 'VALOR ABSOLUTO / RACIONAL',
       };
+    }
+    if (_calculatorMode == 12) {
+      return _ineqSysUnknowns == 1
+          ? 'SISTEMA INECUACIONES 1D ($_ineqSysRows INEC.)'
+          : 'REGIÓN FACTIBLE 2D ($_ineqSysRows INEC.)';
     }
     if (_calculatorMode == 7) {
       return 'ESTADÍSTICA 1-VAR';
@@ -5370,6 +5545,113 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildInequalitySystemEditorView() {
+    final textColor =
+        _isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF101815);
+    final rowBg =
+        _isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD);
+    final activeRowBg =
+        _isOledDark ? const Color(0xFF0F172A) : const Color(0xFFD4E2D9);
+    final activeBorder =
+        _isOledDark ? const Color(0xFF60A5FA) : const Color(0xFF1E3A5F);
+    final inactiveBorder =
+        _isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                '{',
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: _ineqSysRows == 3 ? 64 : 52,
+                  fontWeight: FontWeight.w200,
+                  fontFamily: 'serif',
+                  height: 0.95,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (int i = 0; i < _ineqSysRows; i++) ...[
+                      if (i > 0) const SizedBox(height: 5),
+                      GestureDetector(
+                        key: Key('ineq_sys_row_$i'),
+                        onTap: () {
+                          setState(() {
+                            _ineqSysActiveRow = i;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _ineqSysActiveRow == i ? activeRowBg : rowBg,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: _ineqSysActiveRow == i
+                                  ? activeBorder
+                                  : inactiveBorder,
+                              width: _ineqSysActiveRow == i ? 1.8 : 1.0,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                '(${i + 1}) ',
+                                style: TextStyle(
+                                  color: textColor.withValues(alpha: 0.65),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  _ineqSysRowInputs[i].isEmpty
+                                      ? (_ineqSysActiveRow == i
+                                          ? '▌'
+                                          : (_ineqSysUnknowns == 1
+                                              ? 'ej. 2x - 3 ≤ 5'
+                                              : 'ej. x + y ≤ 4'))
+                                      : (_ineqSysActiveRow == i
+                                          ? '${_ineqSysRowInputs[i]}▌'
+                                          : _ineqSysRowInputs[i]),
+                                  style: TextStyle(
+                                    color: _ineqSysRowInputs[i].isEmpty &&
+                                            _ineqSysActiveRow != i
+                                        ? textColor.withValues(alpha: 0.38)
+                                        : textColor,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'monospace',
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
