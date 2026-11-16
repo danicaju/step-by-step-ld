@@ -294,14 +294,16 @@ void main() {
     testWidgets('Modo 8 (Matrices): abre editor limpio, alterna 3x3 y calcula |A| por Sarrus', (tester) async {
       await pumpCalc(tester, const Size(1024, 820));
 
-      // Abrimos MENU -> Página 2 y elegimos Modo 8: Matrices
+      // Abrimos MENU -> Página 3 y elegimos Modo 9: Matrices
       await tester.tap(find.text('MODE'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('menu_page_next')));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('menu_mode_8')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('menu_page_next')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('menu_mode_9')), findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('menu_mode_8')));
+      await tester.tap(find.byKey(const Key('menu_mode_9')));
       await tester.pumpAndSettle();
 
       // Verifica vista de Matrices activa (3x3 por defecto) y cambia a 2x2 para prueba rápida
@@ -346,7 +348,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('matrix_op_determinant')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('matrix_solve_btn')));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();
       expect(find.textContaining('PASO 1/3'), findsOneWidget);
 
@@ -415,12 +417,14 @@ void main() {
       expect(find.textContaining('PASO 1/'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      // También verifica que Modo 8 (Matrices) no desborda en pantalla móvil 390x844
+      // También verifica que Modo 9 (Matrices) no desborda en pantalla móvil 390x844
       await tester.tap(find.text('MODE'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('menu_page_next')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('menu_mode_8')));
+      await tester.tap(find.byKey(const Key('menu_page_next')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('menu_mode_9')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('matrix_size_3')));
       await tester.pumpAndSettle();

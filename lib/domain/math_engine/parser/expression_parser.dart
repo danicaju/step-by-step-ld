@@ -106,6 +106,9 @@ class ExpressionParser {
       return (token, token.length);
     }
     final safe = snapCursorOutsideKeywords(raw, currentPos);
+    if (token == ')' && safe < raw.length && raw[safe] == ')') {
+      return (raw, safe + 1);
+    }
     final updated = raw.substring(0, safe) + token + raw.substring(safe);
     return (updated, safe + token.length);
   }
@@ -1689,12 +1692,9 @@ class ExpressionParser {
     final intVal = int.tryParse(token);
     if (intVal != null) {
       _consume();
-      // Si justo después del número hay una barra '/', creamos un FractionNode(num, den)
-      if (_current == '/') {
+      // Si justo después del número hay una barra '/' seguida de otro entero, creamos FractionNode
+      if (_current == '/' && _pos + 1 < _tokens.length && int.tryParse(_tokens[_pos + 1]) != null) {
         _consume(); // '/'
-        if (_current == null || int.tryParse(_current!) == null) {
-          throw const FormatException('Falta el denominador de la fracción');
-        }
         final denVal = int.parse(_consume());
         return FractionNode(intVal, denVal);
       }

@@ -289,7 +289,7 @@ void main() {
 
       expect(find.text('Inecuaciones'), findsOneWidget);
       expect(find.text('Estadística'), findsOneWidget);
-      expect(find.text('Matrices'), findsOneWidget);
+      expect(find.text('Sistemas Inec.'), findsOneWidget);
       expect(find.text('Tutor IA'), findsNothing);
       expect(tester.takeException(), isNull);
     });
@@ -371,10 +371,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('menu_page_next')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('menu_mode_7')));
+      await tester.tap(find.byKey(const Key('menu_mode_8')));
       await tester.pumpAndSettle();
 
-      expect(find.text('M7: ESTADÍST.'), findsOneWidget);
+      expect(find.text('M8: ESTADÍST.'), findsOneWidget);
       expect(find.byType(CasioStatTableView), findsOneWidget);
       expect(find.byKey(const Key('stat_cell_0_0')), findsOneWidget);
       expect(find.byKey(const Key('stat_cell_0_1')), findsOneWidget);
@@ -447,7 +447,7 @@ void main() {
       // Entrar a Modo 7 y calcular estadística en móvil (reabrir MODE mantiene la Página 2)
       await tester.tap(find.text('MODE'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('menu_mode_7')));
+      await tester.tap(find.byKey(const Key('menu_mode_8')));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 

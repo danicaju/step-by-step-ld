@@ -143,23 +143,27 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   InequalitySign _inequalitySign = InequalitySign.less;
   Inequality1DVisualData? _activeIneqVisualData;
 
-  // Estado Modo 11 (Sistemas de Inecuaciones: 1D o 2D)
+  // Estado Modo 7 (Sistemas de Inecuaciones: 1D o 2D)
   int _ineqSysUnknowns = 1; // 1 = 1 Incóg. (x), 2 = 2 Incóg. (x, y)
-  int _ineqSysRows = 2; // 2 o 3 inecuaciones
-  final List<String> _ineqSysRowInputs = ['', '', ''];
-  final List<int> _ineqSysRowCursors = [0, 0, 0];
+  int _ineqSysRows = 2; // 2, 3 o 4 inecuaciones
+  final List<String> _ineqSysRowInputs = ['', '', '', ''];
+  final List<int> _ineqSysRowCursors = [0, 0, 0, 0];
   int _ineqSysActiveRow = 0;
   bool _show2DRegionView = true;
   bool _isChoosingIneqSysUnknowns = true;
   FeasibleRegion2DVisualData? _currentFeasibleRegion;
 
-  // Estado Modo 7 (Estadística 1-Var: tabla xi | fi)
+  // Estado Modo 8 (Estadística 1-Var: tabla xi | fi)
   List<({String xi, String fi})> _statRows = [(xi: '', fi: '')];
   int _statActiveRow = 0;
   int _statActiveCol = 0; // 0 = x_i, 1 = f_i
 
-  // Estado Modo 8 (Matrices 2x2 / 3x3 / 4x4 / Rectangulares)
-  int _matrixDim = 3; // 2, 3, 4, 34 (3x4), 45 (4x5)
+  // Estado Modo 9 (Matrices: libre m x n)
+  int _matrixDim = 3;
+  int _matrixRowsA = 3;
+  int _matrixColsA = 3;
+  int _matrixRowsB = 3;
+  int _matrixColsB = 3;
   int _matrixActiveTarget = 0; // 0 = MatA, 1 = MatB, 2 = escalar k
   MatrixOperation _matrixOp = MatrixOperation.determinant;
   final List<String> _matrixCellsA = List<String>.filled(25, '');
@@ -232,15 +236,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   /// Modos con celdas estructuradas donde solo entran tokens numéricos (`0-9`, `-`, `/`, `.`).
   bool get _isGridOrStructuredMode =>
-      _calculatorMode == 7 ||
       _calculatorMode == 8 ||
       _calculatorMode == 9 ||
       _calculatorMode == 10 ||
+      _calculatorMode == 11 ||
       (_calculatorMode == 12 && _calculusActiveField != 0);
 
   /// Verdadero cuando el cursor activo edita una expresión simbólica (`f(x)`, Modo 1, 2, 4 Notables, 6 lineal).
   bool get _supportsExpressionInput =>
-      !_isCoefficientMode && !_isGridOrStructuredMode && _calculatorMode != 11;
+      !_isCoefficientMode && !_isGridOrStructuredMode && _calculatorMode != 7;
 
   /// Verdadero solo en modos de expresión general con funciones científicas (`sin`, `log`, `√`, `mcm`).
   bool get _supportsScientificFns =>
@@ -321,13 +325,14 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       case 5:
         return '3.º-4.º ESO';
       case 6:
-        return '4.º ESO-Bach.';
       case 7:
-        return '2.º-4.º ESO';
+        return '4.º ESO-Bach.';
       case 8:
+        return '2.º-4.º ESO';
       case 9:
       case 10:
       case 11:
+      case 12:
         return '1.º-2.º Bach. / EBAU';
       default:
         return 'General';
@@ -339,13 +344,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     final String? savedRawExpr;
     if (_calculatorMode == 2) {
       savedRawExpr = '${_eqLeftRaw.trim()} = ${_eqRightRaw.trim()}';
+    } else if (_calculatorMode == 7) {
+      savedRawExpr = _ineqSysRowInputs.take(_ineqSysRows).join(', ');
     } else if (_isCoefficientMode ||
-        _calculatorMode == 7 ||
         _calculatorMode == 8 ||
         _calculatorMode == 9 ||
-        _calculatorMode == 10) {
+        _calculatorMode == 10 ||
+        _calculatorMode == 11) {
       savedRawExpr = null;
-    } else if (_calculatorMode == 11) {
+    } else if (_calculatorMode == 12) {
       savedRawExpr = _calculusExprRaw;
     } else {
       savedRawExpr = _rawInput;
@@ -937,7 +944,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       return;
     }
 
-    if (_calculatorMode == 11) {
+    if (_calculatorMode == 7) {
       final activeRows = _ineqSysRowInputs
           .take(_ineqSysRows)
           .map((s) => s.trim())
@@ -965,7 +972,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           });
           _recordCurrentResolutionToHistory(
             outcome.resolution,
-            'M11: Sistema Inecuaciones 1D ($_ineqSysRows Inec.)',
+            'M7: Sistema Inecuaciones 1D ($_ineqSysRows Inec.)',
           );
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -988,7 +995,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           });
           _recordCurrentResolutionToHistory(
             outcome.resolution,
-            'M11: Región Factible 2D ($_ineqSysRows Inec.)',
+            'M7: Región Factible 2D ($_ineqSysRows Inec.)',
           );
         } catch (e) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1002,7 +1009,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       }
     }
 
-    if (_calculatorMode == 7) {
+    if (_calculatorMode == 8) {
       final points = <StatDataPoint>[];
       try {
         for (int i = 0; i < _statRows.length; i++) {
@@ -1030,7 +1037,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         setState(() {
           _activeResolution = res;
         });
-        _recordCurrentResolutionToHistory(res, 'M7: Estadística 1-Var');
+        _recordCurrentResolutionToHistory(res, 'M8: Estadística 1-Var');
       } on FormatException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1049,20 +1056,22 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       return;
     }
 
-    if (_calculatorMode == 8) {
+    if (_calculatorMode == 9) {
       try {
-        final int rCountA = _matrixDim == 34 ? 3 : (_matrixDim == 45 ? 4 : _matrixDim);
-        final int cCountA = _matrixDim == 34 ? 4 : (_matrixDim == 45 ? 5 : _matrixDim);
+        final int rCountA = _matrixRowsA;
+        final int cCountA = _matrixColsA;
         final matA = _buildRationalMatrixFromCells(
           _matrixCellsA,
           _matrixDim,
           rows: rCountA,
           cols: cCountA,
         );
+        final int rCountB = _matrixRowsB;
+        final int cCountB = _matrixColsB;
         final matB = _matrixOp.needsMatrixB
             ? (_matrixOp == MatrixOperation.cramer
                 ? _buildRationalMatrixFromCells(_matrixCellsB, _matrixDim, rows: rCountA, cols: 1)
-                : _buildRationalMatrixFromCells(_matrixCellsB, _matrixDim, rows: rCountA, cols: cCountA))
+                : _buildRationalMatrixFromCells(_matrixCellsB, _matrixDim, rows: rCountB, cols: cCountB))
             : null;
         final scalarVal = _matrixOp == MatrixOperation.scalarMultiply
             ? _parseRationalCell(_matrixScalarK, defaultValue: Rational(1))
@@ -1078,7 +1087,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         });
         _recordCurrentResolutionToHistory(
           res,
-          'M8: Matrices (${_matrixOp.shortLabel})',
+          'M9: Matrices (${_matrixOp.shortLabel})',
         );
       } on FormatException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1098,7 +1107,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       return;
     }
 
-    if (_calculatorMode == 9) {
+    if (_calculatorMode == 10) {
       try {
         final u = _buildRationalVectorFromCells(_vecUCells, _vectorDim);
         final v = _vectorOp.needsSecondVector
@@ -1114,7 +1123,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         });
         _recordCurrentResolutionToHistory(
           res,
-          'M9: Vectores (${_vectorOp.shortLabel})',
+          'M10: Vectores (${_vectorOp.shortLabel})',
         );
       } on FormatException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1134,7 +1143,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       return;
     }
 
-    if (_calculatorMode == 10) {
+    if (_calculatorMode == 11) {
       try {
         final a1 = _parseRationalCell(_complexCells[0], defaultValue: Rational(0));
         final b1 = _parseRationalCell(_complexCells[1], defaultValue: Rational(0));
@@ -1160,7 +1169,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         });
         _recordCurrentResolutionToHistory(
           res,
-          'M10: Complejos (${_complexOp.shortLabel})',
+          'M11: Complejos (${_complexOp.shortLabel})',
         );
       } on FormatException catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1352,7 +1361,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _applyRawInsertion(String token, {bool keepLeadingZero = false}) {
-    if (_calculatorMode == 11) {
+    if (_calculatorMode == 7) {
       if (_isChoosingIneqSysUnknowns) {
         if (token == '1') {
           _ineqSysUnknowns = 1;
@@ -1899,31 +1908,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           _eqRightCursorPos = 0;
           _eqActiveSide = 0;
         } else if (_calculatorMode == 7) {
-          _statRows = [(xi: '', fi: '')];
-          _statActiveRow = 0;
-          _statActiveCol = 0;
-        } else if (_calculatorMode == 8) {
-          for (int i = 0; i < _matrixCellsA.length; i++) {
-            _matrixCellsA[i] = '';
-            _matrixCellsB[i] = '';
-          }
-          _matrixScalarK = '';
-          _matrixActiveTarget = 0;
-          _matrixActiveRow = 0;
-          _matrixActiveCol = 0;
-        } else if (_calculatorMode == 9) {
-          for (int i = 0; i < _vecUCells.length; i++) {
-            _vecUCells[i] = '';
-            _vecVCells[i] = '';
-          }
-          _vectorActiveRow = 0;
-          _vectorActiveCol = 0;
-        } else if (_calculatorMode == 10) {
-          for (int i = 0; i < _complexCells.length; i++) {
-            _complexCells[i] = '';
-          }
-          _complexActiveIndex = 0;
-        } else if (_calculatorMode == 11) {
           _activeResolution = null;
           _activeStepIndex = 0;
           _activeIneqVisualData = null;
@@ -1942,6 +1926,31 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               _isChoosingIneqSysUnknowns = true;
             }
           }
+        } else if (_calculatorMode == 8) {
+          _statRows = [(xi: '', fi: '')];
+          _statActiveRow = 0;
+          _statActiveCol = 0;
+        } else if (_calculatorMode == 9) {
+          for (int i = 0; i < _matrixCellsA.length; i++) {
+            _matrixCellsA[i] = '';
+            _matrixCellsB[i] = '';
+          }
+          _matrixScalarK = '';
+          _matrixActiveTarget = 0;
+          _matrixActiveRow = 0;
+          _matrixActiveCol = 0;
+        } else if (_calculatorMode == 10) {
+          for (int i = 0; i < _vecUCells.length; i++) {
+            _vecUCells[i] = '';
+            _vecVCells[i] = '';
+          }
+          _vectorActiveRow = 0;
+          _vectorActiveCol = 0;
+        } else if (_calculatorMode == 11) {
+          for (int i = 0; i < _complexCells.length; i++) {
+            _complexCells[i] = '';
+          }
+          _complexActiveIndex = 0;
         } else if (_calculatorMode == 12) {
           _calculusExprRaw = '';
           _calculusCursorPos = 0;
@@ -1981,22 +1990,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         }
 
         if (_calculatorMode == 7) {
-          _statBackspace();
-          return;
-        }
-        if (_calculatorMode == 8) {
-          _matrixBackspace();
-          return;
-        }
-        if (_calculatorMode == 9) {
-          _vectorBackspace();
-          return;
-        }
-        if (_calculatorMode == 10) {
-          _complexBackspace();
-          return;
-        }
-        if (_calculatorMode == 11) {
           final cur = _ineqSysRowInputs[_ineqSysActiveRow];
           final pos = _ineqSysRowCursors[_ineqSysActiveRow];
           final (nextRaw, nextPos) = ExpressionParser.deleteAtCursor(
@@ -2007,6 +2000,22 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           );
           _ineqSysRowInputs[_ineqSysActiveRow] = nextRaw;
           _ineqSysRowCursors[_ineqSysActiveRow] = nextPos;
+          return;
+        }
+        if (_calculatorMode == 8) {
+          _statBackspace();
+          return;
+        }
+        if (_calculatorMode == 9) {
+          _matrixBackspace();
+          return;
+        }
+        if (_calculatorMode == 10) {
+          _vectorBackspace();
+          return;
+        }
+        if (_calculatorMode == 11) {
+          _complexBackspace();
           return;
         }
         if (_calculatorMode == 12) {
@@ -2200,19 +2209,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           return;
         }
         _isAlphaActive = false;
-        if (_calculatorMode == 8) {
-          _matrixInsertToken('/');
-          return;
-        }
-        if (_calculatorMode == 9) {
-          _vectorInsertToken('/');
-          return;
-        }
-        if (_calculatorMode == 10) {
-          _complexInsertToken('/');
-          return;
-        }
-        if (_calculatorMode == 11) {
+        if (_calculatorMode == 7) {
           final cur = _ineqSysRowInputs[_ineqSysActiveRow];
           final pos = _ineqSysRowCursors[_ineqSysActiveRow];
           final (nextRaw, advancedPos) = ExpressionParser.insertAtCursor(
@@ -2223,6 +2220,18 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           );
           _ineqSysRowInputs[_ineqSysActiveRow] = nextRaw;
           _ineqSysRowCursors[_ineqSysActiveRow] = advancedPos;
+          return;
+        }
+        if (_calculatorMode == 9) {
+          _matrixInsertToken('/');
+          return;
+        }
+        if (_calculatorMode == 10) {
+          _vectorInsertToken('/');
+          return;
+        }
+        if (_calculatorMode == 11) {
+          _complexInsertToken('/');
           return;
         }
         if (_calculatorMode == 12 && _calculusActiveField != 0) {
@@ -2470,64 +2479,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _isShiftActive = false;
         _isAlphaActive = false;
 
-        // En Modo 7 (Estadística 1-Var): confirma celda y baja a la siguiente fila, o avanza pasos si ya está resuelto
+        // En Modo 7 (Sistemas de Inecuaciones)
         if (_calculatorMode == 7) {
-          if (_activeResolution != null) {
-            if (_activeStepIndex < _activeResolution!.steps.length - 1) {
-              _activeStepIndex++;
-            } else {
-              _activeStepIndex = 0;
-            }
-            return;
-          }
-          _statAdvanceRowOnEquals();
-          return;
-        }
-
-        // En Modo 8 (Matrices): avanza por celdas (y de MatA a MatB si aplica) hasta resolver
-        if (_calculatorMode == 8) {
-          if (_activeResolution != null) {
-            if (_activeStepIndex < _activeResolution!.steps.length - 1) {
-              _activeStepIndex++;
-            } else {
-              _activeStepIndex = 0;
-            }
-            return;
-          }
-          _matrixAdvanceOnEquals();
-          return;
-        }
-
-        // En Modo 9 (Vectores): avanza coordenadas hasta resolver
-        if (_calculatorMode == 9) {
-          if (_activeResolution != null) {
-            if (_activeStepIndex < _activeResolution!.steps.length - 1) {
-              _activeStepIndex++;
-            } else {
-              _activeStepIndex = 0;
-            }
-            return;
-          }
-          _vectorAdvanceOnEquals();
-          return;
-        }
-
-        // En Modo 10 (Complejos): avanza casillas binómicas/polares hasta resolver
-        if (_calculatorMode == 10) {
-          if (_activeResolution != null) {
-            if (_activeStepIndex < _activeResolution!.steps.length - 1) {
-              _activeStepIndex++;
-            } else {
-              _activeStepIndex = 0;
-            }
-            return;
-          }
-          _complexAdvanceOnEquals();
-          return;
-        }
-
-        // En Modo 11 (Sistemas de Inecuaciones)
-        if (_calculatorMode == 11) {
           if (_isChoosingIneqSysUnknowns) {
             _isChoosingIneqSysUnknowns = false;
             return;
@@ -2540,13 +2493,63 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             }
             return;
           }
-          if (_ineqSysActiveRow < _ineqSysRows - 1 &&
-              _ineqSysRowInputs[_ineqSysActiveRow].trim().isNotEmpty &&
-              _ineqSysRowInputs[_ineqSysActiveRow + 1].trim().isEmpty) {
-            _ineqSysActiveRow++;
+          _solveCurrentMode();
+          return;
+        }
+
+        // En Modo 8 (Estadística 1-Var)
+        if (_calculatorMode == 8) {
+          if (_activeResolution != null) {
+            if (_activeStepIndex < _activeResolution!.steps.length - 1) {
+              _activeStepIndex++;
+            } else {
+              _activeStepIndex = 0;
+            }
+            return;
+          }
+          _statAdvanceRowOnEquals();
+          return;
+        }
+
+        // En Modo 9 (Matrices): resuelve directamente o avanza pasos
+        if (_calculatorMode == 9) {
+          if (_activeResolution != null) {
+            if (_activeStepIndex < _activeResolution!.steps.length - 1) {
+              _activeStepIndex++;
+            } else {
+              _activeStepIndex = 0;
+            }
             return;
           }
           _solveCurrentMode();
+          return;
+        }
+
+        // En Modo 10 (Vectores)
+        if (_calculatorMode == 10) {
+          if (_activeResolution != null) {
+            if (_activeStepIndex < _activeResolution!.steps.length - 1) {
+              _activeStepIndex++;
+            } else {
+              _activeStepIndex = 0;
+            }
+            return;
+          }
+          _vectorAdvanceOnEquals();
+          return;
+        }
+
+        // En Modo 11 (Complejos)
+        if (_calculatorMode == 11) {
+          if (_activeResolution != null) {
+            if (_activeStepIndex < _activeResolution!.steps.length - 1) {
+              _activeStepIndex++;
+            } else {
+              _activeStepIndex = 0;
+            }
+            return;
+          }
+          _complexAdvanceOnEquals();
           return;
         }
 
@@ -2619,48 +2622,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
       _isShiftActive = false;
 
-      // ENTRADA EN MODO 7 (ESTADÍSTICA 1-VAR: tabla xi | fi)
+      // ENTRADA EN MODO 7 (SISTEMAS DE INECUACIONES)
       if (_calculatorMode == 7) {
-        if (_activeResolution != null) {
-          _activeResolution = null;
-          _activeStepIndex = 0;
-        }
-        _statInsertToken(effectiveChar);
-        return;
-      }
-
-      // ENTRADA EN MODO 8 (MATRICES 2x2 / 3x3)
-      if (_calculatorMode == 8) {
-        if (_activeResolution != null) {
-          _activeResolution = null;
-          _activeStepIndex = 0;
-        }
-        _matrixInsertToken(effectiveChar);
-        return;
-      }
-
-      // ENTRADA EN MODO 9 (VECTORES 2D / 3D)
-      if (_calculatorMode == 9) {
-        if (_activeResolution != null) {
-          _activeResolution = null;
-          _activeStepIndex = 0;
-        }
-        _vectorInsertToken(effectiveChar);
-        return;
-      }
-
-      // ENTRADA EN MODO 10 (COMPLEJOS)
-      if (_calculatorMode == 10) {
-        if (_activeResolution != null) {
-          _activeResolution = null;
-          _activeStepIndex = 0;
-        }
-        _complexInsertToken(effectiveChar);
-        return;
-      }
-
-      // ENTRADA EN MODO 11 (SISTEMAS DE INECUACIONES: selector 1D/2D o edición de fila)
-      if (_calculatorMode == 11) {
         if (_isChoosingIneqSysUnknowns) {
           if (effectiveChar == '1') {
             _ineqSysUnknowns = 1;
@@ -2680,6 +2643,46 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           _ineqSysRowCursors[_ineqSysActiveRow] =
               _ineqSysRowInputs[_ineqSysActiveRow].length;
         }
+      }
+
+      // ENTRADA EN MODO 8 (ESTADÍSTICA 1-VAR: tabla xi | fi)
+      if (_calculatorMode == 8) {
+        if (_activeResolution != null) {
+          _activeResolution = null;
+          _activeStepIndex = 0;
+        }
+        _statInsertToken(effectiveChar);
+        return;
+      }
+
+      // ENTRADA EN MODO 9 (MATRICES)
+      if (_calculatorMode == 9) {
+        if (_activeResolution != null) {
+          _activeResolution = null;
+          _activeStepIndex = 0;
+        }
+        _matrixInsertToken(effectiveChar);
+        return;
+      }
+
+      // ENTRADA EN MODO 10 (VECTORES 2D / 3D)
+      if (_calculatorMode == 10) {
+        if (_activeResolution != null) {
+          _activeResolution = null;
+          _activeStepIndex = 0;
+        }
+        _vectorInsertToken(effectiveChar);
+        return;
+      }
+
+      // ENTRADA EN MODO 11 (COMPLEJOS)
+      if (_calculatorMode == 11) {
+        if (_activeResolution != null) {
+          _activeResolution = null;
+          _activeStepIndex = 0;
+        }
+        _complexInsertToken(effectiveChar);
+        return;
       }
 
       // ENTRADA EN MODO 12 (CÁLCULO: campo auxiliar x0/a/b vs f(x))
@@ -2814,7 +2817,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       return;
     }
     final cells = _matrixActiveTarget == 1 ? _matrixCellsB : _matrixCellsA;
-    final idx = _matrixActiveRow * 3 + _matrixActiveCol;
+    final idx = _matrixActiveRow * 5 + _matrixActiveCol;
     cells[idx] = _appendTokenToNumericCell(cells[idx], token);
   }
 
@@ -2826,37 +2829,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       return;
     }
     final cells = _matrixActiveTarget == 1 ? _matrixCellsB : _matrixCellsA;
-    final idx = _matrixActiveRow * 3 + _matrixActiveCol;
+    final idx = _matrixActiveRow * 5 + _matrixActiveCol;
     if (cells[idx].isNotEmpty) {
       cells[idx] = cells[idx].substring(0, cells[idx].length - 1);
     }
   }
 
-  void _matrixAdvanceOnEquals() {
-    if (_matrixActiveTarget == 2) {
-      _matrixActiveTarget = 0;
-      _solveCurrentMode();
-      return;
-    }
-    if (_matrixActiveCol < _matrixDim - 1) {
-      _matrixActiveCol++;
-      return;
-    }
-    if (_matrixActiveRow < _matrixDim - 1) {
-      _matrixActiveRow++;
-      _matrixActiveCol = 0;
-      return;
-    }
-    if (_matrixOp.needsMatrixB && _matrixActiveTarget == 0) {
-      _matrixActiveTarget = 1;
-      _matrixActiveRow = 0;
-      _matrixActiveCol = 0;
-      return;
-    }
-    _solveCurrentMode();
-  }
+
 
   void _matrixMoveDpad({required int dRow, required int dCol}) {
+    final curRows = _matrixActiveTarget == 0 ? _matrixRowsA : _matrixRowsB;
+    final curCols = _matrixActiveTarget == 0 ? _matrixColsA : _matrixColsB;
     if (_matrixActiveTarget == 2) {
       if (dRow > 0 || dCol != 0) {
         _matrixActiveTarget = 0;
@@ -2870,19 +2853,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _matrixActiveCol--;
       } else if (_matrixActiveRow > 0) {
         _matrixActiveRow--;
-        _matrixActiveCol = _matrixDim - 1;
+        _matrixActiveCol = curCols - 1;
       }
     } else if (dCol > 0) {
-      if (_matrixActiveCol < _matrixDim - 1) {
+      if (_matrixActiveCol < curCols - 1) {
         _matrixActiveCol++;
-      } else if (_matrixActiveRow < _matrixDim - 1) {
+      } else if (_matrixActiveRow < curRows - 1) {
         _matrixActiveRow++;
         _matrixActiveCol = 0;
       }
     }
     if (dRow < 0 && _matrixActiveRow > 0) {
       _matrixActiveRow--;
-    } else if (dRow > 0 && _matrixActiveRow < _matrixDim - 1) {
+    } else if (dRow > 0 && _matrixActiveRow < curRows - 1) {
       _matrixActiveRow++;
     }
   }
@@ -3121,22 +3104,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return;
       }
       if (_calculatorMode == 7) {
-        _statMoveDpad(dRow: 0, dCol: -1);
-        return;
-      }
-      if (_calculatorMode == 8) {
-        _matrixMoveDpad(dRow: 0, dCol: -1);
-        return;
-      }
-      if (_calculatorMode == 9) {
-        _vectorMoveDpad(dRow: 0, dCol: -1);
-        return;
-      }
-      if (_calculatorMode == 10) {
-        _complexMoveDpad(dRow: 0, dCol: -1);
-        return;
-      }
-      if (_calculatorMode == 11) {
         if (_isChoosingIneqSysUnknowns) {
           _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
           return;
@@ -3147,6 +3114,22 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           _ineqSysRowCursors[_ineqSysActiveRow] =
               ExpressionParser.stepCursorLeft(cur, pos);
         }
+        return;
+      }
+      if (_calculatorMode == 8) {
+        _statMoveDpad(dRow: 0, dCol: -1);
+        return;
+      }
+      if (_calculatorMode == 9) {
+        _matrixMoveDpad(dRow: 0, dCol: -1);
+        return;
+      }
+      if (_calculatorMode == 10) {
+        _vectorMoveDpad(dRow: 0, dCol: -1);
+        return;
+      }
+      if (_calculatorMode == 11) {
+        _complexMoveDpad(dRow: 0, dCol: -1);
         return;
       }
       if (_calculatorMode == 12) {
@@ -3199,22 +3182,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return;
       }
       if (_calculatorMode == 7) {
-        _statMoveDpad(dRow: 0, dCol: 1);
-        return;
-      }
-      if (_calculatorMode == 8) {
-        _matrixMoveDpad(dRow: 0, dCol: 1);
-        return;
-      }
-      if (_calculatorMode == 9) {
-        _vectorMoveDpad(dRow: 0, dCol: 1);
-        return;
-      }
-      if (_calculatorMode == 10) {
-        _complexMoveDpad(dRow: 0, dCol: 1);
-        return;
-      }
-      if (_calculatorMode == 11) {
         if (_activeResolution == null) {
           final cur = _ineqSysRowInputs[_ineqSysActiveRow];
           final pos = _ineqSysRowCursors[_ineqSysActiveRow];
@@ -3237,6 +3204,22 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             }
           }
         }
+        return;
+      }
+      if (_calculatorMode == 8) {
+        _statMoveDpad(dRow: 0, dCol: 1);
+        return;
+      }
+      if (_calculatorMode == 9) {
+        _matrixMoveDpad(dRow: 0, dCol: 1);
+        return;
+      }
+      if (_calculatorMode == 10) {
+        _vectorMoveDpad(dRow: 0, dCol: 1);
+        return;
+      }
+      if (_calculatorMode == 11) {
+        _complexMoveDpad(dRow: 0, dCol: 1);
         return;
       }
       if (_calculatorMode == 12) {
@@ -3366,22 +3349,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return;
       }
       if (_calculatorMode == 7) {
-        _statMoveDpad(dRow: -1, dCol: 0);
-        return;
-      }
-      if (_calculatorMode == 8) {
-        _matrixMoveDpad(dRow: -1, dCol: 0);
-        return;
-      }
-      if (_calculatorMode == 9) {
-        _vectorMoveDpad(dRow: -1, dCol: 0);
-        return;
-      }
-      if (_calculatorMode == 10) {
-        _complexMoveDpad(dRow: -1, dCol: 0);
-        return;
-      }
-      if (_calculatorMode == 11) {
         if (_isChoosingIneqSysUnknowns) {
           _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
           return;
@@ -3389,6 +3356,22 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         if (_activeResolution == null && _ineqSysActiveRow > 0) {
           _ineqSysActiveRow--;
         }
+        return;
+      }
+      if (_calculatorMode == 8) {
+        _statMoveDpad(dRow: -1, dCol: 0);
+        return;
+      }
+      if (_calculatorMode == 9) {
+        _matrixMoveDpad(dRow: -1, dCol: 0);
+        return;
+      }
+      if (_calculatorMode == 10) {
+        _vectorMoveDpad(dRow: -1, dCol: 0);
+        return;
+      }
+      if (_calculatorMode == 11) {
+        _complexMoveDpad(dRow: -1, dCol: 0);
         return;
       }
       if (_calculatorMode == 12) {
@@ -3461,22 +3444,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return;
       }
       if (_calculatorMode == 7) {
-        _statMoveDpad(dRow: 1, dCol: 0);
-        return;
-      }
-      if (_calculatorMode == 8) {
-        _matrixMoveDpad(dRow: 1, dCol: 0);
-        return;
-      }
-      if (_calculatorMode == 9) {
-        _vectorMoveDpad(dRow: 1, dCol: 0);
-        return;
-      }
-      if (_calculatorMode == 10) {
-        _complexMoveDpad(dRow: 1, dCol: 0);
-        return;
-      }
-      if (_calculatorMode == 11) {
         if (_isChoosingIneqSysUnknowns) {
           _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
           return;
@@ -3484,6 +3451,22 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         if (_activeResolution == null && _ineqSysActiveRow < _ineqSysRows - 1) {
           _ineqSysActiveRow++;
         }
+        return;
+      }
+      if (_calculatorMode == 8) {
+        _statMoveDpad(dRow: 1, dCol: 0);
+        return;
+      }
+      if (_calculatorMode == 9) {
+        _matrixMoveDpad(dRow: 1, dCol: 0);
+        return;
+      }
+      if (_calculatorMode == 10) {
+        _vectorMoveDpad(dRow: 1, dCol: 0);
+        return;
+      }
+      if (_calculatorMode == 11) {
+        _complexMoveDpad(dRow: 1, dCol: 0);
         return;
       }
       if (_calculatorMode == 12) {
@@ -3635,11 +3618,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     });
     if (_activeResolution == null) {
       if (_isCoefficientMode ||
-          _calculatorMode == 7 ||
           _calculatorMode == 8 ||
           _calculatorMode == 9 ||
           _calculatorMode == 10 ||
-          (_calculatorMode == 11 && _ineqSysRowInputs.any((r) => r.trim().isNotEmpty)) ||
+          _calculatorMode == 11 ||
+          (_calculatorMode == 7 && _ineqSysRowInputs.any((r) => r.trim().isNotEmpty)) ||
           (_calculatorMode == 12 && _calculusExprRaw.trim().isNotEmpty) ||
           (_calculatorMode == 2 &&
               (_eqLeftRaw.trim().isNotEmpty || _eqRightRaw.trim().isNotEmpty)) ||
@@ -3710,7 +3693,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       final restored = _entryToEditableRaw(entry);
       if (_calculatorMode == 2) {
         _restoreMode2EquationString(restored);
-      } else if (_calculatorMode == 11) {
+      } else if (_calculatorMode == 7) {
         final rawRows = (entry.rawExpression ?? restored)
             .split(RegExp(r'[;,]'))
             .map((s) => s.trim())
@@ -3720,7 +3703,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           _ineqSysRowInputs[i] = i < rawRows.length ? rawRows[i] : '';
           _ineqSysRowCursors[i] = _ineqSysRowInputs[i].length;
         }
-        _ineqSysRows = rawRows.length.clamp(2, 3);
+        _ineqSysRows = rawRows.length.clamp(2, 4);
         _ineqSysUnknowns = (entry.rawExpression ?? restored).contains('y') ? 2 : 1;
         _isChoosingIneqSysUnknowns = false;
         _ineqSysActiveRow = 0;
@@ -3744,7 +3727,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     });
 
     // Re-evaluar con el motor y vistas visuales actualizadas de la app
-    if (_calculatorMode == 1 || _calculatorMode == 2 || _calculatorMode == 6 || _calculatorMode == 11) {
+    if (_calculatorMode == 1 || _calculatorMode == 2 || _calculatorMode == 6 || _calculatorMode == 7) {
       _solveCurrentMode();
     }
 
@@ -3870,11 +3853,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         2 => 'M6: INEC. 2°',
         _ => 'M6: |x| / RAC.',
       },
-      7: 'M7: ESTADÍST.',
-      8: 'M8: MATRICES ($_matrixDim×$_matrixDim)',
-      9: 'M9: VECTORES ${_vectorDim}D',
-      10: 'M10: COMPLEJOS',
-      11: _ineqSysUnknowns == 1 ? 'M11: SIST. INEC 1D' : 'M11: REGIÓN 2D',
+      7: _ineqSysUnknowns == 1 ? 'M7: SIST. INEC 1D' : 'M7: REGIÓN 2D',
+      8: 'M8: ESTADÍST.',
+      9: 'M9: MATRICES ($_matrixRowsA×$_matrixColsA)',
+      10: 'M10: VECTORES ${_vectorDim}D',
+      11: 'M11: COMPLEJOS',
       12: 'M12: CÁLCULO',
     };
     final modeLabel = modeLabels[_calculatorMode] ?? 'M1: CALC & √';
@@ -4137,7 +4120,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                     });
                                   },
                                 )
-                              : (_calculatorMode == 11 &&
+                              : (_calculatorMode == 7 &&
                                       _ineqSysUnknowns == 2 &&
                                       _show2DRegionView &&
                                       _currentFeasibleRegion != null
@@ -4160,14 +4143,14 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           modeLabel: modeLabel,
                           idleHint: _lcdIdleHint,
                           customHeaderTitle: _lcdCustomHeaderTitle,
-                          customBodyView: (_calculatorMode == 11 &&
+                          customBodyView: (_calculatorMode == 7 &&
                                   _isChoosingIneqSysUnknowns)
                               ? _buildIneqSysUnknownsSelector()
                               : (_calculatorMode == 4 &&
                                       !_polyIsNotableMode &&
                                       _isChoosingRuffiniDegree)
                                   ? _buildRuffiniDegreeSelector()
-                                  : (_calculatorMode == 7
+                                  : (_calculatorMode == 8
                                       ? CasioStatTableView(
                                           rows: _statRows,
                                           activeRow: _statActiveRow,
@@ -4181,9 +4164,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                             });
                                           },
                                         )
-                                      : (_calculatorMode == 8
+                                      : (_calculatorMode == 9
                                           ? CasioMatrixEditorView(
-                                              dimension: _matrixDim,
+                                              rowsA: _matrixRowsA,
+                                              colsA: _matrixColsA,
+                                              rowsB: _matrixRowsB,
+                                              colsB: _matrixColsB,
                                               activeMatrixTarget: _matrixActiveTarget,
                                               selectedOperation: _matrixOp,
                                               cellsA: _matrixCellsA,
@@ -4208,14 +4194,20 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                               _matrixActiveTarget = target;
                                             });
                                           },
-                                          onChangeDimension: (dim) {
+                                          onUpdateDimensions: (target, rows, cols) {
                                             setState(() {
                                               _activeResolution = null;
-                                              _matrixDim = dim;
+                                              if (target == 0) {
+                                                _matrixRowsA = rows;
+                                                _matrixColsA = cols;
+                                              } else {
+                                                _matrixRowsB = rows;
+                                                _matrixColsB = cols;
+                                              }
                                               _matrixActiveRow =
-                                                  _matrixActiveRow.clamp(0, dim - 1);
+                                                  _matrixActiveRow.clamp(0, rows - 1).toInt().toInt();
                                               _matrixActiveCol =
-                                                  _matrixActiveCol.clamp(0, dim - 1);
+                                                  _matrixActiveCol.clamp(0, cols - 1).toInt().toInt();
                                             });
                                           },
                                           onSelectOperation: (op) {
@@ -4240,21 +4232,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                                 _matrixActiveCol = 0;
                                               }
                                             });
-                                            if (op == MatrixOperation.scalarMultiply) {
-                                              if (hasMatA &&
-                                                  _matrixScalarK.trim().isNotEmpty) {
-                                                _solveCurrentMode();
-                                              }
-                                            } else if (op.needsMatrixB) {
-                                              if (hasMatA && hasMatB) {
-                                                _solveCurrentMode();
-                                              }
-                                            } else if (hasMatA) {
-                                              _solveCurrentMode();
-                                            }
                                           },
                                         )
-                                      : (_calculatorMode == 9
+                                      : (_calculatorMode == 10
                                           ? CasioVectorEditorView(
                                               dimension: _vectorDim,
                                               selectedOperation: _vectorOp,
@@ -4298,7 +4278,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                                 }
                                               },
                                             )
-                                          : (_calculatorMode == 10
+                                          : (_calculatorMode == 11
                                               ? CasioComplexEditorView(
                                                   selectedOperation: _complexOp,
                                                   cells: _complexCells,
@@ -4312,7 +4292,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                                   },
                                                   onSelectOperation: _selectComplexOp,
                                                 )
-                                              : (_calculatorMode == 11
+                                              : (_calculatorMode == 7
                                                   ? (_isChoosingIneqSysUnknowns || _activeResolution != null
                                                       ? null
                                                       : _buildInequalitySystemEditorView())
@@ -4385,7 +4365,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                             });
                           },
                           supplementaryVisualView:
-                              (_calculatorMode == 6 || _calculatorMode == 11) &&
+                              (_calculatorMode == 6 || _calculatorMode == 7) &&
                                       _activeIneqVisualData != null &&
                                       (_activeResolution == null ||
                                           _activeResolution!.steps.length <= 1 ||
@@ -4793,6 +4773,69 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                     ],
                   ),
                 ] else if (_calculatorMode == 7) ...[
+                  if (!_isChoosingIneqSysUnknowns) ...[
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        if (_activeResolution != null) ...[
+                          _buildMethodTab(
+                            key: const Key('ineq_sys_edit_btn'),
+                            label: '✎ Editar Sistema',
+                            selected: false,
+                            onTap: () {
+                              setState(() {
+                                _activeResolution = null;
+                                _show2DRegionView = false;
+                              });
+                            },
+                          ),
+                          if (_ineqSysUnknowns == 2 && _currentFeasibleRegion != null) ...[
+                            const SizedBox(width: 4),
+                            _buildMethodTab(
+                              key: const Key('ineq_sys_2d_toggle_btn'),
+                              label: _show2DRegionView ? 'Ver Pasos' : 'Ver Plano 2D',
+                              selected: _show2DRegionView,
+                              onTap: () {
+                                setState(() {
+                                  _show2DRegionView = !_show2DRegionView;
+                                });
+                              },
+                            ),
+                          ],
+                        ] else ...[
+                          _buildMethodTab(
+                            key: const Key('ineq_sys_var_x'),
+                            label: 'x',
+                            selected: false,
+                            onTap: _insertVariableX,
+                          ),
+                          if (_ineqSysUnknowns == 2) ...[
+                            const SizedBox(width: 3),
+                            _buildMethodTab(
+                              key: const Key('ineq_sys_var_y'),
+                              label: 'y',
+                              selected: false,
+                              onTap: _insertVariableY,
+                            ),
+                          ],
+                          for (final s in InequalitySign.values) ...[
+                            const SizedBox(width: 3),
+                            _buildMethodTab(
+                              key: Key('ineq_sys_sign_${s.name}'),
+                              label: s.symbol,
+                              selected: _inequalitySign == s,
+                              onTap: () {
+                                setState(() {
+                                  _setInequalitySign(s, insertIfMissing: true);
+                                });
+                              },
+                            ),
+                          ],
+                        ],
+                      ],
+                    ),
+                  ],
+                ] else if (_calculatorMode == 8) ...[
                   const SizedBox(height: 3),
                   Row(
                     children: [
@@ -4837,13 +4880,32 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       ),
                     ],
                   ),
-                ] else if (_calculatorMode == 8) ...[
+                ] else if (_calculatorMode == 9) ...[
+                  if (_activeResolution != null) ...[
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        _buildMethodTab(
+                          key: const Key('matrix_edit_btn'),
+                          label: '✎ Editar Matriz',
+                          selected: false,
+                          onTap: () {
+                            setState(() {
+                              _activeResolution = null;
+                              _activeStepIndex = 0;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ] else if (_calculatorMode == 10) ...[
                   const SizedBox(height: 3),
                   Row(
                     children: [
                       if (_activeResolution != null)
                         _buildMethodTab(
-                          key: const Key('matrix_edit_btn'),
+                          key: const Key('vector_edit_btn'),
                           label: 'Editar',
                           selected: false,
                           onTap: () {
@@ -4855,106 +4917,24 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                         )
                       else ...[
                         _buildMethodTab(
-                          key: const Key('matrix_bar_2x2'),
-                          label: '2×2',
-                          selected: _matrixDim == 2,
-                          onTap: () {
-                            setState(() {
-                              _matrixDim = 2;
-                              _matrixActiveRow = _matrixActiveRow.clamp(0, 1);
-                              _matrixActiveCol = _matrixActiveCol.clamp(0, 1);
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 4),
-                        _buildMethodTab(
-                          key: const Key('matrix_bar_3x3'),
-                          label: '3×3',
-                          selected: _matrixDim == 3,
-                          onTap: () {
-                            setState(() {
-                              _matrixDim = 3;
-                            });
-                          },
-                        ),
-                      ],
-                      const SizedBox(width: 4),
-                      _buildMethodTab(
-                        key: const Key('matrix_solve_btn'),
-                        label: 'Calcular (${_matrixOp.shortLabel})',
-                        selected: true,
-                        onTap: _solveCurrentMode,
-                      ),
-                    ],
-                  ),
-                ] else if (_calculatorMode == 9) ...[
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      if (_activeResolution != null) ...[
-                        _buildMethodTab(
-                          key: const Key('vector_edit_btn'),
-                          label: 'Editar',
-                          selected: false,
-                          onTap: () {
-                            setState(() {
-                              _activeResolution = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 4),
-                      ] else ...[
-                        _buildMethodTab(
-                          key: const Key('vector_bar_2d'),
+                          key: const Key('vector_dim_2'),
                           label: '2D',
                           selected: _vectorDim == 2,
                           onTap: () => _setVectorDim(2),
                         ),
                         const SizedBox(width: 4),
                         _buildMethodTab(
-                          key: const Key('vector_bar_3d'),
+                          key: const Key('vector_dim_3'),
                           label: '3D',
                           selected: _vectorDim == 3,
                           onTap: () => _setVectorDim(3),
                         ),
-                        const SizedBox(width: 4),
                       ],
+                      const SizedBox(width: 4),
                       _buildMethodTab(
                         key: const Key('vector_solve_btn'),
                         label: 'Calcular (${_vectorOp.shortLabel})',
-                        selected: false,
-                        onTap: _solveCurrentMode,
-                      ),
-                    ],
-                  ),
-                ] else if (_calculatorMode == 10) ...[
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      if (_activeResolution != null) ...[
-                        _buildMethodTab(
-                          key: const Key('complex_edit_btn'),
-                          label: 'Editar',
-                          selected: false,
-                          onTap: () {
-                            setState(() {
-                              _activeResolution = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 4),
-                      ],
-                      _buildMethodTab(
-                        key: const Key('complex_polar_btn'),
-                        label: 'a+bi→r_α',
-                        selected: _complexOp == ComplexOperation.toPolar,
-                        onTap: () => _selectComplexOp(ComplexOperation.toPolar),
-                      ),
-                      const SizedBox(width: 4),
-                      _buildMethodTab(
-                        key: const Key('complex_solve_btn'),
-                        label: 'Calcular',
-                        selected: false,
+                        selected: true,
                         onTap: _solveCurrentMode,
                       ),
                     ],
@@ -4963,131 +4943,27 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                        if (_activeResolution != null) ...[
-                          _buildMethodTab(
-                            key: const Key('ineq_sys_edit_btn'),
-                            label: '✎ Editar Sistema',
-                            selected: false,
-                            onTap: () {
-                              setState(() {
-                                _activeResolution = null;
-                                _show2DRegionView = false;
-                              });
-                            },
-                          ),
-                          if (_ineqSysUnknowns == 2 && _currentFeasibleRegion != null) ...[
-                            const SizedBox(width: 4),
-                            _buildMethodTab(
-                              key: const Key('ineq_sys_2d_toggle_btn'),
-                              label: _show2DRegionView ? 'Ver Pasos' : 'Ver Plano 2D',
-                              selected: _show2DRegionView,
-                              onTap: () {
-                                setState(() {
-                                  _show2DRegionView = !_show2DRegionView;
-                                });
-                              },
-                            ),
-                          ],
-                        ] else ...[
-                          _buildMethodTab(
-                            key: const Key('ineq_sys_rows_2'),
-                            label: '2 Inec.',
-                            selected: _ineqSysRows == 2,
-                            onTap: () {
-                              setState(() {
-                                _ineqSysRows = 2;
-                                _activeResolution = null;
-                                _activeStepIndex = 0;
-                                _activeIneqVisualData = null;
-                                _currentFeasibleRegion = null;
-                              });
-                            },
-                          ),
-                          const SizedBox(width: 3),
-                          _buildMethodTab(
-                            key: const Key('ineq_sys_rows_3'),
-                            label: '3 Inec.',
-                            selected: _ineqSysRows == 3,
-                            onTap: () {
-                              setState(() {
-                                _ineqSysRows = 3;
-                                _activeResolution = null;
-                                _activeStepIndex = 0;
-                                _activeIneqVisualData = null;
-                                _currentFeasibleRegion = null;
-                              });
-                            },
-                          ),
-                          const SizedBox(width: 3),
-                          _buildMethodTab(
-                            key: const Key('ineq_sys_unk_1'),
-                            label: '1 Incóg. (x)',
-                            selected: _ineqSysUnknowns == 1,
-                            onTap: () {
-                              setState(() {
-                                _ineqSysUnknowns = 1;
-                                _activeResolution = null;
-                                _activeStepIndex = 0;
-                                _activeIneqVisualData = null;
-                                _currentFeasibleRegion = null;
-                              });
-                            },
-                          ),
-                          const SizedBox(width: 3),
-                          _buildMethodTab(
-                            key: const Key('ineq_sys_unk_2'),
-                            label: '2 Incóg. (x, y)',
-                            selected: _ineqSysUnknowns == 2,
-                            onTap: () {
-                              setState(() {
-                                _ineqSysUnknowns = 2;
-                                _activeResolution = null;
-                                _activeStepIndex = 0;
-                                _activeIneqVisualData = null;
-                                _currentFeasibleRegion = null;
-                                _show2DRegionView = true;
-                              });
-                            },
-                          ),
-                          const SizedBox(width: 3),
-                          _buildMethodTab(
-                            key: const Key('ineq_sys_var_x'),
-                            label: 'x',
-                            selected: false,
-                            onTap: _insertVariableX,
-                          ),
-                          if (_ineqSysUnknowns == 2) ...[
-                            const SizedBox(width: 3),
-                            _buildMethodTab(
-                              key: const Key('ineq_sys_var_y'),
-                              label: 'y',
-                              selected: false,
-                              onTap: _insertVariableY,
-                            ),
-                          ],
-                          for (final s in InequalitySign.values) ...[
-                            const SizedBox(width: 3),
-                            _buildMethodTab(
-                              key: Key('ineq_sys_sign_${s.name}'),
-                              label: s.symbol,
-                              selected: _inequalitySign == s,
-                              onTap: () {
-                                setState(() {
-                                  _setInequalitySign(s, insertIfMissing: true);
-                                });
-                              },
-                            ),
-                          ],
-                          const SizedBox(width: 4),
-                          _buildMethodTab(
-                            key: const Key('ineq_sys_solve_btn'),
-                            label: 'Resolver',
-                            selected: false,
-                            onTap: _solveCurrentMode,
-                          ),
-                        ],
-                      ],
-                    ),
+                      if (_activeResolution != null)
+                        _buildMethodTab(
+                          key: const Key('complex_edit_btn'),
+                          label: 'Editar',
+                          selected: false,
+                          onTap: () {
+                            setState(() {
+                              _activeResolution = null;
+                              _activeStepIndex = 0;
+                            });
+                          },
+                        ),
+                      const SizedBox(width: 4),
+                      _buildMethodTab(
+                        key: const Key('complex_solve_btn'),
+                        label: 'Calcular (${_complexOp.shortLabel})',
+                        selected: true,
+                        onTap: _solveCurrentMode,
+                      ),
+                    ],
+                  ),
                 ] else if (_calculatorMode == 12) ...[
                   const SizedBox(height: 3),
                   Row(
@@ -5861,7 +5737,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  '1: 1 Incógnita (x)',
+                                  '1: Una Incógnita (x)',
                                   style: TextStyle(
                                     color: _ineqSysUnknowns == 1
                                         ? Colors.white
@@ -5920,7 +5796,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  '2: 2 Incógnitas (x, y)',
+                                  '2: Dos Incógnitas (x, y)',
                                   style: TextStyle(
                                     color: _ineqSysUnknowns == 2
                                         ? Colors.white
@@ -5969,112 +5845,201 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _isOledDark ? const Color(0xFF60A5FA) : const Color(0xFF1E3A5F);
     final inactiveBorder =
         _isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
+    final unselectedBg =
+        _isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD);
+    final unselectedBorder =
+        _isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
+    final selectedBg =
+        _isOledDark ? const Color(0xFF2563EB) : const Color(0xFF1E3A5F);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                '{',
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: _ineqSysRows == 3 ? 64 : 52,
-                  fontWeight: FontWeight.w200,
-                  fontFamily: 'serif',
-                  height: 0.95,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+              // Barra superior interna del LCD con selector 1D/2D y número de inecuaciones
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    for (int i = 0; i < _ineqSysRows; i++) ...[
-                      if (i > 0) const SizedBox(height: 5),
-                      GestureDetector(
-                        key: Key('ineq_sys_row_$i'),
-                        onTap: () {
-                          setState(() {
-                            _ineqSysActiveRow = i;
-                            _ineqSysRowCursors[i] =
-                                _ineqSysRowInputs[i].length;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _ineqSysActiveRow == i ? activeRowBg : rowBg,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: _ineqSysActiveRow == i
-                                  ? activeBorder
-                                  : inactiveBorder,
-                              width: _ineqSysActiveRow == i ? 1.8 : 1.0,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                '(${i + 1}) ',
-                                style: TextStyle(
-                                  color: textColor.withValues(alpha: 0.65),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Expanded(
-                                child: Builder(
-                                  builder: (context) {
-                                    final raw = _ineqSysRowInputs[i];
-                                    final isActive = _ineqSysActiveRow == i;
-                                    final cursor = isActive
-                                        ? _ineqSysRowCursors[i]
-                                        : null;
-                                    final String rowTex;
-                                    if (raw.isEmpty) {
-                                      rowTex = isActive
-                                          ? r'\textcolor{#2E86DE}{\blacksquare}'
-                                          : (_ineqSysUnknowns == 1
-                                              ? r'2x - 3 \le 5'
-                                              : r'x + y \le 4');
-                                    } else {
-                                      rowTex = ExpressionParser.rawToLiveLatex(
-                                        raw,
-                                        cursorPos: cursor,
-                                      );
-                                    }
-                                    return FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.centerLeft,
-                                      child: Math.tex(
-                                        rowTex,
-                                        textStyle: TextStyle(
-                                          color: raw.isEmpty && !isActive
-                                              ? textColor.withValues(
-                                                  alpha: 0.38)
-                                              : textColor,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
+                    GestureDetector(
+                      key: const Key('ineq_sys_header_toggle_unk'),
+                      onTap: () {
+                        setState(() {
+                          _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
+                          _activeResolution = null;
+                          _activeIneqVisualData = null;
+                          _currentFeasibleRegion = null;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: unselectedBg,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: unselectedBorder),
+                        ),
+                        child: Text(
+                          _ineqSysUnknowns == 1 ? '⇄ Modo 1D (x)' : '⇄ Modo 2D (x, y)',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
                           ),
                         ),
                       ),
-                    ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final r in [2, 3, 4]) ...[
+                          GestureDetector(
+                            key: Key('ineq_sys_header_rows_$r'),
+                            onTap: () {
+                              setState(() {
+                                _ineqSysRows = r;
+                                _activeResolution = null;
+                                _activeStepIndex = 0;
+                                _activeIneqVisualData = null;
+                                _currentFeasibleRegion = null;
+                                if (_ineqSysActiveRow >= r) {
+                                  _ineqSysActiveRow = r - 1;
+                                }
+                              });
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(left: 3),
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _ineqSysRows == r ? selectedBg : unselectedBg,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: _ineqSysRows == r ? Colors.cyanAccent : unselectedBorder,
+                                ),
+                              ),
+                              child: Text(
+                                '$r Inec.',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: _ineqSysRows == r ? Colors.white : textColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
+              ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    '{',
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: _ineqSysRows == 4 ? 76 : (_ineqSysRows == 3 ? 64 : 52),
+                      fontWeight: FontWeight.w200,
+                      fontFamily: 'serif',
+                      height: 0.95,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (int i = 0; i < _ineqSysRows; i++) ...[
+                          if (i > 0) const SizedBox(height: 5),
+                          GestureDetector(
+                            key: Key('ineq_sys_row_$i'),
+                            onTap: () {
+                              setState(() {
+                                _ineqSysActiveRow = i;
+                                _ineqSysRowCursors[i] =
+                                    _ineqSysRowInputs[i].length;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _ineqSysActiveRow == i ? activeRowBg : rowBg,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: _ineqSysActiveRow == i
+                                      ? activeBorder
+                                      : inactiveBorder,
+                                  width: _ineqSysActiveRow == i ? 1.8 : 1.0,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    '(${i + 1}) ',
+                                    style: TextStyle(
+                                      color: textColor.withValues(alpha: 0.65),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Builder(
+                                      builder: (context) {
+                                        final raw = _ineqSysRowInputs[i];
+                                        final isActive = _ineqSysActiveRow == i;
+                                        final cursor = isActive
+                                            ? _ineqSysRowCursors[i]
+                                            : null;
+                                        final String rowTex;
+                                        if (raw.isEmpty) {
+                                          rowTex = isActive
+                                              ? r'\textcolor{#2E86DE}{\blacksquare}'
+                                              : (_ineqSysUnknowns == 1
+                                                  ? r'2x - 3 \le 5'
+                                                  : r'x + y \le 4');
+                                        } else {
+                                          rowTex = ExpressionParser.rawToLiveLatex(
+                                            raw,
+                                            cursorPos: cursor,
+                                          );
+                                        }
+                                        return FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Math.tex(
+                                            rowTex,
+                                            textStyle: TextStyle(
+                                              color: raw.isEmpty && !isActive
+                                                  ? textColor.withValues(
+                                                      alpha: 0.38)
+                                                  : textColor,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

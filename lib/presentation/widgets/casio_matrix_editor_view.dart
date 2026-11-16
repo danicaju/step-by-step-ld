@@ -4,12 +4,15 @@ import '../../domain/math_engine/solvers/matrix_solver.dart';
 import 'casio_cell_value_text.dart';
 
 /// Cuadrícula matricial editable integrada dentro de la LCD Casio ClassWiz
-/// para el Modo 8 (Matrices 2x2 y 3x3: Sarrus, Inversa, Adjunta, A·B, A+B).
+/// con selector libre de dimensiones (1..4 Filas × 1..4 Columnas) independiente para MatA y MatB.
 class CasioMatrixEditorView extends StatelessWidget {
-  final int dimension; // 2 o 3
+  final int rowsA;
+  final int colsA;
+  final int rowsB;
+  final int colsB;
   final int activeMatrixTarget; // 0 = MatA, 1 = MatB, 2 = escalar k
   final MatrixOperation selectedOperation;
-  final List<String> cellsA; // 9 entradas row-major (3x3; para 2x2 se usan 0,1,3,4 o [r*3+c])
+  final List<String> cellsA; // 25 entradas (5x5 stride)
   final List<String> cellsB;
   final String scalarK;
   final int activeRow;
@@ -17,12 +20,15 @@ class CasioMatrixEditorView extends StatelessWidget {
   final bool isOledDark;
   final void Function(int row, int col)? onCellTap;
   final ValueChanged<int>? onSwitchMatrixTarget;
-  final ValueChanged<int>? onChangeDimension;
+  final void Function(int target, int rows, int cols)? onUpdateDimensions;
   final ValueChanged<MatrixOperation>? onSelectOperation;
 
   const CasioMatrixEditorView({
     super.key,
-    required this.dimension,
+    required this.rowsA,
+    required this.colsA,
+    required this.rowsB,
+    required this.colsB,
     required this.activeMatrixTarget,
     required this.selectedOperation,
     required this.cellsA,
@@ -33,9 +39,14 @@ class CasioMatrixEditorView extends StatelessWidget {
     this.isOledDark = false,
     this.onCellTap,
     this.onSwitchMatrixTarget,
-    this.onChangeDimension,
+    this.onUpdateDimensions,
     this.onSelectOperation,
   });
+
+  bool get _isSquareOnlyOp =>
+      selectedOperation == MatrixOperation.determinant ||
+      selectedOperation == MatrixOperation.inverse ||
+      selectedOperation == MatrixOperation.adjoint;
 
   @override
   Widget build(BuildContext context) {
@@ -44,22 +55,25 @@ class CasioMatrixEditorView extends StatelessWidget {
     final List<String> activeCells = isEditingB ? cellsB : cellsA;
     final String activeId = isEditingB ? 'B' : 'A';
 
+    final int currentRows = isEditingB ? rowsB : rowsA;
+    final int currentCols = isEditingB ? colsB : colsA;
+
     final Color textColor =
         isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF0F172A);
     final Color bracketColor =
         isOledDark ? const Color(0xFF94A3B8) : const Color(0xFF334155);
 
-    final int rowsCount = dimension == 34 ? 3 : (dimension == 45 ? 4 : dimension);
-    final int colsCount = dimension == 34 ? 4 : (dimension == 45 ? 5 : dimension);
-    final int stride = activeCells.length >= 25 ? 5 : (dimension <= 3 ? 3 : 4);
-    final double bracketH = rowsCount == 2 ? 52 : (rowsCount == 3 ? 72 : 88);
+    const int stride = 5;
+    final double bracketH = currentRows == 1
+        ? 34
+        : (currentRows == 2 ? 52 : (currentRows == 3 ? 72 : 88));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Barra superior dentro de la LCD: selector MatA/MatB + [2x2] / [3x3] / [4x4]
+        // 1. Barra superior dentro de la LCD: Pestañas MatA/MatB + Selector m × n libre
         SizedBox(
-          height: 22,
+          height: 24,
           child: Row(
             children: [
               _lcdPill(
@@ -89,48 +103,92 @@ class CasioMatrixEditorView extends StatelessWidget {
                 ),
               ],
               const Spacer(),
-              _lcdPill(
-                key: const Key('matrix_size_2'),
-                label: '2×2',
-                selected: dimension == 2,
-                onTap: () => onChangeDimension?.call(2),
-              ),
-              const SizedBox(width: 3),
-              _lcdPill(
-                key: const Key('matrix_size_3'),
-                label: '3×3',
-                selected: dimension == 3,
-                onTap: () => onChangeDimension?.call(3),
-              ),
-              const SizedBox(width: 3),
-              _lcdPill(
-                key: const Key('matrix_size_4'),
-                label: '4×4',
-                selected: dimension == 4,
-                onTap: () => onChangeDimension?.call(4),
-              ),
-              if (selectedOperation == MatrixOperation.gauss) ...[
-                const SizedBox(width: 3),
-                _lcdPill(
-                  key: const Key('matrix_size_34'),
-                  label: '3×4',
-                  selected: dimension == 34,
-                  onTap: () => onChangeDimension?.call(34),
+
+              // Selector de dimensiones: cuadradas (2..4) si es determinante/inversa/adjunta,
+              // o selector libre F x C (1..4) si es rectangular/Gauss/operaciones
+              if (_isSquareOnlyOp) ...[
+                Text(
+                  'Dim:',
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.75),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(width: 3),
-                _lcdPill(
-                  key: const Key('matrix_size_45'),
-                  label: '4×5',
-                  selected: dimension == 45,
-                  onTap: () => onChangeDimension?.call(45),
+                for (final dim in [2, 3, 4]) ...[
+                  if (dim > 2) const SizedBox(width: 2),
+                  _lcdDimPill(
+                    key: Key('matrix_size_$dim'),
+                    label: '$dim×$dim',
+                    selected: currentRows == dim && currentCols == dim,
+                    onTap: () {
+                      final target = isEditingB ? 1 : 0;
+                      onUpdateDimensions?.call(target, dim, dim);
+                    },
+                  ),
+                ],
+              ] else ...[
+                // Selector interactivo libre F: 1..4 x C: 1..4
+                Text(
+                  'F:',
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.8),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+                const SizedBox(width: 1),
+                for (int r = 1; r <= 4; r++) ...[
+                  _lcdDimPill(
+                    key: Key('matrix_${activeId}_rows_$r'),
+                    label: '$r',
+                    selected: currentRows == r,
+                    onTap: () {
+                      final target = isEditingB ? 1 : 0;
+                      onUpdateDimensions?.call(target, r, currentCols);
+                    },
+                  ),
+                  if (r < 4) const SizedBox(width: 1.5),
+                ],
+                const SizedBox(width: 3),
+                Text(
+                  '×',
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.6),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 3),
+                Text(
+                  'C:',
+                  style: TextStyle(
+                    color: textColor.withValues(alpha: 0.8),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 1),
+                for (int c = 1; c <= 4; c++) ...[
+                  _lcdDimPill(
+                    key: Key('matrix_${activeId}_cols_$c'),
+                    label: '$c',
+                    selected: currentCols == c,
+                    onTap: () {
+                      final target = isEditingB ? 1 : 0;
+                      onUpdateDimensions?.call(target, currentRows, c);
+                    },
+                  ),
+                  if (c < 4) const SizedBox(width: 1.5),
+                ],
               ],
             ],
           ),
         ),
         const SizedBox(height: 3),
 
-        // Matriz editable central con paréntesis adaptativos y auto-escalado
+        // 2. Matriz editable central con corchetes adaptativos y auto-escalado
         Expanded(
           child: Center(
             child: LayoutBuilder(
@@ -171,19 +229,23 @@ class CasioMatrixEditorView extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 2),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
-                            children: List.generate(rowsCount, (r) {
+                            children: List.generate(currentRows, (r) {
                               return Padding(
-                                padding: EdgeInsets.only(bottom: r < rowsCount - 1 ? 3 : 0),
+                                padding: EdgeInsets.only(
+                                    bottom: r < currentRows - 1 ? 3 : 0),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: List.generate(colsCount, (c) {
+                                  children: List.generate(currentCols, (c) {
                                     final rawIdx = r * stride + c;
-                                    final value = rawIdx < activeCells.length ? activeCells[rawIdx] : '';
+                                    final value = rawIdx < activeCells.length
+                                        ? activeCells[rawIdx]
+                                        : '';
                                     final isSelected = !isEditingK &&
                                         r == activeRow &&
                                         c == activeCol;
                                     return _buildCell(
-                                      key: Key('matrix_${activeId}_cell_${r}_$c'),
+                                      key: Key(
+                                          'matrix_${activeId}_cell_${r}_$c'),
                                       value: value,
                                       isActive: isSelected,
                                       onTap: () => onCellTap?.call(r, c),
@@ -213,7 +275,7 @@ class CasioMatrixEditorView extends StatelessWidget {
 
         const SizedBox(height: 3),
 
-        // Tira de botones rápidos en la LCD: |A| (Sarrus), A⁻¹ (Inversa), Adj(A), A·B, A+B...
+        // 3. Tira de operaciones rápidas dentro de la LCD
         SizedBox(
           height: 22,
           child: SingleChildScrollView(
@@ -223,7 +285,9 @@ class CasioMatrixEditorView extends StatelessWidget {
                 for (final op in MatrixOperation.values) ...[
                   _lcdActionChip(
                     key: Key('matrix_op_${op.name}'),
-                    label: op == MatrixOperation.determinant && dimension == 2
+                    label: op == MatrixOperation.determinant &&
+                            currentRows == 2 &&
+                            currentCols == 2
                         ? '|A| (2×2)'
                         : op.shortLabel,
                     selected: selectedOperation == op,
@@ -252,7 +316,9 @@ class CasioMatrixEditorView extends StatelessWidget {
     final Color idleBg =
         isOledDark ? const Color(0xFF1E2824) : const Color(0xFFC7D3C9);
     final Color idleText = isOledDark
-        ? (value.isNotEmpty ? const Color(0xFFE8F3EE) : const Color(0xFF64748B))
+        ? (value.isNotEmpty
+            ? const Color(0xFFE8F3EE)
+            : const Color(0xFF64748B))
         : (value.isNotEmpty
             ? const Color(0xFF0F172A)
             : const Color(0xFF64748B));
@@ -299,15 +365,13 @@ class CasioMatrixEditorView extends StatelessWidget {
     Color? accentColor,
     required VoidCallback onTap,
   }) {
-    final bg = selected
-        ? (isOledDark ? const Color(0xFF1E40AF) : const Color(0xFF0F172A))
-        : (isOledDark ? const Color(0xFF1F2925) : const Color(0xFFC5D0C8));
-    final border = selected
-        ? (accentColor ?? const Color(0xFFE5A93C))
-        : (accentColor ?? (isOledDark ? const Color(0xFF374151) : const Color(0xFF8C9B91)));
-    final fg = selected
+    final Color baseSelected = accentColor ?? const Color(0xFF2563EB);
+    final Color bg = selected
+        ? baseSelected
+        : (isOledDark ? const Color(0xFF1E293B) : const Color(0xFFBAC7BE));
+    final Color fg = selected
         ? Colors.white
-        : (isOledDark ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B));
+        : (isOledDark ? const Color(0xFF94A3B8) : const Color(0xFF334155));
 
     return GestureDetector(
       key: key,
@@ -317,16 +381,55 @@ class CasioMatrixEditorView extends StatelessWidget {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: border, width: selected ? 1.4 : 0.9),
+          border: Border.all(
+            color: selected ? Colors.white : Colors.transparent,
+            width: selected ? 1.0 : 0.0,
+          ),
         ),
-        alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
             color: fg,
-            fontSize: 9.5,
-            fontWeight: FontWeight.w800,
-            fontFamily: 'monospace',
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _lcdDimPill({
+    required Key key,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final Color bg = selected
+        ? const Color(0xFF2563EB)
+        : (isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC7D3C9));
+    final Color fg = selected
+        ? Colors.white
+        : (isOledDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155));
+
+    return GestureDetector(
+      key: key,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(3),
+          border: Border.all(
+            color: selected ? Colors.cyanAccent : Colors.transparent,
+            width: selected ? 1.0 : 0.0,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: fg,
+            fontSize: 9.0,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
@@ -339,33 +442,35 @@ class CasioMatrixEditorView extends StatelessWidget {
     required bool selected,
     required VoidCallback onTap,
   }) {
-    final bg = selected
-        ? (isOledDark ? const Color(0xFF0284C7) : const Color(0xFF1E3A8A))
-        : (isOledDark ? const Color(0xFF1A2220) : const Color(0xFFCBD5CE));
-    final fg = selected
+    final Color bg = selected
+        ? (isOledDark ? const Color(0xFF2563EB) : const Color(0xFF1E3A5F))
+        : (isOledDark ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1));
+    final Color fg = selected
         ? Colors.white
-        : (isOledDark ? const Color(0xFFCBD5E1) : const Color(0xFF0F172A));
-    final border = selected
-        ? const Color(0xFF38BDF8)
-        : (isOledDark ? const Color(0xFF334155) : const Color(0xFF94A39B));
+        : (isOledDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155));
 
     return GestureDetector(
       key: key,
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: border, width: 1.0),
+          border: Border.all(
+            color: selected
+                ? const Color(0xFF60A5FA)
+                : (isOledDark
+                    ? const Color(0xFF334155)
+                    : const Color(0xFF94A3B8)),
+          ),
         ),
-        alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
             color: fg,
-            fontSize: 9.5,
-            fontWeight: FontWeight.w800,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
@@ -390,49 +495,49 @@ class _MatrixBracket extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isDeterminant) {
       return Container(
-        width: 2.0,
+        width: 2.2,
         height: height,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
         color: color,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
       );
     }
-
-    return SizedBox(
-      width: 6,
-      height: height,
-      child: CustomPaint(
-        painter: _ParenPainter(isLeft: isLeft, color: color),
-      ),
+    return CustomPaint(
+      size: Size(6, height),
+      painter: _BracketPainter(isLeft: isLeft, color: color),
     );
   }
 }
 
-class _ParenPainter extends CustomPainter {
+class _BracketPainter extends CustomPainter {
   final bool isLeft;
   final Color color;
 
-  const _ParenPainter({required this.isLeft, required this.color});
+  _BracketPainter({required this.isLeft, required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 1.8
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
 
     final path = Path();
     if (isLeft) {
-      path.moveTo(size.width - 1, 2);
-      path.quadraticBezierTo(0, size.height / 2, size.width - 1, size.height - 2);
+      path.moveTo(size.width, 0);
+      path.lineTo(0, 0);
+      path.lineTo(0, size.height);
+      path.lineTo(size.width, size.height);
     } else {
-      path.moveTo(1, 2);
-      path.quadraticBezierTo(size.width, size.height / 2, 1, size.height - 2);
+      path.moveTo(0, 0);
+      path.lineTo(size.width, 0);
+      path.lineTo(size.width, size.height);
+      path.lineTo(0, size.height);
     }
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant _ParenPainter oldDelegate) =>
-      oldDelegate.isLeft != isLeft || oldDelegate.color != color;
+  bool shouldRepaint(covariant _BracketPainter oldDelegate) {
+    return oldDelegate.isLeft != isLeft || oldDelegate.color != color;
+  }
 }

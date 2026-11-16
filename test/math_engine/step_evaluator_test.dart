@@ -91,5 +91,13 @@ void main() {
     expect(res.exactResultLatex, isNot(equals('0')));
     expect(res.exactResultLatex, contains('2,584'));
     expect(res.decimalApproxLatex, contains('2,584'));
+
+    final astDiv = parser.parse('6/log_(5,2)');
+    final resDiv = evaluator.evaluate(astDiv);
+    expect(resDiv.exactResultLatex, contains('13,93'));
+
+    final astMulComm = parser.parse('6*log_(5,2)');
+    final resMulComm = evaluator.evaluate(astMulComm);
+    expect(resMulComm.exactResultLatex, contains('2,584'));
   });
 }
