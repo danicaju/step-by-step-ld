@@ -388,9 +388,11 @@ extension _CalculatorScreenChassis on _CalculatorScreenState {
                 ),
 
 
-                // Barra interactiva contextual para Modos 2..12
-                ..._buildBasicModesToolbar(),
-                ..._buildAdvancedModesToolbar(),
+                // Barra interactiva contextual para Modos 2..12 (oculta si el MENU está abierto)
+                if (!_isMenuOpen) ...[
+                  ..._buildBasicModesToolbar(),
+                  ..._buildAdvancedModesToolbar(),
+                ],
 
                 const SizedBox(height: 6),
 

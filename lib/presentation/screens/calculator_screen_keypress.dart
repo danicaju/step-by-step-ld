@@ -28,7 +28,7 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
           return;
         }
 
-        // En Modo 8 (Estadística 1-Var)
+        // En Modo 8 (Estadística 1-Var): el botón físico = calcula directamente los parámetros
         if (_calculatorMode == 8) {
           if (_activeResolution != null) {
             if (_activeStepIndex < _activeResolution!.steps.length - 1) {
@@ -38,7 +38,7 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
             }
             return;
           }
-          _statAdvanceRowOnEquals();
+          _solveCurrentMode();
           return;
         }
 
@@ -98,6 +98,13 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
           return;
         }
 
+        // En Modo 4: confirmar selección de grado si está en el menú inicial
+        if (_calculatorMode == 4 && !_polyIsNotableMode && _isChoosingRuffiniDegree) {
+          _isChoosingRuffiniDegree = false;
+          _currentActiveIndex = 0;
+          return;
+        }
+
         // En modo coeficientes: avanza pasos si está resuelto, o confirma celda
         if (_isCoefficientMode) {
           if (_activeResolution != null) {
@@ -152,6 +159,16 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
       }
 
       _isShiftActive = false;
+
+      // ENTRADA EN MODO 4 (RUFFINI: atajo numérico de grado 2..6)
+      if (_calculatorMode == 4 && !_polyIsNotableMode && _isChoosingRuffiniDegree) {
+        if ('23456'.contains(effectiveChar)) {
+          _ruffiniDegree = int.parse(effectiveChar);
+          _isChoosingRuffiniDegree = false;
+          _currentActiveIndex = 0;
+          return;
+        }
+      }
 
       // ENTRADA EN MODO 7 (SISTEMAS DE INECUACIONES)
       if (_calculatorMode == 7) {

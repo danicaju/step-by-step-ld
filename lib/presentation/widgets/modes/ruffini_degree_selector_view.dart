@@ -21,8 +21,8 @@ class RuffiniDegreeSelectorView extends StatelessWidget {
         isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD);
     final unselectedBorder =
         isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
-    final selectedBg =
-        isOledDark ? const Color(0xFF2563EB) : const Color(0xFF1E3A5F);
+    const selectedBg = Color(0xFF181E29);
+    const selectedBorder = Color(0xFF2B3445);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -42,7 +42,7 @@ class RuffiniDegreeSelectorView extends StatelessWidget {
                     'Selecciona el grado del polinomio P(x):',
                     style: TextStyle(
                       color: textColor,
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
                     textAlign: TextAlign.center,
@@ -58,7 +58,7 @@ class RuffiniDegreeSelectorView extends StatelessWidget {
                             onTap: () => onSelectDegree(deg),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                vertical: 6,
+                                vertical: 9,
                                 horizontal: 2,
                               ),
                               decoration: BoxDecoration(
@@ -68,9 +68,9 @@ class RuffiniDegreeSelectorView extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
                                   color: currentDegree == deg
-                                      ? const Color(0xFF60A5FA)
+                                      ? selectedBorder
                                       : unselectedBorder,
-                                  width: currentDegree == deg ? 1.8 : 1.0,
+                                  width: currentDegree == deg ? 1.5 : 1.0,
                                 ),
                               ),
                               child: Column(
@@ -82,7 +82,7 @@ class RuffiniDegreeSelectorView extends StatelessWidget {
                                       color: currentDegree == deg
                                           ? Colors.white
                                           : textColor,
-                                      fontSize: 13,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
@@ -90,9 +90,9 @@ class RuffiniDegreeSelectorView extends StatelessWidget {
                                     supDegrees[deg]!,
                                     style: TextStyle(
                                       color: currentDegree == deg
-                                          ? const Color(0xFFDBEAFE)
+                                          ? const Color(0xFFCBD5E1)
                                           : textColor.withValues(alpha: 0.78),
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),

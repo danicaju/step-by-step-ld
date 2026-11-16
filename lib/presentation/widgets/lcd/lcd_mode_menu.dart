@@ -81,7 +81,7 @@ const List<ClassWizMenuItem> classWizMenuItems = [
     modeId: 9,
     number: '9',
     shortTitle: 'Matrices',
-    fullTitle: '9:Matrices y Sistemas',
+    fullTitle: '9:Matrices',
     icon: Icons.grid_on_rounded,
   ),
   ClassWizMenuItem(

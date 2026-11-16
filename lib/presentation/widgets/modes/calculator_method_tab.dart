@@ -23,12 +23,13 @@ class CalculatorMethodTab extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFF2563EB) : const Color(0xFF2A2E37),
+            color: selected ? const Color(0xFF181E29) : const Color(0xFF2A2E37),
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
               color: selected
-                  ? const Color(0xFF60A5FA)
+                  ? const Color(0xFF2B3445)
                   : const Color(0xFF3B4252),
+              width: selected ? 1.5 : 1.0,
             ),
           ),
           child: FittedBox(

@@ -45,7 +45,15 @@ class ExpressionParser {
   int _pos = 0;
 
   ExprNode parse(String input) {
-    final cleaned = input.replaceAll(' ', '');
+    final cleaned = input
+        .replaceAll(r'\cdot', '*')
+        .replaceAll('cdot', '*')
+        .replaceAll(r'\times', '*')
+        .replaceAll('times', '*')
+        .replaceAll('·', '*')
+        .replaceAll('×', '*')
+        .replaceAll('÷', '/')
+        .replaceAll(' ', '');
     if (cleaned.isEmpty) {
       return const IntNode(0);
     }

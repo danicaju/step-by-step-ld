@@ -326,15 +326,6 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
     }
   }
 
-  void _statAdvanceRowOnEquals() {
-    if (_statActiveRow < _statRows.length - 1) {
-      _statActiveRow++;
-    } else {
-      _statRows.add((xi: '', fi: ''));
-      _statActiveRow = _statRows.length - 1;
-    }
-  }
-
   void _statMoveDpad({required int dRow, required int dCol}) {
     if (dCol != 0) {
       _statActiveCol = (_statActiveCol + dCol).clamp(0, 1);

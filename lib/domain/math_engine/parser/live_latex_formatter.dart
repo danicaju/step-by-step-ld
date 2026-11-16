@@ -252,6 +252,11 @@ class LiveLatexFormatter {
     out = out
         .replaceAll('*', r' \cdot ')
         .replaceAll('+', ' + ')
+        .replaceAllMapped(
+          RegExp(r'(?<=[0-9a-zA-Zπ)}\]>])\s*-\s*'),
+          (_) => ' - ',
+        )
+        .replaceAll(RegExp(r' {2,}'), ' ')
         .replaceAll(':', ' : ')
         .replaceAll('<=', r' \le ')
         .replaceAll('≤', r' \le ')

@@ -29,21 +29,21 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
         return 'Teclea valor absoluto o racional (ej: |x - 5| < 3) y pulsa =';
       }
     }
-    if (_calculatorMode == 11) {
+    if (_calculatorMode == 7) {
       return _ineqSysUnknowns == 1
           ? 'Escribe inecuaciones con x y pulsa = (▲ ▼ para saltar fila)'
           : 'Escribe rectas con x, y y pulsa = para ver la región 2D';
     }
-    if (_calculatorMode == 7) {
-      return 'Introduce xi/fi, pulsa = para bajar fila, ◀ ▶ ▲ ▼ moverte y CALC STAT';
-    }
     if (_calculatorMode == 8) {
-      return 'Rellena celdas (0 si vacío), muévete con D-Pad o = y elige operación en LCD';
+      return 'Introduce xi/fi, muévete con D-Pad ◀ ▶ ▲ ▼ y pulsa = para calcular';
     }
     if (_calculatorMode == 9) {
-      return 'Elige 2D/3D y operación (|u|, u·v, u×v), edita u y v y pulsa =';
+      return 'Rellena celdas (0 si vacío), muévete con D-Pad o = y elige operación en LCD';
     }
     if (_calculatorMode == 10) {
+      return 'Elige 2D/3D y operación (|u|, u·v, u×v), edita u y v y pulsa =';
+    }
+    if (_calculatorMode == 11) {
       return 'Introduce z1 = a + bi y z2 = c + di (o módulo/ángulo en Polar) y pulsa =';
     }
     if (_calculatorMode == 12) {
@@ -77,21 +77,21 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
         _ => 'VALOR ABSOLUTO / RACIONAL',
       };
     }
-    if (_calculatorMode == 11) {
+    if (_calculatorMode == 7) {
       return _ineqSysUnknowns == 1
           ? 'SISTEMA INECUACIONES 1D ($_ineqSysRows INEC.)'
           : 'REGIÓN FACTIBLE 2D ($_ineqSysRows INEC.)';
     }
-    if (_calculatorMode == 7) {
+    if (_calculatorMode == 8) {
       return 'ESTADÍSTICA 1-VAR';
     }
-    if (_calculatorMode == 8) {
+    if (_calculatorMode == 9) {
       return 'MATRICES $_matrixDim×$_matrixDim';
     }
-    if (_calculatorMode == 9) {
+    if (_calculatorMode == 10) {
       return 'VECTORES ${_vectorDim}D (${_vectorOp.shortLabel})';
     }
-    if (_calculatorMode == 10) {
+    if (_calculatorMode == 11) {
       return 'COMPLEJOS (${_complexOp.shortLabel})';
     }
     if (_calculatorMode == 12) {

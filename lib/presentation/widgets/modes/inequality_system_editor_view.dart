@@ -22,8 +22,8 @@ class IneqSysUnknownsSelectorView extends StatelessWidget {
         isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD);
     final unselectedBorder =
         isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
-    final selectedBg =
-        isOledDark ? const Color(0xFF2563EB) : const Color(0xFF1E3A5F);
+    final selectedBg = const Color(0xFF181E29);
+    const selectedBorder = Color(0xFF2B3445);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -57,8 +57,8 @@ class IneqSysUnknownsSelectorView extends StatelessWidget {
                           onTap: () => onSelectUnknowns(1),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 10,
+                              horizontal: 8,
+                              vertical: 13,
                             ),
                             decoration: BoxDecoration(
                               color: ineqSysUnknowns == 1
@@ -67,9 +67,9 @@ class IneqSysUnknownsSelectorView extends StatelessWidget {
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                 color: ineqSysUnknowns == 1
-                                    ? Colors.cyanAccent
+                                    ? selectedBorder
                                     : unselectedBorder,
-                                width: ineqSysUnknowns == 1 ? 1.8 : 1.0,
+                                width: ineqSysUnknowns == 1 ? 1.5 : 1.0,
                               ),
                             ),
                             child: Column(
@@ -81,12 +81,12 @@ class IneqSysUnknownsSelectorView extends StatelessWidget {
                                     color: ineqSysUnknowns == 1
                                         ? Colors.white
                                         : textColor,
-                                    fontSize: 11,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 3),
                                 Text(
                                   'Recta Real 1D',
                                   style: TextStyle(
@@ -94,7 +94,7 @@ class IneqSysUnknownsSelectorView extends StatelessWidget {
                                             ? Colors.white
                                             : textColor)
                                         .withValues(alpha: 0.7),
-                                    fontSize: 9,
+                                    fontSize: 10,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -110,8 +110,8 @@ class IneqSysUnknownsSelectorView extends StatelessWidget {
                           onTap: () => onSelectUnknowns(2),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 10,
+                              horizontal: 8,
+                              vertical: 13,
                             ),
                             decoration: BoxDecoration(
                               color: ineqSysUnknowns == 2
@@ -120,9 +120,9 @@ class IneqSysUnknownsSelectorView extends StatelessWidget {
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                 color: ineqSysUnknowns == 2
-                                    ? Colors.cyanAccent
+                                    ? selectedBorder
                                     : unselectedBorder,
-                                width: ineqSysUnknowns == 2 ? 1.8 : 1.0,
+                                width: ineqSysUnknowns == 2 ? 1.5 : 1.0,
                               ),
                             ),
                             child: Column(
@@ -134,12 +134,12 @@ class IneqSysUnknownsSelectorView extends StatelessWidget {
                                     color: ineqSysUnknowns == 2
                                         ? Colors.white
                                         : textColor,
-                                    fontSize: 11,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 3),
                                 Text(
                                   'Plano 2D / Región Sf',
                                   style: TextStyle(
@@ -147,7 +147,7 @@ class IneqSysUnknownsSelectorView extends StatelessWidget {
                                             ? Colors.white
                                             : textColor)
                                         .withValues(alpha: 0.7),
-                                    fontSize: 9,
+                                    fontSize: 10,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -201,15 +201,14 @@ class InequalitySystemEditorView extends StatelessWidget {
     final activeRowBg =
         isOledDark ? const Color(0xFF0F172A) : const Color(0xFFD4E2D9);
     final activeBorder =
-        isOledDark ? const Color(0xFF60A5FA) : const Color(0xFF1E3A5F);
+        isOledDark ? const Color(0xFF2B3445) : const Color(0xFF1E3A5F);
     final inactiveBorder =
         isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
     final unselectedBg =
         isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD);
     final unselectedBorder =
         isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
-    final selectedBg =
-        isOledDark ? const Color(0xFF2563EB) : const Color(0xFF1E3A5F);
+    const selectedBg = Color(0xFF181E29);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -259,7 +258,7 @@ class InequalitySystemEditorView extends StatelessWidget {
                                 color: ineqSysRows == r ? selectedBg : unselectedBg,
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: ineqSysRows == r ? Colors.cyanAccent : unselectedBorder,
+                                  color: ineqSysRows == r ? const Color(0xFF2B3445) : unselectedBorder,
                                 ),
                               ),
                               child: Text(

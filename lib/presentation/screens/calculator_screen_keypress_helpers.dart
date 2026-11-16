@@ -3,17 +3,17 @@ part of 'calculator_screen.dart';
 extension _CalculatorScreenKeypressHelpers on _CalculatorScreenState {
   void _setInequalitySign(InequalitySign sign, {bool insertIfMissing = true}) {
     _inequalitySign = sign;
-    if (_calculatorMode == 11) {
+    if (_calculatorMode == 7) {
       if (_activeResolution != null) {
         _activeResolution = null;
         _activeStepIndex = 0;
       }
       final cur = _ineqSysRowInputs[_ineqSysActiveRow];
-      final pos = _ineqSysRowCursors[_ineqSysActiveRow];
+      final pos = _ineqSysRowCursors[_ineqSysActiveRow].clamp(0, cur.length);
       final existing = RegExp(r'(<=|>=|[≤≥<>])');
       if (existing.hasMatch(cur)) {
         _ineqSysRowInputs[_ineqSysActiveRow] = cur.replaceFirst(existing, sign.symbol);
-      } else if (insertIfMissing && cur.trim().isNotEmpty) {
+      } else if (insertIfMissing) {
         final (nextRaw, nextPos) = ExpressionParser.insertAtCursor(
           cur,
           pos,
@@ -61,7 +61,7 @@ extension _CalculatorScreenKeypressHelpers on _CalculatorScreenState {
       }
     } else if (_calculatorMode == 12 && _calculusActiveField == 0) {
       _calculusCursorPos = _calculusExprRaw.length;
-    } else if (_calculatorMode == 11) {
+    } else if (_calculatorMode == 7) {
       _ineqSysRowCursors[_ineqSysActiveRow] =
           _ineqSysRowInputs[_ineqSysActiveRow].length;
     } else {

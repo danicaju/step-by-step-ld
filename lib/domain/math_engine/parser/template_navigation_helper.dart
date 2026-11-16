@@ -202,8 +202,8 @@ class TemplateNavigationHelper {
       }
       if (commaIdx != -1 && safe == endBoundary && !inside.endsWith(',')) {
         if (closeIdx == null) {
-          final updated = '${raw.substring(0, safe)})${raw.substring(safe)}';
-          return (updated, safe + 1);
+          // Salir al nivel base con un espacio en vez de forzar inserción de ')'
+          return ('$raw ', safe + 1);
         }
       }
     }
@@ -302,7 +302,7 @@ class TemplateNavigationHelper {
       }
     }
 
-    // Si no está cerrado y el cursor está al final del contenido del bloque abierto
+    // Si es una plantilla estructurada y el cursor está al final, cerrar limpiamente la plantilla con ')'
     if (!hasClosingParen && safe >= raw.length) {
       final updated = '${raw.substring(0, safe)})${raw.substring(safe)}';
       return (updated, safe + 1);
@@ -323,16 +323,18 @@ class TemplateNavigationHelper {
     if (safe != raw.length) return null;
     if (raw.endsWith(' ')) return null;
 
-    final lastPowParen = raw.lastIndexOf('^(');
-    if (lastPowParen != -1) {
-      final after = raw.substring(lastPowParen + 2);
+    final lastPowOpen = raw.lastIndexOf('^(');
+    if (lastPowOpen != -1) {
+      final after = raw.substring(lastPowOpen + 2);
       if (!after.contains(')')) {
+        // Cierra limpiamente el exponente con ')' y sitúa el cursor al nivel base
         return ('$raw)', safe + 1);
       }
     }
 
-    final powMatch = RegExp(r'\^[0-9a-zA-Zπ.]+$|\^\([^)]+\)$').firstMatch(raw);
+    final powMatch = RegExp(r'\^[0-9a-zA-Zπ.]+$|\^\([^)]+\)').firstMatch(raw);
     if (powMatch != null) {
+      // Salir limpiamente de la potencia al presionar ▶
       return ('$raw ', safe + 1);
     }
 
