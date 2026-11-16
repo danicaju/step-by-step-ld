@@ -371,6 +371,7 @@ class StepEvaluator {
           return PowerNode(_reduceNextStep(base, fullRoot: fullRoot), exponent);
         }
         final baseVal = base.value;
+        final isApprox = base.isApproximateDecimal;
         if (exponent < 0) {
           final inverted = Rational(baseVal.denominator, baseVal.numerator);
           final posExp = -exponent;
@@ -381,17 +382,38 @@ class StepEvaluator {
             note:
                 'Invertimos la base para transformar el exponente en positivo: (a/b)⁻ⁿ = (b/a)ⁿ.',
           );
-          return PowerNode(ResolvedRationalNode(inverted), posExp);
+          return PowerNode(ResolvedRationalNode(inverted, isApproximateDecimal: isApprox), posExp);
         }
-        final finalVal = baseVal.pow(exponent);
+        Rational finalVal;
+        bool resultIsApprox = isApprox;
+        if (isApprox) {
+          final double baseD = baseVal.toDouble();
+          final double poweredD = math.pow(baseD, exponent).toDouble();
+          final rounded = poweredD.round();
+          if ((poweredD - rounded).abs() < 1e-5) {
+            finalVal = Rational(rounded);
+            resultIsApprox = false;
+          } else {
+            final d4 = (poweredD * 4).round();
+            if ((poweredD - d4 / 4.0).abs() < 1e-5) {
+              finalVal = Rational(d4, 4);
+              resultIsApprox = false;
+            } else {
+              finalVal = Rational.fromDouble(poweredD, 1000000);
+            }
+          }
+        } else {
+          finalVal = baseVal.pow(exponent);
+        }
         _addStep(
           title: 'Cálculo de potencia',
-          latex:
-              '\\left(${baseVal.toLatex()}\\right)^{$exponent} = ${finalVal.toLatex()}',
+          latex: isApprox
+              ? '\\left(${baseVal.toDecimalLatex()}\\right)^{$exponent} \\approx ${finalVal.toDecimalLatex()}'
+              : '\\left(${baseVal.toLatex()}\\right)^{$exponent} = ${finalVal.toLatex()}',
           note:
-              'Elevamos tanto el numerador como el denominador al exponente $exponent.',
+              'Elevamos la base al exponente $exponent.',
         );
-        return ResolvedRationalNode(finalVal);
+        return ResolvedRationalNode(finalVal, isApproximateDecimal: resultIsApprox);
 
       case BinaryOpNode(:final left, :final op, :final right):
         if (left is! ResolvedRationalNode) {

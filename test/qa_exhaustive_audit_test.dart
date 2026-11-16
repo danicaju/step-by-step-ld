@@ -8,6 +8,7 @@ import 'package:casio_tutor_calc/domain/math_engine/core/rational.dart';
 import 'package:casio_tutor_calc/domain/math_engine/models/step_resolution.dart';
 import 'package:casio_tutor_calc/domain/math_engine/parser/expression_parser.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/step_evaluator.dart';
+import 'package:casio_tutor_calc/domain/math_engine/solvers/trig_and_angles_solver.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/radical_and_factor_solver.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/linear_equation_solver.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/quadratic_solver.dart';
@@ -122,6 +123,51 @@ void main() {
       final rawExp = '2^(2+x)';
       final latexExp = ExpressionParser.rawToLiveLatex(rawExp);
       verifyLatexOutput('2^(2+x)', latexExp);
+    });
+
+    test('Identidad pitagórica fundamental: sin²(30°) + cos²(30°) = 1 (DEG) y sin²(π/4) + cos²(π/4) = 1 (RAD)', () {
+      final degEval = StepEvaluator(angleUnit: AngleUnit.deg);
+      final resDeg = degEval.evaluate(parser.parse('sin(30)^2+cos(30)^2'));
+      expect(resDeg.exactResultLatex, equals('1'));
+      verifyResolutionLatex('Trig DEG Identity', resDeg);
+
+      final radEval = StepEvaluator(angleUnit: AngleUnit.rad);
+      final resRad = radEval.evaluate(parser.parse('sin(pi/4)^2+cos(pi/4)^2'));
+      expect(resRad.exactResultLatex, equals('1'));
+      verifyResolutionLatex('Trig RAD Identity', resRad);
+    });
+
+    test('Funciones anidadas e inversas: cos(sin(0)) = 1 y sqrt(sin(90°)) = 1', () {
+      final degEval = StepEvaluator(angleUnit: AngleUnit.deg);
+      final resCosSin = degEval.evaluate(parser.parse('cos(sin(0))'));
+      expect(resCosSin.exactResultLatex, equals('1'));
+      verifyResolutionLatex('cos(sin(0))', resCosSin);
+
+      final resSqrtSin = degEval.evaluate(parser.parse('sqrt(sin(90))'));
+      expect(resSqrtSin.exactResultLatex, equals('1'));
+      verifyResolutionLatex('sqrt(sin(90))', resSqrtSin);
+    });
+
+    test('Navegación y salida de cursor: sqrt(4)+5 = 7, sin(30)*4 = 2 y 2^(2+1) = 8', () {
+      final degEval = StepEvaluator(angleUnit: AngleUnit.deg);
+      final res1 = degEval.evaluate(parser.parse('sqrt(4)+5'));
+      expect(res1.exactResultLatex, equals('7'));
+      verifyResolutionLatex('sqrt(4)+5', res1);
+
+      final res2 = degEval.evaluate(parser.parse('sin(30)*4'));
+      expect(res2.exactResultLatex, equals('2'));
+      verifyResolutionLatex('sin(30)*4', res2);
+
+      final res3 = degEval.evaluate(parser.parse('2^(2+1)'));
+      expect(res3.exactResultLatex, equals('8'));
+      verifyResolutionLatex('2^(2+1)', res3);
+    });
+
+    test('Precisión decimal de logaritmo: log_5(2) * 6 = 2,584062', () {
+      final degEval = StepEvaluator(angleUnit: AngleUnit.deg);
+      final res = degEval.evaluate(parser.parse('log(5,2)*6'));
+      expect(res.decimalApproxLatex, equals('2,584062'));
+      verifyResolutionLatex('log_5(2)*6', res);
     });
   });
 
@@ -341,7 +387,7 @@ void main() {
   });
 
   // ===========================================================================
-  // MODO 6: INECUACIONES (1.º Grado, 2.º Grado, Valor Absoluto, 1D y 2D)
+  // MODO 6: INECUACIONES (1.º Grado, 2.º Grado, Valor Absoluto)
   // ===========================================================================
   group('Fase 9D - Modo 6: Inecuaciones', () {
     test('1.º Grado con cambio de sentido al dividir por coeficiente negativo', () {
@@ -364,6 +410,17 @@ void main() {
       expect(res.exactResultLatex, contains('(2, 8)'));
       verifyResolutionLatex('Ineq Valor Absoluto', res);
     });
+  });
+
+  // ===========================================================================
+  // MODO 7: SISTEMAS DE INECUACIONES (1D en Recta Real y 2D en Plano Cartesiano)
+  // ===========================================================================
+  group('Fase 9D - Modo 7: Sistemas de Inecuaciones', () {
+    test('Sistema 1D: intersección de rectas reales con zona en malla XXX', () {
+      final res1D = InequalitySolver.solveSystem1D(['2x - 4 > 0', 'x + 1 <= 5']);
+      expect(res1D.resolution.exactResultLatex, contains('(2, 4]'));
+      verifyResolutionLatex('Ineq 1D System', res1D.resolution);
+    });
 
     test('Sistema de Inecuaciones 2D: región factible y cálculo de vértices', () {
       final sys2d = LinearInequality2DSolver.solveSystem2D([
@@ -377,9 +434,9 @@ void main() {
   });
 
   // ===========================================================================
-  // MODO 7: ESTADÍSTICA (1 y 2 Variables con Regresión y Varianza Cero)
+  // MODO 8: ESTADÍSTICA (1 y 2 Variables con Regresión y Varianza Cero)
   // ===========================================================================
-  group('Fase 9D - Modo 7: Estadística', () {
+  group('Fase 9D - Modo 8: Estadística', () {
     test('Estadística 1 Variable: media, mediana, varianza y cuartiles', () {
       final data = [
         StatDataPoint(Rational(2), 1),
@@ -420,9 +477,9 @@ void main() {
   });
 
   // ===========================================================================
-  // MODO 8: MATRICES (Multiplicación, Det 3x3/4x4, Adjunta, Inversa, Det=0, Gauss, Cramer)
+  // MODO 9: MATRICES (Multiplicación, Det 3x3/4x4, Adjunta, Inversa, Det=0, Gauss, Cramer)
   // ===========================================================================
-  group('Fase 9D - Modo 8: Matrices', () {
+  group('Fase 9D - Modo 9: Matrices', () {
     test('Determinante 3x3 por Sarrus y 4x4 por Laplace', () {
       final m3 = RationalMatrix.fromInts([
         [1, 2, 3],
@@ -499,9 +556,9 @@ void main() {
   });
 
   // ===========================================================================
-  // MODO 9: VECTORES (Módulo, Unitario, Escalar, Vectorial 3D, Ortogonalidad)
+  // MODO 10: VECTORES 3D (Módulo, Unitario, Escalar, Vectorial 3D, Ortogonalidad)
   // ===========================================================================
-  group('Fase 9D - Modo 9: Vectores', () {
+  group('Fase 9D - Modo 10: Vectores 3D', () {
     test('Módulo, vector unitario y producto escalar con comprobación de ortogonalidad', () {
       final u = RationalVector.fromInts([3, 4]);
       final resMod = VectorSolver.modulus(u);
@@ -526,9 +583,9 @@ void main() {
   });
 
   // ===========================================================================
-  // MODO 10: NÚMEROS COMPLEJOS (Aritmética, División por Conjugado, Potencias de i, Polar)
+  // MODO 11: NÚMEROS COMPLEJOS (Aritmética, División por Conjugado, Potencias de i, Polar)
   // ===========================================================================
-  group('Fase 9D - Modo 10: Números Complejos', () {
+  group('Fase 9D - Modo 11: Números Complejos', () {
     test('División de números complejos multiplicando por el conjugado del denominador', () {
       final z1 = RationalComplex.fromInts(2, 1);
       final z2 = RationalComplex.fromInts(1, -1);
@@ -563,9 +620,9 @@ void main() {
   });
 
   // ===========================================================================
-  // MODO 11: CÁLCULO INFINITESIMAL (Derivadas, Tangente, Integrales + C, Barrow)
+  // MODO 12: DERIVADAS E INTEGRALES (Cálculo Infinitesimal)
   // ===========================================================================
-  group('Fase 9D - Modo 11: Cálculo Infinitesimal', () {
+  group('Fase 9D - Modo 12: Derivadas e Integrales', () {
     test('Derivada simbólica término a término f\'(x)', () {
       final poly = RationalPolynomial.parseExpression('x^3 - 3x^2 + 2');
       final res = CalculusSolver.derivative(poly);
@@ -591,7 +648,7 @@ void main() {
   });
 
   // ===========================================================================
-  // UI & UX RESPONSIVA: Menú Completo (1 al 11) y Sin Overflow (Portrait & Landscape)
+  // UI & UX RESPONSIVA: Menú Completo (1 al 12 en 3 Páginas) y Sin Overflow
   // ===========================================================================
   group('Fase 9D - UI & UX Responsiva', () {
     Future<void> pumpCalculator(WidgetTester tester, Size size) async {
@@ -611,7 +668,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('Navegación completa del Menú (Modos 1 al 11) incluyendo Modo 10 y Modo 11', (tester) async {
+    testWidgets('Navegación completa del Menú (Modos 1 al 12 en 3 páginas)', (tester) async {
       await pumpCalculator(tester, const Size(400, 850));
 
       // Abrir menú
@@ -626,9 +683,18 @@ void main() {
       await tester.tap(find.byKey(const Key('menu_page_next')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('menu_mode_5')), findsOneWidget);
+      expect(find.byKey(const Key('menu_mode_7')), findsOneWidget);
       expect(find.byKey(const Key('menu_mode_8')), findsOneWidget);
 
-      // Siguiente página (Página 3: Modos 9 a 11)
+      // Seleccionar Modo 7 (Sistemas de Inec.)
+      await tester.tap(find.byKey(const Key('menu_mode_7')));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Volver a MODE y avanzar a Página 3 (Modos 9 a 12)
+      // Como el modo activo es el 7 (Página 2), el menú abre directamente en Página 2
+      await tester.tap(find.text('MODE'));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('menu_page_next')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('menu_mode_9')), findsOneWidget);
@@ -636,20 +702,12 @@ void main() {
       expect(find.byKey(const Key('menu_mode_11')), findsOneWidget);
       expect(find.byKey(const Key('menu_mode_12')), findsOneWidget);
 
-      // Seleccionar Modo 10
-      await tester.tap(find.byKey(const Key('menu_mode_10')));
+      // Seleccionar Modo 9 (Matrices)
+      await tester.tap(find.byKey(const Key('menu_mode_9')));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      // Volver a MODE y seleccionar Modo 11 (Sistemas de Inec.)
-      await tester.tap(find.text('MODE'));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('menu_mode_11')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('menu_mode_11')));
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-
-      // Volver a MODE y seleccionar Modo 12 (Derivadas e Integrales)
+      // Volver a MODE (abre en Página 3 donde está el Modo 9 activo) y seleccionar Modo 12 (Derivadas e Integrales)
       await tester.tap(find.text('MODE'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('menu_mode_12')), findsOneWidget);

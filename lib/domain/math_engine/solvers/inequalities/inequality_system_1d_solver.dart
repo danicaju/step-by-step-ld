@@ -93,7 +93,7 @@ class InequalitySystem1DSolver {
         index: steps.length + 1,
         shortTitle: 'Solución final del sistema',
         latexExpression: isNone
-            ? '$capLatex = \\emptyset \\quad (\\text{Sin solución})'
+            ? '$capLatex = \\emptyset \\quad (\\text{Sin solucion})'
             : 'x \\in S_{f} = $sfLatex',
         pedagogicalNote: isNone
             ? 'Los intervalos no tienen ningún punto en común: el sistema de inecuaciones es incompatible y no tiene solución (conjunto vacío ∅).'

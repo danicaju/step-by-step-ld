@@ -83,7 +83,7 @@ class RationalAbsInequalitySolver {
           MathStep(
             index: steps.length + 1,
             shortTitle: 'Desigualdad imposible (Sin solución)',
-            latexExpression: '|$insideLatex| ${effectiveSign.latex} ${InequalityParsingHelper.fmt(isolatedC)} \\implies \\text{Sin solución} \\quad (\\emptyset)',
+            latexExpression: '|$insideLatex| ${effectiveSign.latex} ${InequalityParsingHelper.fmt(isolatedC)} \\implies \\text{Sin solucion} \\quad (\\emptyset)',
             pedagogicalNote:
                 'El valor absoluto de cualquier número real es siempre mayor o igual a cero (|A| ≥ 0). Nunca puede ser estrictamente menor ni menor o igual que un número negativo ($isolatedC).',
             warningTrick: 'Un valor absoluto nunca puede ser menor que un número negativo. La solución es el conjunto vacío (∅).',

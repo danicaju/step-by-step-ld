@@ -49,7 +49,7 @@ class System3x3CramerSolver {
               ? 'Δ = 0 → Cramer no aplicable (Sistema Incompatible)'
               : 'Δ = 0 → Cramer no aplicable (Sistema Compatible Indeterminado)',
           latexExpression:
-              '\\Delta = 0, \\; \\Delta_x = ${dx.toLatex()}, \\; \\Delta_y = ${dy.toLatex()}, \\; \\Delta_z = ${dz.toLatex()} \\implies '
+              '\\Delta = 0, \\; \\Delta_{x} = ${dx.toLatex()}, \\; \\Delta_{y} = ${dy.toLatex()}, \\; \\Delta_{z} = ${dz.toLatex()} \\implies '
               '\\text{rg}(A) = $rankA${isSi ? ' < ' : ' = '}\\text{rg}(A^*) = $rankAb \\implies ${isSi ? r'\text{S.I.}' : r'\text{S.C.I.}'}',
           pedagogicalNote: isSi
               ? 'Al ser Δ = 0 la Regla de Cramer no se puede aplicar (no se puede dividir por cero). Al comprobar rangos por Rouché-Frobenius resulta rg(A) < rg(A*): Sistema Incompatible (sin solución).'
@@ -95,8 +95,8 @@ class System3x3CramerSolver {
         index: 2,
         shortTitle: 'Cálculo de Δx y valor de x',
         latexExpression:
-            '\\Delta_x = ${matX.toDeterminantLatex()} = ${dx.toLatex()} \\implies '
-            'x = \\frac{\\Delta_x}{\\Delta} = ${System3x3Formatter.fractionLatex(dx, det, x)}',
+            '\\Delta_{x} = ${matX.toDeterminantLatex()} = ${dx.toLatex()} \\implies '
+            'x = \\frac{\\Delta_{x}}{\\Delta} = ${System3x3Formatter.fractionLatex(dx, det, x)}',
         pedagogicalNote:
             'Sustituimos la 1.ª columna de A (coeficientes de x) por la columna de términos independientes B y dividimos Δx entre Δ = ${det.toLatex()}.',
       ),
@@ -107,8 +107,8 @@ class System3x3CramerSolver {
         index: 3,
         shortTitle: 'Cálculo de Δy y valor de y',
         latexExpression:
-            '\\Delta_y = ${matY.toDeterminantLatex()} = ${dy.toLatex()} \\implies '
-            'y = \\frac{\\Delta_y}{\\Delta} = ${System3x3Formatter.fractionLatex(dy, det, y)}',
+            '\\Delta_{y} = ${matY.toDeterminantLatex()} = ${dy.toLatex()} \\implies '
+            'y = \\frac{\\Delta_{y}}{\\Delta} = ${System3x3Formatter.fractionLatex(dy, det, y)}',
         pedagogicalNote:
             'Sustituimos la 2.ª columna de A (coeficientes de y) por la columna B y dividimos Δy entre Δ = ${det.toLatex()}.',
       ),
@@ -119,8 +119,8 @@ class System3x3CramerSolver {
         index: 4,
         shortTitle: 'Cálculo de Δz y solución final (x, y, z)',
         latexExpression:
-            '\\Delta_z = ${matZ.toDeterminantLatex()} = ${dz.toLatex()} \\implies '
-            'z = \\frac{\\Delta_z}{\\Delta} = ${System3x3Formatter.fractionLatex(dz, det, z)}',
+            '\\Delta_{z} = ${matZ.toDeterminantLatex()} = ${dz.toLatex()} \\implies '
+            'z = \\frac{\\Delta_{z}}{\\Delta} = ${System3x3Formatter.fractionLatex(dz, det, z)}',
         pedagogicalNote:
             'Sustituimos la 3.ª columna de A (coeficientes de z) por la columna B y dividimos Δz entre Δ = ${det.toLatex()}.',
       ),

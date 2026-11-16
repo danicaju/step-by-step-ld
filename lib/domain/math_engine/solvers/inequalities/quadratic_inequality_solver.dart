@@ -242,7 +242,7 @@ class QuadraticInequalitySolver {
         index: steps.length + 1,
         shortTitle: 'Ecuación asociada sin raíces reales (Δ < 0)',
         latexExpression:
-            '\\Delta = $discriminant < 0 \\implies \\text{Sin raíces reales}',
+            '\\Delta = $discriminant < 0 \\implies \\text{Sin raices reales}',
         pedagogicalNote:
             'Al no cortar al eje X, el polinomio mantiene siempre el mismo signo en toda la recta real (-∞, +∞).',
       ),
@@ -257,7 +257,7 @@ class QuadraticInequalitySolver {
         shortTitle: 'Estudio de signo en toda la recta y solución',
         latexExpression: alwaysTrue
             ? r'x \in (-\infty, +\infty) = \mathbb{R}'
-            : r'\text{Sin solución}',
+            : r'\text{Sin solucion}',
         pedagogicalNote: alwaysTrue
             ? 'El signo del polinomio cumple la desigualdad en cualquier x real: solución (-∞, +∞).'
             : 'Ningún número real hace que el signo cumpla la desigualdad: el conjunto solución es vacío (∅).',

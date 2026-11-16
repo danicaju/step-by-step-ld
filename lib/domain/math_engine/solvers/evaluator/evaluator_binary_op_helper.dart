@@ -53,8 +53,9 @@ class EvaluatorBinaryOpHelper {
       case BinaryOperator.add:
       case BinaryOperator.subtract:
         final signSymbol = op == BinaryOperator.add ? '+' : '-';
+        final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
 
-        if (a.denominator != b.denominator) {
+        if (!isApprox && a.denominator != b.denominator) {
           final commonDen = Rational.lcm(a.denominator, b.denominator);
           final factorA = commonDen ~/ a.denominator;
           final factorB = commonDen ~/ b.denominator;
@@ -106,8 +107,23 @@ class EvaluatorBinaryOpHelper {
           return ResolvedRationalNode(simplified);
         }
 
-        final result = op == BinaryOperator.add ? a + b : a - b;
-        final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
+        Rational result;
+        bool resultIsApprox = isApprox;
+        if (isApprox) {
+          final double dVal = op == BinaryOperator.add
+              ? (a.toDouble() + b.toDouble())
+              : (a.toDouble() - b.toDouble());
+          final rounded = dVal.round();
+          if ((dVal - rounded).abs() < 1e-5) {
+            result = Rational(rounded);
+            resultIsApprox = false;
+          } else {
+            result = Rational.fromDouble(dVal, 1000000);
+          }
+        } else {
+          result = op == BinaryOperator.add ? a + b : a - b;
+        }
+
         final rightStr = b.numerator < 0 ? '(${b.toLatex()})' : b.toLatex();
         final addLatex = isApprox
             ? '${a.toDecimalLatex()} $signSymbol ${b.toDecimalLatex()} \\approx ${result.toDecimalLatex()}'
@@ -125,11 +141,25 @@ class EvaluatorBinaryOpHelper {
                   ? 'Resolvemos la operación entera respetando la regla de los signos.'
                   : 'Mantenemos el denominador común (${a.denominator}) y operamos los numeradores.'),
         );
-        return ResolvedRationalNode(result, isApproximateDecimal: isApprox);
+        return ResolvedRationalNode(result, isApproximateDecimal: resultIsApprox);
 
       case BinaryOperator.multiply:
-        final result = a * b;
         final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
+        Rational result;
+        bool resultIsApprox = isApprox;
+        if (isApprox) {
+          final double dVal = a.toDouble() * b.toDouble();
+          final rounded = dVal.round();
+          if ((dVal - rounded).abs() < 1e-5) {
+            result = Rational(rounded);
+            resultIsApprox = false;
+          } else {
+            result = Rational.fromDouble(dVal, 1000000);
+          }
+        } else {
+          result = a * b;
+        }
+
         final rightStr = b.numerator < 0 ? '(${b.toLatex()})' : b.toLatex();
         final mulLatex = isApprox
             ? '${a.toDecimalLatex()} \\cdot ${b.toDecimalLatex()} \\approx ${result.toDecimalLatex()}'
@@ -147,11 +177,25 @@ class EvaluatorBinaryOpHelper {
                   ? 'Calculamos el producto respetando la regla de los signos.'
                   : 'Multiplicamos en línea: numerador por numerador y denominador por denominador.'),
         );
-        return ResolvedRationalNode(result, isApproximateDecimal: isApprox);
+        return ResolvedRationalNode(result, isApproximateDecimal: resultIsApprox);
 
       case BinaryOperator.divide:
-        final result = a / b;
         final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
+        Rational result;
+        bool resultIsApprox = isApprox;
+        if (isApprox) {
+          final double dVal = a.toDouble() / b.toDouble();
+          final rounded = dVal.round();
+          if ((dVal - rounded).abs() < 1e-5) {
+            result = Rational(rounded);
+            resultIsApprox = false;
+          } else {
+            result = Rational.fromDouble(dVal, 1000000);
+          }
+        } else {
+          result = a / b;
+        }
+
         final rightStr = b.numerator < 0 ? '(${b.toLatex()})' : b.toLatex();
         final divLatex = isApprox
             ? '${a.toDecimalLatex()} : ${b.toDecimalLatex()} \\approx ${result.toDecimalLatex()}'
@@ -171,7 +215,7 @@ class EvaluatorBinaryOpHelper {
                   ? 'Dividimos los dos números y simplificamos si es fracción irreducible.'
                   : 'Multiplicamos en cruz (o multiplicamos la primera fracción por la inversa de la segunda).'),
         );
-        return ResolvedRationalNode(result, isApproximateDecimal: isApprox);
+        return ResolvedRationalNode(result, isApproximateDecimal: resultIsApprox);
     }
   }
 
