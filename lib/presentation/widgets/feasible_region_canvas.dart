@@ -2,9 +2,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../domain/math_engine/models/inequality_models.dart';
+import '../../domain/math_engine/solvers/inequalities/sutherland_hodgman_2d.dart';
 
 /// Widget interactivo para renderizar la región factible 2D en el plano cartesiano
-/// con recorte de polígono exacto (Algoritmo de Sutherland-Hodgman).
+/// con recorte exacto por Sutherland-Hodgman y diferenciación de contornos.
 class FeasibleRegionCanvas extends StatelessWidget {
   final FeasibleRegion2DVisualData visualData;
   final bool isOledDark;
@@ -80,7 +81,6 @@ class _FeasibleRegionPainter extends CustomPainter {
       minY = math.min(-1.5, (pMinY - 2.0).floorToDouble());
       maxY = math.max(5.0, (pMaxY + 2.5).ceilToDouble());
     } else if (data.inequalities.isNotEmpty) {
-      // Buscar cortes con ejes para dimensionar la vista
       final intercepts = <double>[];
       for (final ineq in data.inequalities) {
         if (ineq.a.abs() > 1e-6) intercepts.add(ineq.c / ineq.a);
@@ -162,17 +162,19 @@ class _FeasibleRegionPainter extends CustomPainter {
     }
 
     // 4. Algoritmo de Sutherland-Hodgman para calcular la Región Factible exacta
-    final polygon = _computeFeasiblePolygonSutherlandHodgman(
-      minX: minX,
-      maxX: maxX,
-      minY: minY,
-      maxY: maxY,
-      inequalities: data.inequalities,
+    final box = [
+      Point2D(minX, minY),
+      Point2D(maxX, minY),
+      Point2D(maxX, maxY),
+      Point2D(minX, maxY),
+    ];
+    final polygon = SutherlandHodgman2D.clipPolygonWithInequalities(
+      box,
+      data.inequalities,
     );
+    final area = SutherlandHodgman2D.computePolygonArea(polygon);
 
-    final area = _computePolygonArea(polygon);
-
-    if (polygon.length >= 3 && area > 1e-4) {
+    if (polygon.length >= 3 && area > 1e-4 && !data.isEmpty) {
       final polyPath = Path();
       polyPath.moveTo(toScreenX(polygon[0].x), toScreenY(polygon[0].y));
       for (int i = 1; i < polygon.length; i++) {
@@ -180,21 +182,46 @@ class _FeasibleRegionPainter extends CustomPainter {
       }
       polyPath.close();
 
-      // Paso B: Relleno de la región factible con azul acero semitransparente (0x885B84B1)
+      // Relleno semitransparente de la región factible (#5B84B1 con alfa)
       final fillPaint = Paint()
         ..color = const Color(0x885B84B1)
         ..style = PaintingStyle.fill;
       canvas.drawPath(polyPath, fillPaint);
 
-      // Paso C: Perímetro del polígono solución con línea gruesa morada/magenta (#9C4196, strokeWidth: 4.0)
+      // Perímetro morado (#9C4196): SÓLO sobre rectas frontera reales, NUNCA sobre bordes de pantalla
       final borderPaint = Paint()
         ..color = const Color(0xFF9C4196)
-        ..strokeWidth = 4.0
+        ..strokeWidth = 3.5
         ..style = PaintingStyle.stroke
-        ..strokeJoin = StrokeJoin.round;
-      canvas.drawPath(polyPath, borderPaint);
+        ..strokeCap = StrokeCap.round;
 
-      // Etiqueta destacada de Región Solución (Sf)
+      for (int i = 0; i < polygon.length; i++) {
+        final pA = polygon[i];
+        final pB = polygon[(i + 1) % polygon.length];
+        final mx = (pA.x + pB.x) / 2.0;
+        final my = (pA.y + pB.y) / 2.0;
+
+        LinearInequality2D? matchedIneq;
+        for (final ineq in data.inequalities) {
+          final dist = (ineq.normA * mx + ineq.normB * my - ineq.normC).abs();
+          if (dist < 1e-4) {
+            matchedIneq = ineq;
+            break;
+          }
+        }
+
+        if (matchedIneq != null) {
+          final off1 = Offset(toScreenX(pA.x), toScreenY(pA.y));
+          final off2 = Offset(toScreenX(pB.x), toScreenY(pB.y));
+          if (matchedIneq.isBoundarySolid) {
+            canvas.drawLine(off1, off2, borderPaint);
+          } else {
+            _drawDashedLine(canvas, off1, off2, borderPaint);
+          }
+        }
+      }
+
+      // Etiqueta de Región Solución
       _drawText(
         canvas,
         'REGIÓN SOLUCIÓN (Sf)',
@@ -207,7 +234,7 @@ class _FeasibleRegionPainter extends CustomPainter {
         ),
       );
     } else {
-      // Incompatible / Conjunto solución vacío en el área
+      // Incompatible / Conjunto solución vacío
       _drawText(
         canvas,
         'Sin región común (S = ∅)',
@@ -221,8 +248,7 @@ class _FeasibleRegionPainter extends CustomPainter {
       );
     }
 
-    // 5. Paso A: Dibujar cada recta frontera de borde a borde del plano
-    // Recta 1: #2563EB (azul), Recta 2: #16A34A (verde), Recta 3: #DC2626 (rojo), Recta 4: #D97706 (naranja)
+    // 5. Dibujar cada recta frontera de borde a borde del plano
     final lineColors = [
       const Color(0xFF2563EB), // Azul
       const Color(0xFF16A34A), // Verde
@@ -250,7 +276,7 @@ class _FeasibleRegionPainter extends CustomPainter {
           _drawDashedLine(canvas, p1, p2, linePaint);
         }
 
-        // Rotular la recta
+        // Rotular la recta r1, r2...
         final mid = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
         _drawText(
           canvas,
@@ -267,24 +293,36 @@ class _FeasibleRegionPainter extends CustomPainter {
       }
     }
 
-    // 6. Marcar vértices de intersección válidos con puntos y coordenadas (x, y)
-    final vertexDotPaint = Paint()
-      ..color = const Color(0xFF9C4196)
-      ..style = PaintingStyle.fill;
-    final vertexBorderPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 2.2
-      ..style = PaintingStyle.stroke;
-
-    final names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    // 6. Marcar vértices de corte reales con círculos ● (cerrado) u ○ (abierto)
     for (int i = 0; i < data.vertices.length; i++) {
       final v = data.vertices[i];
       final sx = toScreenX(v.x);
       final sy = toScreenY(v.y);
-      final name = i < names.length ? names[i] : 'V${i + 1}';
+      final name = v.label ?? 'V${i + 1}';
 
-      canvas.drawCircle(Offset(sx, sy), 5.5, vertexDotPaint);
-      canvas.drawCircle(Offset(sx, sy), 5.5, vertexBorderPaint);
+      if (v.isOpen) {
+        // Vértice abierto ○
+        final openBg = Paint()
+          ..color = isOledDark ? const Color(0xFF111615) : Colors.white
+          ..style = PaintingStyle.fill;
+        final openBorder = Paint()
+          ..color = const Color(0xFF9C4196)
+          ..strokeWidth = 2.5
+          ..style = PaintingStyle.stroke;
+        canvas.drawCircle(Offset(sx, sy), 5.5, openBg);
+        canvas.drawCircle(Offset(sx, sy), 5.5, openBorder);
+      } else {
+        // Vértice cerrado ●
+        final solidDot = Paint()
+          ..color = const Color(0xFF9C4196)
+          ..style = PaintingStyle.fill;
+        final solidBorder = Paint()
+          ..color = Colors.white
+          ..strokeWidth = 1.8
+          ..style = PaintingStyle.stroke;
+        canvas.drawCircle(Offset(sx, sy), 5.5, solidDot);
+        canvas.drawCircle(Offset(sx, sy), 5.5, solidBorder);
+      }
 
       _drawText(
         canvas,
@@ -298,86 +336,6 @@ class _FeasibleRegionPainter extends CustomPainter {
         ),
       );
     }
-  }
-
-  /// Recorta el rectángulo visible usando el algoritmo de Sutherland-Hodgman
-  /// para cada semiplano generado por una inecuación lineal del sistema.
-  static List<Point2D> _computeFeasiblePolygonSutherlandHodgman({
-    required double minX,
-    required double maxX,
-    required double minY,
-    required double maxY,
-    required List<LinearInequality2D> inequalities,
-  }) {
-    List<Point2D> polygon = [
-      Point2D(minX, minY),
-      Point2D(maxX, minY),
-      Point2D(maxX, maxY),
-      Point2D(minX, maxY),
-    ];
-
-    for (final ineq in inequalities) {
-      if (polygon.isEmpty) break;
-      polygon = _clipPolygonWithHalfPlane(polygon, ineq);
-    }
-
-    return polygon;
-  }
-
-  static List<Point2D> _clipPolygonWithHalfPlane(
-    List<Point2D> poly,
-    LinearInequality2D ineq,
-  ) {
-    final output = <Point2D>[];
-    if (poly.isEmpty) return output;
-
-    for (int i = 0; i < poly.length; i++) {
-      final current = poly[i];
-      final next = poly[(i + 1) % poly.length];
-      final currentInside = ineq.evaluatesTrue(current.x, current.y);
-      final nextInside = ineq.evaluatesTrue(next.x, next.y);
-
-      if (currentInside && nextInside) {
-        output.add(next);
-      } else if (currentInside && !nextInside) {
-        final intersection = _intersectSegmentWithLine(current, next, ineq);
-        if (intersection != null) output.add(intersection);
-      } else if (!currentInside && nextInside) {
-        final intersection = _intersectSegmentWithLine(current, next, ineq);
-        if (intersection != null) output.add(intersection);
-        output.add(next);
-      }
-    }
-
-    return output;
-  }
-
-  static Point2D? _intersectSegmentWithLine(
-    Point2D p1,
-    Point2D p2,
-    LinearInequality2D ineq,
-  ) {
-    // Distancia dirigida respecto a ax + by - c = 0
-    final d1 = ineq.a * p1.x + ineq.b * p1.y - ineq.c;
-    final d2 = ineq.a * p2.x + ineq.b * p2.y - ineq.c;
-
-    final denom = d1 - d2;
-    if (denom.abs() < 1e-12) return null;
-
-    final t = (d1 / denom).clamp(0.0, 1.0);
-    final ix = p1.x + t * (p2.x - p1.x);
-    final iy = p1.y + t * (p2.y - p1.y);
-    return Point2D(ix, iy);
-  }
-
-  static double _computePolygonArea(List<Point2D> p) {
-    if (p.length < 3) return 0.0;
-    double area = 0.0;
-    for (int i = 0; i < p.length; i++) {
-      final j = (i + 1) % p.length;
-      area += p[i].x * p[j].y - p[j].x * p[i].y;
-    }
-    return (area / 2.0).abs();
   }
 
   (Point2D, Point2D)? _findLineScreenPoints(

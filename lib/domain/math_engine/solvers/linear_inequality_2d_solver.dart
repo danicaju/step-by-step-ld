@@ -1,20 +1,19 @@
 import 'dart:math' as math;
 
 import '../models/step_resolution.dart';
-import 'inequality_solver.dart';
+import '../models/inequality_models.dart';
+import 'inequalities/sutherland_hodgman_2d.dart';
+import 'inequalities/inequality_sign.dart';
 
-/// Solver de Sistemas de Inecuaciones Lineales de 2 Incógnitas (Programación Lineal / Región Factible).
+/// Solver de Sistemas de Inecuaciones Lineales de 2 Incógnitas (Región Factible 2D).
 class LinearInequality2DSolver {
-  /// Resuelve un sistema de inecuaciones lineales en 2 variables (x, y).
-  ///
-  /// Ejemplos:
-  /// - `['x + y <= 4', '2x - y >= 1', 'x >= 0', 'y >= 0']`
-  /// - `['2x + 3y <= 12', 'x - y <= 1', 'x >= 0', 'y >= 0']`
+  /// Resuelve un sistema de inecuaciones lineales en 2 variables (x, y)
+  /// produciendo 3 pasos pedagógicos claros y datos para el plano cartesiano.
   static ({StepByStepResolution resolution, FeasibleRegion2DVisualData visualData}) solveSystem2D(
     List<String> rawInequalities,
   ) {
     if (rawInequalities.isEmpty) {
-      throw const FormatException('Introduce al menos una inecuacion lineal.');
+      throw const FormatException('Introduce al menos una inecuación lineal.');
     }
 
     final parsedList = <LinearInequality2D>[];
@@ -25,67 +24,68 @@ class LinearInequality2DSolver {
     }
 
     if (parsedList.isEmpty) {
-      throw const FormatException('No se encontraron inecuaciones validas.');
+      throw const FormatException('No se encontraron inecuaciones válidas.');
     }
 
     final steps = <MathStep>[];
 
-    // -------------------------------------------------------------------------
-    // PASO 1: Rectas frontera y estilo (continua o discontinua)
-    // -------------------------------------------------------------------------
+    // =========================================================================
+    // PASO 1: Rectas frontera, estilo y 2 puntos de corte
+    // =========================================================================
     final boundaryLinesDesc = <String>[];
     for (int i = 0; i < parsedList.length; i++) {
       final ineq = parsedList[i];
       final lineEq = _formatLineEquation(ineq.a, ineq.b, ineq.c);
       final styleStr = ineq.isBoundarySolid ? 'continua' : 'discontinua';
-      final reasonStr = ineq.isBoundarySolid
-          ? 'incluye el igual (${ineq.sign.symbol})'
-          : 'desigualdad estricta (${ineq.sign.symbol})';
+      final pts = _computeTwoPoints(ineq.a, ineq.b, ineq.c);
+      final p1Str = pts.$1.toLatex();
+      final p2Str = pts.$2.toLatex();
+
       boundaryLinesDesc.add(
-        'r_{${i + 1}}: $lineEq \\quad (\\text{Linea } $styleStr \\text{ porque } $reasonStr)',
+        'r_{${i + 1}}: $lineEq \\quad (\\text{Linea $styleStr}) '
+        '\\implies P_1$p1Str, \\; P_2$p2Str',
       );
     }
 
     steps.add(
       MathStep(
         index: 1,
-        shortTitle: 'Determinar las rectas frontera',
+        shortTitle: 'Rectas frontera y puntos de corte',
         latexExpression: boundaryLinesDesc.join(r' \\ '),
         pedagogicalNote:
-            'Cambiamos cada desigualdad por un signo igual (=) para obtener las rectas frontera que limitan los semiplanos. '
-            'Si la inecuación contiene ≤ o ≥, la recta se dibuja continua porque sus puntos pertenecen a la solución. '
-            'Si contiene < o >, se dibuja discontinua porque sus puntos no están incluidos.',
+            'Sustituimos la desigualdad por un igual (=) para obtener las rectas frontera y calculamos dos puntos sencillos para representarlas. '
+            'Las inecuaciones con ≤ o ≥ tienen línea continua (puntos incluidos); las de < o > tienen línea discontinua (puntos excluidos).',
       ),
     );
 
-    // -------------------------------------------------------------------------
-    // PASO 2: Prueba del punto (0,0) para determinar semiplanos
-    // -------------------------------------------------------------------------
+    // =========================================================================
+    // PASO 2: Comprobación de semiplanos con punto de prueba
+    // =========================================================================
     final testPointSteps = <String>[];
     for (int i = 0; i < parsedList.length; i++) {
       final ineq = parsedList[i];
-      final test00 = ineq.testPoint(0, 0);
-      final val00 = test00.value;
-      final satisfied = test00.satisfied;
       final lineLabel = 'r_{${i + 1}}';
 
-      // Si la recta pasa por (0,0), usar (1,0) o (0,1)
       if (ineq.c.abs() < 1e-9) {
+        // Pasa por el origen: usar (1,0) o (0,1)
         final altX = ineq.a.abs() > 1e-9 ? 1.0 : 0.0;
         final altY = ineq.a.abs() > 1e-9 ? 0.0 : 1.0;
         final testAlt = ineq.testPoint(altX, altY);
-        final valAlt = testAlt.value;
-        final satAlt = testAlt.satisfied;
-        final satText = satAlt ? r'\text{SI se cumple}' : r'\text{NO se cumple}';
+        final satText = testAlt.satisfied
+            ? r'\text{SI se cumple (sombrear ese lado)}'
+            : r'\text{NO se cumple (sombrear semiplano opuesto)}';
         testPointSteps.add(
           '$lineLabel: (${_fmt(altX)}, ${_fmt(altY)}) \\implies '
-          '${_fmt(valAlt)} ${ineq.sign.latex} ${_fmt(ineq.c)} \\implies $satText',
+          '${_fmt(testAlt.value)} ${ineq.sign.latex} ${_fmt(ineq.c)} \\implies $satText',
         );
       } else {
-        final satText = satisfied ? r'\text{SI se cumple}' : r'\text{NO se cumple}';
+        final test00 = ineq.testPoint(0, 0);
+        final satText = test00.satisfied
+            ? r'\text{SI se cumple (sombrear el lado del origen)}'
+            : r'\text{NO se cumple (sombrear semiplano opuesto)}';
         testPointSteps.add(
           '$lineLabel: (0,0) \\implies '
-          '${_fmt(val00)} ${ineq.sign.latex} ${_fmt(ineq.c)} \\implies $satText',
+          '${_fmt(test00.value)} ${ineq.sign.latex} ${_fmt(ineq.c)} \\implies $satText',
         );
       }
     }
@@ -93,17 +93,16 @@ class LinearInequality2DSolver {
     steps.add(
       MathStep(
         index: 2,
-        shortTitle: 'Comprobación de semiplanos con punto de prueba',
+        shortTitle: 'Comprobación de semiplanos (Punto de prueba)',
         latexExpression: testPointSteps.join(r' \\ '),
         pedagogicalNote:
-            'Sustituimos el punto de prueba (0,0) en cada inecuación. Si se cumple la desigualdad, sombreamos el semiplano que contiene al origen (0,0). '
-            'Si no se cumple, sombreamos el semiplano contrario.',
+            'Evaluamos el punto de prueba (0,0) en cada inecuación. Si satisface la desigualdad, sombreamos el semiplano que lo contiene; en caso contrario, sombreamos el lado opuesto.',
       ),
     );
 
-    // -------------------------------------------------------------------------
-    // PASO 3: Cálculo de vértices (intersección de rectas frontera)
-    // -------------------------------------------------------------------------
+    // =========================================================================
+    // PASO 3: Cálculo de vértices y determinación de la región solución
+    // =========================================================================
     final candidateVertices = <Point2D>[];
     final vertexExplanations = <String>[];
 
@@ -112,137 +111,161 @@ class LinearInequality2DSolver {
         final l1 = parsedList[i];
         final l2 = parsedList[j];
 
-        final det = l1.a * l2.b - l1.b * l2.a;
-        if (det.abs() < 1e-9) {
-          // Rectas paralelas o coincidentes
-          continue;
-        }
+        // Resolver sistema 2x2 formado por las dos rectas frontera
+        final det = l1.normA * l2.normB - l1.normB * l2.normA;
+        if (det.abs() < 1e-9) continue; // Paralelas o coincidentes
 
-        final detX = l1.c * l2.b - l1.b * l2.c;
-        final detY = l1.a * l2.c - l1.c * l2.a;
-        final px = detX / det;
-        final py = detY / det;
+        final px = (l1.normC * l2.normB - l1.normB * l2.normC) / det;
+        final py = (l1.normA * l2.normC - l1.normC * l2.normA) / det;
 
-        // Comprobar si este punto satisface TODAS las inecuaciones del sistema
-        bool allSatisfied = true;
+        // Comprobar si cumple la clausura (<= c + eps) de TODAS las inecuaciones
+        bool inClosure = true;
         for (final ineq in parsedList) {
-          if (!ineq.evaluatesTrue(px, py)) {
-            allSatisfied = false;
+          final val = ineq.normA * px + ineq.normB * py;
+          if (val > ineq.normC + 1e-7) {
+            inClosure = false;
             break;
           }
         }
 
-        if (allSatisfied) {
-          // Evitar duplicados
+        if (inClosure) {
+          // Determinar si es vértice abierto (alguna de las rectas que pasan por él es estricta)
+          bool isOpen = false;
+          for (final ineq in parsedList) {
+            final dist = (ineq.normA * px + ineq.normB * py - ineq.normC).abs();
+            if (dist < 1e-5 && ineq.isStrict) {
+              isOpen = true;
+              break;
+            }
+          }
+
           final alreadyExists = candidateVertices.any(
             (v) => (v.x - px).abs() < 1e-4 && (v.y - py).abs() < 1e-4,
           );
           if (!alreadyExists) {
-            final pt = Point2D(px, py);
+            final pt = Point2D(px, py, null, isOpen);
             candidateVertices.add(pt);
+            final statusStr = isOpen ? r'\text{ (Vertice abierto } \circ)' : r'\text{ (Vertice cerrado } \bullet)';
             vertexExplanations.add(
-              'r_{${i + 1}} \\cap r_{${j + 1}} \\implies ${pt.toLatex()}',
+              'r_{${i + 1}} \\cap r_{${j + 1}} \\implies ${pt.toLatex()} $statusStr',
             );
           }
         }
       }
     }
 
-    // Ordenar vértices angularmente alrededor del centroide para dibujar el polígono
+    // Análisis topológico de la región sobre caja de gran alcance [-1000, 1000]^2
+    final regionAnalysis = SutherlandHodgman2D.analyzeFeasibleRegion(parsedList);
+    final bool isEmpty = regionAnalysis.isEmpty;
+    final bool isBounded = regionAnalysis.isBounded;
+
     final sortedVertices = _sortVerticesCounterClockwise(candidateVertices);
+    final names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+    final labeledVertices = <Point2D>[];
+    final formattedVertices = <String>[];
 
-    final bool isEmpty = candidateVertices.isEmpty;
-    final bool isBounded = _isRegionBounded(parsedList, sortedVertices);
+    for (int k = 0; k < sortedVertices.length; k++) {
+      final v = sortedVertices[k];
+      final name = k < names.length ? names[k] : 'V_{${k + 1}}';
+      labeledVertices.add(Point2D(v.x, v.y, name, v.isOpen));
+      final mark = v.isOpen ? r'^\circ' : '';
+      formattedVertices.add('$name$mark${v.toLatex()}');
+    }
 
-    final String verticesLatex;
+    final String verticesLatex = formattedVertices.isEmpty
+        ? r'\text{Sin vertices de corte}'
+        : formattedVertices.join(', \\; ');
+
+    final String conclusionLatex;
+    final String conclusionNote;
+    final String summaryLatex;
+
     if (isEmpty) {
-      verticesLatex = r'\text{Sin vertices: region factible vacia } (\emptyset)';
+      conclusionLatex = r'\text{Region factible vacia: } \emptyset';
+      conclusionNote =
+          'Los semiplanos no tienen ninguna región en común. El sistema es incompatible y no tiene solución.';
+      summaryLatex = r'S_{f} = \emptyset';
+    } else if (isBounded) {
+      conclusionLatex =
+          '\\text{Region factible acotada con } ${labeledVertices.length} \\text{ vertices: } $verticesLatex';
+      conclusionNote =
+          'La intersección forma un polígono cerrado (región acotada). Los vértices calculados delimitan la región solución.';
+      summaryLatex = 'S_{f} \\text{ acotada: } $verticesLatex';
     } else {
-      final names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-      final formatted = <String>[];
-      for (int k = 0; k < sortedVertices.length; k++) {
-        final name = k < names.length ? names[k] : 'V_{${k + 1}}';
-        formatted.add('$name${sortedVertices[k].toLatex()}');
-      }
-      verticesLatex = formatted.join(', \\; ');
+      conclusionLatex =
+          '\\text{Region factible no acotada con vertices: } $verticesLatex';
+      conclusionNote =
+          'La región factible se extiende indefinidamente (no acotada). Los vértices calculados marcan los puntos de inflexión del contorno.';
+      summaryLatex = 'S_{f} \\text{ no acotada: } $verticesLatex';
+    }
+
+    final String step3Latex;
+    if (isEmpty) {
+      step3Latex = conclusionLatex;
+    } else if (vertexExplanations.isEmpty) {
+      step3Latex = '$conclusionLatex \\\\[4pt] \\text{Pulsa "Ver Plano 2D" para ver la region sombreada.}';
+    } else {
+      step3Latex =
+          '${vertexExplanations.join(r' \\ ')} \\\\[6pt] $conclusionLatex \\\\[4pt] '
+          '\\text{Pulsa "Ver Plano 2D" para ver la region sombreada.}';
     }
 
     steps.add(
       MathStep(
         index: 3,
-        shortTitle: 'Cálculo de los vértices de la región factible',
-        latexExpression: vertexExplanations.isEmpty
-            ? verticesLatex
-            : '${vertexExplanations.join(r' \\ ')} \\\\[6pt] \\text{Vertices validos: } $verticesLatex',
-        pedagogicalNote:
-            'Resolvemos los sistemas 2x2 formados por pares de rectas frontera para hallar los puntos de corte. '
-            'Solo aquellos puntos que cumplen todas las inecuaciones a la vez forman los vértices de la región factible.',
-      ),
-    );
-
-    // -------------------------------------------------------------------------
-    // PASO 4: Conclusión de la región factible
-    // -------------------------------------------------------------------------
-    final String conclusionLatex;
-    final String conclusionNote;
-    if (isEmpty) {
-      conclusionLatex = r'\text{Region factible vacia: } \emptyset';
-      conclusionNote =
-          'Los semiplanos no tienen ninguna zona en común. El sistema es incompatible y no existe solución real.';
-    } else if (isBounded) {
-      conclusionLatex =
-          '\\text{Region factible acotada con } ${sortedVertices.length} \\text{ vertices: } $verticesLatex';
-      conclusionNote =
-          'La región factible es un polígono cerrado (acotado). En problemas de optimización lineal, los máximos y mínimos se alcanzan siempre en uno de estos vértices.';
-    } else {
-      conclusionLatex =
-          '\\text{Region factible no acotada con vertices: } $verticesLatex';
-      conclusionNote =
-          'La región factible es abierta hacia el infinito (no acotada). Los vértices delimitan su frontera inferior/superior.';
-    }
-
-    steps.add(
-      MathStep(
-        index: 4,
-        shortTitle: 'Conclusión de la región factible',
-        latexExpression: conclusionLatex,
+        shortTitle: 'Vértices y región solución',
+        latexExpression: step3Latex,
         pedagogicalNote: conclusionNote,
       ),
     );
 
-    final originalLatex = parsedList.map((e) => e.rawInput).join(r' \quad ');
-
-    final res = StepByStepResolution(
-      originalInputLatex: originalLatex,
+    final resolution = StepByStepResolution(
+      originalInputLatex:
+          '\\begin{cases} ${parsedList.map((e) => e.rawInput).join(r' \\ ')} \\end{cases}',
       steps: steps,
-      exactResultLatex: verticesLatex,
-      decimalApproxLatex: verticesLatex,
+      exactResultLatex: summaryLatex,
+      decimalApproxLatex: summaryLatex,
     );
 
     final visualData = FeasibleRegion2DVisualData(
       inequalities: parsedList,
-      vertices: sortedVertices,
+      vertices: labeledVertices,
       isBounded: isBounded,
       isEmpty: isEmpty,
-      solutionSummaryLatex: conclusionLatex,
+      solutionSummaryLatex: summaryLatex,
     );
 
-    return (resolution: res, visualData: visualData);
+    return (resolution: resolution, visualData: visualData);
   }
 
-  // ---------------------------------------------------------------------------
-  // Parseo de inecuaciones 2D: ax + by <= c
-  // ---------------------------------------------------------------------------
+  static (Point2D, Point2D) _computeTwoPoints(double a, double b, double c) {
+    if (c.abs() < 1e-9) {
+      if (a.abs() > 1e-9 && b.abs() > 1e-9) {
+        return (const Point2D(0, 0), Point2D(b, -a));
+      } else if (a.abs() > 1e-9) {
+        return (const Point2D(0, 0), const Point2D(0, 1));
+      } else {
+        return (const Point2D(0, 0), const Point2D(1, 0));
+      }
+    }
+    if (a.abs() > 1e-9 && b.abs() > 1e-9) {
+      return (Point2D(0, c / b), Point2D(c / a, 0));
+    } else if (a.abs() > 1e-9) {
+      return (Point2D(c / a, 0), Point2D(c / a, 1));
+    } else if (b.abs() > 1e-9) {
+      return (Point2D(0, c / b), Point2D(1, c / b));
+    }
+    return (const Point2D(0, 0), const Point2D(1, 1));
+  }
+
   static LinearInequality2D _parse2DInequality(String raw) {
     final cleaned = raw
-        .replaceAll(RegExp(r'\s+'), '')
-        .replaceAll('\u2212', '-')
+        .replaceAll(' ', '')
         .replaceAll('X', 'x')
         .replaceAll('Y', 'y')
         .replaceAll(r'\cdot', '*')
         .replaceAll('·', '*');
 
-    // Detectar signo
     InequalitySign? sign;
     int signIdx = -1;
     int signLen = 0;
@@ -274,7 +297,7 @@ class LinearInequality2DSolver {
     final netB = leftParsed.b - rightParsed.b;
     final netC = rightParsed.constant - leftParsed.constant;
 
-    return LinearInequality2D(
+    return LinearInequality2D.create(
       a: netA,
       b: netB,
       c: netC,
@@ -288,7 +311,6 @@ class LinearInequality2DSolver {
       return (a: 0.0, b: 0.0, constant: 0.0);
     }
 
-    // Desglosar en términos aditivos con signos
     final terms = <String>[];
     int start = 0;
     for (int i = 0; i < side.length; i++) {
@@ -377,7 +399,6 @@ class LinearInequality2DSolver {
   static List<Point2D> _sortVerticesCounterClockwise(List<Point2D> points) {
     if (points.length <= 2) return points;
 
-    // Calcular centroide
     double cx = 0;
     double cy = 0;
     for (final p in points) {
@@ -396,19 +417,9 @@ class LinearInequality2DSolver {
     return sorted;
   }
 
-  static bool _isRegionBounded(List<LinearInequality2D> ineqs, List<Point2D> vertices) {
-    if (vertices.length < 3) return false;
-    // Comprobar si existen restricciones en las 4 direcciones principales
-    bool hasPlusX = ineqs.any((e) => e.a > 0.1 && (e.sign == InequalitySign.less || e.sign == InequalitySign.lessOrEqual));
-    bool hasMinusX = ineqs.any((e) => e.a > 0.1 && (e.sign == InequalitySign.greater || e.sign == InequalitySign.greaterOrEqual) || (e.a < -0.1 && (e.sign == InequalitySign.less || e.sign == InequalitySign.lessOrEqual)));
-    bool hasPlusY = ineqs.any((e) => e.b > 0.1 && (e.sign == InequalitySign.less || e.sign == InequalitySign.lessOrEqual));
-    bool hasMinusY = ineqs.any((e) => e.b > 0.1 && (e.sign == InequalitySign.greater || e.sign == InequalitySign.greaterOrEqual) || (e.b < -0.1 && (e.sign == InequalitySign.less || e.sign == InequalitySign.lessOrEqual)));
-
-    return hasPlusX && hasMinusX && hasPlusY && hasMinusY;
-  }
-
   static String _fmt(double v) {
-    if (v == v.roundToDouble()) return v.toInt().toString();
+    if (v.isNaN || v.isInfinite) return '0';
+    if ((v - v.roundToDouble()).abs() < 1e-6) return v.round().toString();
     return v.toStringAsFixed(2);
   }
 }

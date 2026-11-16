@@ -14,6 +14,9 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
         if (_calculatorMode == 7) {
           if (_isChoosingIneqSysUnknowns) {
             _isChoosingIneqSysUnknowns = false;
+            if (_ineqSysUnknowns == 2) {
+              _show2DRegionView = true;
+            }
             return;
           }
           if (_activeResolution != null) {

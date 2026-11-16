@@ -9,6 +9,7 @@ class CasioReplayPad extends StatelessWidget {
   final VoidCallback onRight;
   final VoidCallback? onUp;
   final VoidCallback? onDown;
+  final VoidCallback? onCenter;
   final double width;
   final double height;
 
@@ -18,6 +19,7 @@ class CasioReplayPad extends StatelessWidget {
     required this.onRight,
     this.onUp,
     this.onDown,
+    this.onCenter,
     this.width = 108.0,
     this.height = 84.0,
   });
@@ -154,9 +156,17 @@ class CasioReplayPad extends StatelessWidget {
             ),
           ),
 
-          // Medallón central metálico decorativo
-          IgnorePointer(
-            child: Center(
+          // Medallón central metálico decorativo / botón OK central
+          Center(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onCenter != null
+                  ? () {
+                      HapticFeedback.lightImpact();
+                      KeyClickSound.playControl();
+                      onCenter!();
+                    }
+                  : null,
               child: Container(
                 width: medallionSize,
                 height: medallionSize,
@@ -206,6 +216,7 @@ class CasioDPad extends CasioReplayPad {
     required super.onRight,
     super.onUp,
     super.onDown,
+    super.onCenter,
   });
 }
 

@@ -98,25 +98,39 @@ class Point2D {
   final double x;
   final double y;
   final String? label;
+  final bool isOpen;
 
-  const Point2D(this.x, this.y, [this.label]);
+  const Point2D(this.x, this.y, [this.label, this.isOpen = false]);
 
-  String toLatex() {
-    final xStr = _fmt(x);
-    final yStr = _fmt(y);
+  String toLatex({bool useFraction = true}) {
+    final xStr = _fmtCoord(x, useFraction);
+    final yStr = _fmtCoord(y, useFraction);
     return '($xStr, $yStr)';
   }
 
-  static String _fmt(double v) {
-    if (v == v.roundToDouble()) return v.toInt().toString();
+  static String _fmtCoord(double v, bool useFraction) {
+    if (v.isNaN || v.isInfinite) return '0';
+    if ((v - v.roundToDouble()).abs() < 1e-6) {
+      return v.round().toString();
+    }
+    if (useFraction) {
+      for (int den = 2; den <= 12; den++) {
+        final num = (v * den).round();
+        if ((v - num / den).abs() < 1e-5) {
+          final isNeg = num < 0;
+          final absNum = num.abs();
+          return isNeg ? '-\\frac{$absNum}{$den}' : '\\frac{$absNum}{$den}';
+        }
+      }
+    }
     return v.toStringAsFixed(2);
   }
 
   @override
-  String toString() => 'Point2D($x, $y)';
+  String toString() => 'Point2D($x, $y${isOpen ? ", open" : ""})';
 }
 
-/// Inecuación lineal de 2 incógnitas en forma ax + by <= c.
+/// Inecuación lineal de 2 incógnitas normalizada a la forma estándar normA*x + normB*y <= normC.
 class LinearInequality2D {
   final double a;
   final double b;
@@ -124,33 +138,78 @@ class LinearInequality2D {
   final InequalitySign sign;
   final String rawInput;
 
+  /// Coeficientes normalizados a la forma: normA * x + normB * y <= normC
+  final double normA;
+  final double normB;
+  final double normC;
+
+  /// Indica si la desigualdad original es estricta (< o >).
+  final bool isStrict;
+
   const LinearInequality2D({
     required this.a,
     required this.b,
     required this.c,
     required this.sign,
     required this.rawInput,
+    required this.normA,
+    required this.normB,
+    required this.normC,
+    required this.isStrict,
   });
 
-  /// Indica si la recta frontera es continua (<= o >=) o discontinua (< o >).
-  bool get isBoundarySolid => !sign.isStrict;
+  /// Crea una inecuación 2D normalizando automáticamente a la forma <=.
+  factory LinearInequality2D.create({
+    required double a,
+    required double b,
+    required double c,
+    required InequalitySign sign,
+    required String rawInput,
+  }) {
+    final isStrict = sign.isStrict;
+    // Si la desigualdad es >= o >, multiplicamos por -1 para invertirla a <=
+    final invert = sign == InequalitySign.greater || sign == InequalitySign.greaterOrEqual;
+    final normA = invert ? -a : a;
+    final normB = invert ? -b : b;
+    final normC = invert ? -c : c;
 
-  /// Evalúa si el punto (x, y) cumple la inecuación.
-  bool evaluatesTrue(double px, double py) {
-    final val = a * px + b * py;
+    return LinearInequality2D(
+      a: a,
+      b: b,
+      c: c,
+      sign: sign,
+      rawInput: rawInput,
+      normA: normA,
+      normB: normB,
+      normC: normC,
+      isStrict: isStrict,
+    );
+  }
+
+  /// Indica si la recta frontera es continua (<= o >=) o discontinua (< o >).
+  bool get isBoundarySolid => !isStrict;
+
+  /// Evalúa si el punto (x, y) cumple la inecuación en su forma normalizada.
+  bool evaluatesTrue(double px, double py, {bool strictCheck = false}) {
+    final val = normA * px + normB * py;
     const eps = 1e-7;
-    return switch (sign) {
-      InequalitySign.less => val < c - eps,
-      InequalitySign.lessOrEqual => val <= c + eps,
-      InequalitySign.greater => val > c + eps,
-      InequalitySign.greaterOrEqual => val >= c - eps,
-    };
+    if (strictCheck && isStrict) {
+      return val < normC - eps;
+    }
+    return val <= normC + eps;
   }
 
   /// Evalúa en el punto de prueba (px, py) retornando diferencia y cumplimiento.
   ({double value, bool satisfied}) testPoint(double px, double py) {
-    final val = a * px + b * py;
-    return (value: val, satisfied: evaluatesTrue(px, py));
+    final origVal = a * px + b * py;
+    const eps = 1e-7;
+    final satisfied = switch (sign) {
+      InequalitySign.less => origVal < c - eps,
+      InequalitySign.lessOrEqual => origVal <= c + eps,
+      InequalitySign.greater => origVal > c + eps,
+      InequalitySign.greaterOrEqual => origVal >= c - eps,
+    };
+    return (value: origVal, satisfied: satisfied);
   }
 }
 

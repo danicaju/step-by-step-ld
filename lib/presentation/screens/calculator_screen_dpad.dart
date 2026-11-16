@@ -100,6 +100,10 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         return;
       }
       if (_calculatorMode == 7) {
+        if (_isChoosingIneqSysUnknowns) {
+          _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
+          return;
+        }
         if (_activeResolution == null) {
           final cur = _ineqSysRowInputs[_ineqSysActiveRow];
           final pos = _ineqSysRowCursors[_ineqSysActiveRow];

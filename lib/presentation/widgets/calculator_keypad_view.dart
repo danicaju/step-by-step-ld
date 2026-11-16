@@ -19,6 +19,7 @@ class CalculatorKeypadView extends StatelessWidget {
   final VoidCallback onDpadRight;
   final VoidCallback onDpadUp;
   final VoidCallback onDpadDown;
+  final VoidCallback? onDpadCenter;
   final VoidCallback onOptnPressed;
 
   const CalculatorKeypadView({
@@ -38,6 +39,7 @@ class CalculatorKeypadView extends StatelessWidget {
     required this.onDpadRight,
     required this.onDpadUp,
     required this.onDpadDown,
+    this.onDpadCenter,
     required this.onOptnPressed,
   });
 
@@ -91,6 +93,7 @@ class CalculatorKeypadView extends StatelessWidget {
                           onRight: onDpadRight,
                           onUp: onDpadUp,
                           onDown: onDpadDown,
+                          onCenter: onDpadCenter,
                         ),
                       ),
 

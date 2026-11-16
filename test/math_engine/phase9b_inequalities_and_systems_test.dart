@@ -116,7 +116,7 @@ void main() {
         r'y \ge 0',
       ]);
 
-      expect(outcome.resolution.steps.length, equals(4));
+      expect(outcome.resolution.steps.length, greaterThanOrEqualTo(3));
       expect(outcome.visualData.isBounded, isTrue);
       expect(outcome.visualData.isEmpty, isFalse);
       expect(outcome.visualData.vertices.length, greaterThanOrEqualTo(3));

@@ -414,6 +414,7 @@ extension _CalculatorScreenChassis on _CalculatorScreenState {
                     onDpadRight: _handleDpadRight,
                     onDpadUp: _handleDpadUp,
                     onDpadDown: _handleDpadDown,
+                    onDpadCenter: () => _handleKeyPress('='),
                     onOptnPressed: () {
                       if (_isShiftActive) {
                         updateState(() {
