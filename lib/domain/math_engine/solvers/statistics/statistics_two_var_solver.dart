@@ -1,0 +1,128 @@
+import 'dart:math' as math;
+
+import '../../core/rational.dart';
+import '../../models/statistics_models.dart';
+import '../../models/step_resolution.dart';
+
+/// Solver de Estadística Bidimensional (Regresión lineal, Pearson r y manejo de varianza cero).
+class StatisticsTwoVarSolver {
+  static StatisticsTwoVarResult analyze(List<TwoVarPoint> points) {
+    if (points.length < 2) {
+      throw const FormatException('Se necesitan al menos 2 pares de datos (x, y).');
+    }
+    final n = points.length;
+    Rational sumX = Rational(0);
+    Rational sumY = Rational(0);
+    Rational sumX2 = Rational(0);
+    Rational sumY2 = Rational(0);
+    Rational sumXY = Rational(0);
+
+    for (final p in points) {
+      sumX = sumX + p.x;
+      sumY = sumY + p.y;
+      sumX2 = sumX2 + (p.x * p.x);
+      sumY2 = sumY2 + (p.y * p.y);
+      sumXY = sumXY + (p.x * p.y);
+    }
+
+    final nRat = Rational(n);
+    final meanX = sumX / nRat;
+    final meanY = sumY / nRat;
+
+    final varX = (sumX2 / nRat) - (meanX * meanX);
+    final varY = (sumY2 / nRat) - (meanY * meanY);
+    final covXY = (sumXY / nRat) - (meanX * meanY);
+
+    final steps = <MathStep>[];
+
+    steps.add(
+      MathStep(
+        index: 1,
+        shortTitle: 'Paso 1: Medias marginales',
+        latexExpression:
+            '\\bar{x} = \\frac{\\sum x_{i}}{N} = ${meanX.toLatex()}, \\quad '
+            '\\bar{y} = \\frac{\\sum y_{i}}{N} = ${meanY.toLatex()}',
+        pedagogicalNote:
+            'Calculamos el centro de gravedad (x̄, ȳ) de la distribución bidimensional.',
+      ),
+    );
+
+    steps.add(
+      MathStep(
+        index: 2,
+        shortTitle: 'Paso 2: Varianzas y covarianza',
+        latexExpression:
+            '\\sigma_{x}^2 = ${varX.toLatex()}, \\quad '
+            '\\sigma_{y}^2 = ${varY.toLatex()}, \\quad '
+            '\\sigma_{xy} = ${covXY.toLatex()}',
+        pedagogicalNote:
+            'Calculamos la dispersión de cada variable y la covarianza que mide la relación lineal conjunta.',
+      ),
+    );
+
+    Rational? slopeM;
+    Rational? interceptN;
+    double? pearsonR;
+    String regLatex;
+
+    if (varX.isZero) {
+      regLatex = 'x = ${meanX.toLatex()} \\quad (\\text{Varianza } \\sigma_{x}^2 = 0)';
+      steps.add(
+        MathStep(
+          index: 3,
+          shortTitle: 'Paso 3: Varianza cero (Recta vertical)',
+          latexExpression: regLatex,
+          pedagogicalNote:
+              'Al ser la varianza de x igual a cero, todos los valores de x son idénticos y la recta de regresión es perfectamente vertical.',
+        ),
+      );
+    } else {
+      slopeM = covXY / varX;
+      interceptN = meanY - (slopeM * meanX);
+
+      final varXDouble = varX.toDouble();
+      final varYDouble = varY.toDouble();
+      if (varXDouble > 0 && varYDouble > 0) {
+        pearsonR = covXY.toDouble() / (math.sqrt(varXDouble) * math.sqrt(varYDouble));
+      }
+
+      final rStr = pearsonR != null ? pearsonR.toStringAsFixed(4) : '0';
+      final nLatex = interceptN.isNegative
+          ? '- ${interceptN.abs().toLatex()}'
+          : '+ ${interceptN.toLatex()}';
+      regLatex = 'y = ${slopeM.toLatex()}x $nLatex';
+
+      steps.add(
+        MathStep(
+          index: 3,
+          shortTitle: 'Paso 3: Recta de regresión y Pearson r',
+          latexExpression: '$regLatex, \\quad r = $rStr',
+          pedagogicalNote:
+              'La pendiente de la recta es m = σ_xy / σ_x² y r mide la fuerza de la correlación lineal entre -1 y 1.',
+        ),
+      );
+    }
+
+    final res = StepByStepResolution(
+      originalInputLatex: 'N = $n',
+      steps: steps,
+      exactResultLatex: regLatex,
+      decimalApproxLatex: regLatex,
+    );
+
+    return StatisticsTwoVarResult(
+      meanX: meanX,
+      meanY: meanY,
+      varX: varX,
+      varY: varY,
+      covXY: covXY,
+      slopeM: slopeM,
+      interceptN: interceptN,
+      pearsonR: pearsonR,
+      resolution: res,
+    );
+  }
+
+  static StepByStepResolution solve(List<TwoVarPoint> points) =>
+      analyze(points).resolution;
+}

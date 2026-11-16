@@ -1,6 +1,9 @@
 import '../core/algebraic_latex_formatter.dart';
 import '../core/rational.dart';
 import '../models/step_resolution.dart';
+import 'linear_equations/linear_equation_parser.dart';
+
+export 'linear_equations/linear_equation_parser.dart';
 
 /// Término de una ecuación lineal: \pm \frac{a x + b}{d}
 class LinearTerm {
@@ -285,7 +288,7 @@ class LinearEquationSolver {
   /// Parsea y resuelve una ecuación lineal introducida como texto por el alumno.
   /// Soporta: "2x + 4 = 16", "2*x = 8", "2(x - 3) = 4", "(x-2)/3 - (x+1)/4 = 2", etc.
   static StepByStepResolution solveEquationString(String equationStr) {
-    String cleaned = _normalizeEquationInput(equationStr);
+    String cleaned = LinearEquationParser.normalizeEquationInput(equationStr);
     if (cleaned.isEmpty || cleaned == '0') {
       throw const FormatException('Ecuación vacía');
     }
@@ -302,11 +305,11 @@ class LinearEquationSolver {
       throw const FormatException('Completa ambos miembros de la ecuación');
     }
 
-    _checkBalancedParens(parts[0]);
-    _checkBalancedParens(parts[1]);
+    LinearEquationParser.checkBalancedParens(parts[0]);
+    LinearEquationParser.checkBalancedParens(parts[1]);
 
-    final leftTerms = _parseLinearTerms(parts[0]);
-    final rightTerms = _parseLinearTerms(parts[1]);
+    final leftTerms = LinearEquationParser.parseLinearTerms(parts[0]);
+    final rightTerms = LinearEquationParser.parseLinearTerms(parts[1]);
 
     if (leftTerms.isEmpty && rightTerms.isEmpty) {
       throw const FormatException('No se encontraron términos en la ecuación');
@@ -325,262 +328,5 @@ class LinearEquationSolver {
       customOriginalLatex:
           '${_formatSideLatex(effectiveLeft)} = ${_formatSideLatex(effectiveRight)}',
     );
-  }
-
-  static String _normalizeEquationInput(String raw) {
-    var s = raw
-        .replaceAll(RegExp(r'\s+'), '')
-        .replaceAll('\u2212', '-')
-        .replaceAll(r'\cdot', '*')
-        .replaceAll('·', '*')
-        .replaceAll('×', '*')
-        .replaceAll(r'\left(', '(')
-        .replaceAll(r'\right)', ')')
-        .replaceAll('X', 'x');
-    return _replaceLatexFractions(s);
-  }
-
-  static String _replaceLatexFractions(String input) {
-    var s = input;
-    while (true) {
-      final idx = s.indexOf(r'\frac{');
-      if (idx == -1) break;
-      final numEnd = _findMatchingBrace(s, idx + 5);
-      if (numEnd == -1 || numEnd + 1 >= s.length || s[numEnd + 1] != '{') {
-        break;
-      }
-      final denEnd = _findMatchingBrace(s, numEnd + 1);
-      if (denEnd == -1) break;
-      final numContent = s.substring(idx + 6, numEnd);
-      final denContent = s.substring(numEnd + 2, denEnd);
-      s = '${s.substring(0, idx)}($numContent)/($denContent)${s.substring(denEnd + 1)}';
-    }
-    return s;
-  }
-
-  static int _findMatchingBrace(String s, int openIdx) {
-    int depth = 0;
-    for (int i = openIdx; i < s.length; i++) {
-      if (s[i] == '{') depth++;
-      if (s[i] == '}') {
-        depth--;
-        if (depth == 0) return i;
-      }
-    }
-    return -1;
-  }
-
-  static void _checkBalancedParens(String s) {
-    int depth = 0;
-    for (int i = 0; i < s.length; i++) {
-      if (s[i] == '(') depth++;
-      if (s[i] == ')') depth--;
-      if (depth < 0) {
-        throw const FormatException('Paréntesis desbalanceados en la ecuación');
-      }
-    }
-    if (depth != 0) {
-      throw const FormatException('Falta cerrar un paréntesis en la ecuación');
-    }
-  }
-
-  static List<({bool isSubtract, String body})> _splitTopLevelAdditive(
-    String s,
-  ) {
-    final result = <({bool isSubtract, String body})>[];
-    if (s.isEmpty) return result;
-
-    int depth = 0;
-    int start = 0;
-    bool isSub = false;
-    int scanStart = 0;
-    if (s[0] == '+' || s[0] == '-') {
-      isSub = s[0] == '-';
-      start = 1;
-      scanStart = 1;
-    }
-
-    for (int i = scanStart; i < s.length; i++) {
-      final ch = s[i];
-      if (ch == '(') {
-        depth++;
-      } else if (ch == ')') {
-        depth--;
-      } else if (depth == 0 &&
-          (ch == '+' || ch == '-') &&
-          i > start &&
-          s[i - 1] != '*' &&
-          s[i - 1] != '/') {
-        final body = s.substring(start, i);
-        if (body.isEmpty) {
-          throw const FormatException('Operador consecutivo inválido');
-        }
-        result.add((isSubtract: isSub, body: body));
-        isSub = ch == '-';
-        start = i + 1;
-      }
-    }
-
-    final tail = s.substring(start);
-    if (tail.isEmpty) {
-      throw const FormatException('Falta término tras signo en la ecuación');
-    }
-    result.add((isSubtract: isSub, body: tail));
-    return result;
-  }
-
-  static List<LinearTerm> _parseLinearTerms(String sideStr) {
-    final List<LinearTerm> terms = [];
-    if (sideStr.isEmpty) return terms;
-
-    for (final (:isSubtract, :body) in _splitTopLevelAdditive(sideStr)) {
-      int depth = 0;
-      int slashIndex = -1;
-      for (int i = 0; i < body.length; i++) {
-        if (body[i] == '(') {
-          depth++;
-        } else if (body[i] == ')') {
-          depth--;
-        } else if (depth == 0 && body[i] == '/') {
-          if (slashIndex != -1) {
-            throw FormatException('División múltiple no soportada: $body');
-          }
-          slashIndex = i;
-        }
-      }
-
-      int denominator = 1;
-      String numeratorStr = body;
-      if (slashIndex != -1) {
-        numeratorStr = body.substring(0, slashIndex);
-        final rawDen = _unwrapOuterParens(body.substring(slashIndex + 1));
-        final parsedDen = int.tryParse(rawDen);
-        if (parsedDen == null || parsedDen <= 0) {
-          throw FormatException(
-            'El denominador debe ser un entero positivo: $rawDen',
-          );
-        }
-        denominator = parsedDen;
-      }
-
-      final parsed = _parseLinearExpr(numeratorStr);
-      terms.add(
-        LinearTerm(
-          xCoeff: parsed.xCoeff,
-          constant: parsed.constant,
-          denominator: denominator,
-          isSubtract: isSubtract,
-        ),
-      );
-    }
-
-    return terms;
-  }
-
-  static String _unwrapOuterParens(String s) {
-    var cur = s;
-    while (cur.length >= 2 && cur.startsWith('(') && cur.endsWith(')')) {
-      int depth = 0;
-      bool enclosesWhole = true;
-      for (int i = 0; i < cur.length; i++) {
-        if (cur[i] == '(') depth++;
-        if (cur[i] == ')') depth--;
-        if (depth == 0 && i < cur.length - 1) {
-          enclosesWhole = false;
-          break;
-        }
-      }
-      if (!enclosesWhole) break;
-      cur = cur.substring(1, cur.length - 1);
-    }
-    return cur;
-  }
-
-  static ({int xCoeff, int constant}) _parseLinearExpr(String expr) {
-    final unwrapped = _unwrapOuterParens(expr);
-    if (unwrapped.isEmpty) {
-      throw const FormatException('Expresión vacía');
-    }
-
-    final addTerms = _splitTopLevelAdditive(unwrapped);
-    if (addTerms.length > 1 || addTerms.first.isSubtract) {
-      int totalX = 0;
-      int totalConst = 0;
-      for (final (:isSubtract, :body) in addTerms) {
-        final sub = _parseLinearProduct(body);
-        final sign = isSubtract ? -1 : 1;
-        totalX += sign * sub.xCoeff;
-        totalConst += sign * sub.constant;
-      }
-      return (xCoeff: totalX, constant: totalConst);
-    }
-
-    return _parseLinearProduct(addTerms.first.body);
-  }
-
-  static ({int xCoeff, int constant}) _parseLinearProduct(String term) {
-    // Insertar '*' implícito junto a paréntesis: 2(x-1) -> 2*(x-1), (x+1)2 -> (x+1)*2
-    final withImplicit = term
-        .replaceAllMapped(RegExp(r'(\d)\('), (m) => '${m[1]}*(')
-        .replaceAll(')(', ')*(')
-        .replaceAllMapped(RegExp(r'\)(\d|[xX])'), (m) => ')*${m[1]}');
-
-    final factors = <String>[];
-    int depth = 0;
-    int start = 0;
-    for (int i = 0; i < withImplicit.length; i++) {
-      final ch = withImplicit[i];
-      if (ch == '(') {
-        depth++;
-      } else if (ch == ')') {
-        depth--;
-      } else if (depth == 0 && ch == '*') {
-        final part = withImplicit.substring(start, i);
-        if (part.isEmpty) {
-          throw FormatException('Producto inválido en: $term');
-        }
-        factors.add(part);
-        start = i + 1;
-      }
-    }
-    final last = withImplicit.substring(start);
-    if (last.isEmpty) {
-      throw FormatException('Producto incompleto en: $term');
-    }
-    factors.add(last);
-
-    var acc = (xCoeff: 0, constant: 1);
-    for (final factor in factors) {
-      final parsed = factor.startsWith('(')
-          ? _parseLinearExpr(factor)
-          : _parseSingleMonomial(factor);
-      if (acc.xCoeff != 0 && parsed.xCoeff != 0) {
-        throw const FormatException(
-          'No es una ecuación de 1.º grado (contiene producto de x)',
-        );
-      }
-      final nextX = acc.xCoeff * parsed.constant + acc.constant * parsed.xCoeff;
-      final nextConst = acc.constant * parsed.constant;
-      acc = (xCoeff: nextX, constant: nextConst);
-    }
-    return acc;
-  }
-
-  static ({int xCoeff, int constant}) _parseSingleMonomial(String token) {
-    if (token == 'x') {
-      return (xCoeff: 1, constant: 0);
-    }
-    if (token == '-x') {
-      return (xCoeff: -1, constant: 0);
-    }
-    final xMatch = RegExp(r'^(-?\d+)x$').firstMatch(token);
-    if (xMatch != null) {
-      return (xCoeff: int.parse(xMatch.group(1)!), constant: 0);
-    }
-    final numVal = int.tryParse(token);
-    if (numVal != null) {
-      return (xCoeff: 0, constant: numVal);
-    }
-    throw FormatException('Término no reconocido en ecuación lineal: $token');
   }
 }

@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import '../models/inequality_models.dart';
 import '../models/step_resolution.dart';
 import 'inequality_solver.dart';
 

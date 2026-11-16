@@ -1,268 +1,130 @@
 import 'dart:math' as math;
+
 import '../ast/ast_nodes.dart';
-import '../core/algebraic_latex_formatter.dart';
 import '../core/rational.dart';
 import '../models/step_resolution.dart';
-import 'logarithm_solver.dart';
-import 'percentage_and_sci_solver.dart';
-import 'radical_and_factor_solver.dart';
 import 'trig_and_angles_solver.dart';
+import 'evaluator/evaluator_quick_eval.dart';
+import 'evaluator/evaluator_binary_op_helper.dart';
+import 'evaluator/evaluator_special_nodes_helper.dart';
+import 'evaluator/evaluator_roots_helper.dart';
+
+export 'evaluator/evaluator_quick_eval.dart';
+export 'evaluator/evaluator_binary_op_helper.dart';
+export 'evaluator/evaluator_special_nodes_helper.dart';
+export 'evaluator/evaluator_roots_helper.dart';
 
 class StepEvaluator {
   final List<MathStep> _steps = [];
-  Map<String, Rational> _memoryVariables = const {};
-  AngleUnit _angleUnit = AngleUnit.deg;
+  Map<String, Rational> _memoryVariables;
+  AngleUnit _angleUnit;
   Rational? _lastEvaluatedRational;
 
   Rational? get lastEvaluatedRational => _lastEvaluatedRational;
+
+  StepEvaluator({
+    Map<String, Rational>? memoryVariables,
+    AngleUnit angleUnit = AngleUnit.deg,
+  })  : _memoryVariables = memoryVariables ?? const {},
+        _angleUnit = angleUnit;
 
   StepByStepResolution evaluate(
     ExprNode root, {
     Map<String, Rational>? memoryVariables,
     AngleUnit angleUnit = AngleUnit.deg,
+    String? rawInput,
+    bool isEquationSide = false,
   }) {
-    _memoryVariables = memoryVariables ?? const {};
+    _steps.clear();
+    if (memoryVariables != null) _memoryVariables = memoryVariables;
     _angleUnit = angleUnit;
 
-    if (root is SqrtNode && root.radicand is IntNode) {
-      return RadicalAndFactorSolver.simplifySquareRoot((root.radicand as IntNode).value);
+    final topLevelRes = EvaluatorSpecialNodesHelper.tryEvaluateTopLevel(
+      root,
+      angleUnit: _angleUnit,
+      rawInput: rawInput,
+      setLastEvaluatedRational: (r) => _lastEvaluatedRational = r,
+    );
+    if (topLevelRes != null) return topLevelRes;
+
+    final origLatex = (rawInput != null && rawInput.trim().isNotEmpty)
+        ? rawInput.trim()
+        : root.toLatex();
+
+    ExprNode current = root;
+    int iteration = 0;
+    const maxSteps = 40;
+
+    while (current is! ResolvedRationalNode &&
+        current is! ExactRadicalNode &&
+        iteration < maxSteps) {
+      iteration++;
+      final next = _reduceNextStep(current, fullRoot: root);
+      if (next == current) break;
+      current = next;
     }
 
-    // 1. Conversión decimal a DMS (ej: 34.52°)
-    if (root is DecimalNode && root.isDegrees) {
-      final res = TrigAndAnglesSolver.solveDecimalToDms(
-        root.toRational().toDouble(),
-        originalLatex: root.rawText.replaceAll('.', ','),
-      );
-      _lastEvaluatedRational = root.toRational();
-      return res;
-    }
+    final String exact;
+    final String decimal;
 
-    // 2. Sistema Sexagesimal puro (sumas y restas DMS)
-    final dmsTerms = _tryCollectDmsTerms(root);
-    if (dmsTerms != null) {
-      final res = TrigAndAnglesSolver.solveDmsOperation(
-        originalLatex: root.toLatex(),
-        terms: dmsTerms,
-      );
-      final decTotal = dmsTerms.fold<double>(
-        0,
-        (acc, t) => acc + (t.isSubtract ? -t.value.toDecimalDegrees() : t.value.toDecimalDegrees()),
-      );
-      _lastEvaluatedRational = Rational.fromDouble(decTotal, 1000000);
-      return res;
-    }
-
-    // 3. Trigonometría directa e inversa de nivel ESO / Bachillerato
-    if (root is TrigNode) {
-      return _evaluateTopLevelTrig(root);
-    }
-
-    // 4. Logaritmos de nivel 4.º ESO / Bachillerato
-    if (root is LogNode) {
-      return _evaluateTopLevelLog(root);
-    }
-
-    // 5. Porcentaje directo (A%)
-    if (root is PercentNode) {
-      final pVal = _evalToRationalQuick(root.operand);
-      if (pVal != null) {
-        final res = PercentageAndSciSolver.solveStandalonePercent(pVal);
-        _lastEvaluatedRational = pVal / Rational(100);
-        return res;
-      }
-    }
-
-    // 6. Operaciones porcentuales y Notación Científica binaria / simple
-    if (root is BinaryOpNode) {
-      // Aumento / descuento porcentual (B + A% / B - A%)
-      if ((root.op == BinaryOperator.add || root.op == BinaryOperator.subtract) &&
-          root.right is PercentNode) {
-        final baseVal = _evalToRationalQuick(root.left);
-        final pctVal = _evalToRationalQuick((root.right as PercentNode).operand);
-        if (baseVal != null && pctVal != null) {
-          final isDiscount = root.op == BinaryOperator.subtract;
-          final iv = isDiscount
-              ? Rational(1) - pctVal / Rational(100)
-              : Rational(1) + pctVal / Rational(100);
-          _lastEvaluatedRational = baseVal * iv;
-          return PercentageAndSciSolver.solvePercentageVariation(
-            baseValue: baseVal,
-            percentValue: pctVal,
-            isDiscount: isDiscount,
-            originalLatex: root.toLatex(),
+    if (current is ResolvedRationalNode) {
+      final resNode = current;
+      _lastEvaluatedRational = resNode.value;
+      exact = resNode.isApproximateDecimal
+          ? resNode.value.toDecimalLatex()
+          : resNode.value.toLatex();
+      decimal = resNode.value.toDecimalLatex();
+    } else if (current is ExactRadicalNode) {
+      final approx = current.multiplier * math.sqrt(current.radicand);
+      _lastEvaluatedRational = Rational.fromDouble(approx, 100000);
+      exact = current.toLatex();
+      decimal = Rational.fromDouble(approx, 100000).toDecimalLatex();
+    } else {
+      final approxD = EvaluatorQuickEval.evalToDoubleQuick(
+            current,
+            angleUnit: _angleUnit,
+            memoryVariables: _memoryVariables,
+          ) ??
+          EvaluatorQuickEval.evalToDoubleQuick(
+            root,
+            angleUnit: _angleUnit,
+            memoryVariables: _memoryVariables,
           );
-        }
-      }
-
-      // Porcentaje directo sobre cantidad (B * A% o A% * B)
-      if (root.op == BinaryOperator.multiply &&
-          (root.right is PercentNode || root.left is PercentNode)) {
-        final bool pctOnRight = root.right is PercentNode;
-        final pctNode = (pctOnRight ? root.right : root.left) as PercentNode;
-        final otherNode = pctOnRight ? root.left : root.right;
-        final baseVal = _evalToRationalQuick(otherNode);
-        final pctVal = _evalToRationalQuick(pctNode.operand);
-        if (baseVal != null && pctVal != null) {
-          _lastEvaluatedRational = baseVal * (pctVal / Rational(100));
-          return PercentageAndSciSolver.solvePercentOf(
-            baseValue: baseVal,
-            percentValue: pctVal,
-            originalLatex: root.toLatex(),
-          );
-        }
-      }
-
-      // Operación binaria en Notación Científica: (m1 * 10^e1) * / : (m2 * 10^e2)
-      if (root.op == BinaryOperator.multiply || root.op == BinaryOperator.divide) {
-        final leftSci = PercentageAndSciSolver.tryExtractSciTerm(root.left);
-        final rightSci = PercentageAndSciSolver.tryExtractSciTerm(root.right);
-        if (leftSci != null && rightSci != null) {
-          if (root.op == BinaryOperator.divide && rightSci.mantissa.isZero) {
-            return PercentageAndSciSolver.solveScientificBinary(
-              left: leftSci,
-              op: root.op,
-              right: rightSci,
-              originalLatex: root.toLatex(),
-            );
-          }
-          final rawMant = root.op == BinaryOperator.multiply
-              ? leftSci.mantissa * rightSci.mantissa
-              : leftSci.mantissa / rightSci.mantissa;
-          final rawExp = root.op == BinaryOperator.multiply
-              ? leftSci.exponent + rightSci.exponent
-              : leftSci.exponent - rightSci.exponent;
-          if (rawExp.abs() <= 8) {
-            _lastEvaluatedRational = rawMant * Rational(10).pow(rawExp);
-          }
-          return PercentageAndSciSolver.solveScientificBinary(
-            left: leftSci,
-            op: root.op,
-            right: rightSci,
-            originalLatex: root.toLatex(),
-          );
-        }
+      if (approxD != null && !approxD.isNaN && !approxD.isInfinite) {
+        _lastEvaluatedRational = Rational.fromDouble(approxD, 100000);
+        exact = current.toLatex();
+        decimal = Rational.fromDouble(approxD, 100000).toDecimalLatex();
+      } else {
+        _lastEvaluatedRational = Rational(0);
+        exact = current.toLatex();
+        decimal = '';
       }
     }
 
-    // Término único en notación científica (ej: 3.2 * 10^-5)
-    final singleSci = PercentageAndSciSolver.tryExtractSciTerm(root);
-    if (singleSci != null) {
-      if (singleSci.exponent.abs() <= 8) {
-        _lastEvaluatedRational =
-            singleSci.mantissa * Rational(10).pow(singleSci.exponent);
-      }
-      return PercentageAndSciSolver.solveScientificSingle(
-        singleSci,
-        originalLatex: root.toLatex(),
-      );
-    }
-
-    _steps.clear();
-    final originalLatex = root.toLatex();
-
-    ExprNode currentTree = root;
-
-    // Reducimos el AST paso a paso hasta que quede un único ResolvedRationalNode o ExactRadicalNode
-    int safetyCounter = 0;
-    while (currentTree is! ResolvedRationalNode &&
-        currentTree is! ExactRadicalNode &&
-        safetyCounter < 50) {
-      safetyCounter++;
-      currentTree = _reduceNextStep(currentTree, fullRoot: currentTree);
-    }
-
-    if (currentTree is ExactRadicalNode) {
-      final decApprox = (currentTree.multiplier * math.sqrt(currentTree.radicand))
-          .toStringAsFixed(6)
-          .replaceAll('.', ',');
-      return StepByStepResolution(
-        originalInputLatex: originalLatex,
-        steps: List.unmodifiable(_steps),
-        exactResultLatex: currentTree.toLatex(),
-        decimalApproxLatex: decApprox,
-      );
-    }
-
-    final resNode = currentTree as ResolvedRationalNode;
-    final finalRational = resNode.value.simplify();
-    _lastEvaluatedRational = finalRational;
-
-    return StepByStepResolution(
-      originalInputLatex: originalLatex,
+    final res = StepByStepResolution(
+      originalInputLatex: origLatex,
       steps: List.unmodifiable(_steps),
-      exactResultLatex: resNode.isApproximateDecimal
-          ? finalRational.toDecimalLatex()
-          : finalRational.toLatex(),
-      decimalApproxLatex: finalRational.toDecimalLatex(),
+      exactResultLatex: exact,
+      decimalApproxLatex: decimal,
     );
-  }
 
-  StepByStepResolution _evaluateTopLevelTrig(TrigNode node) {
-    final piMult = _extractPiMultiple(node.arg);
-    final ratArg = piMult == null ? _evalToRationalQuick(node.arg) : null;
-    final numArg = _evalToDoubleQuick(node.arg);
-    final res = TrigAndAnglesSolver.solveTrig(
-      function: node.function,
-      argNode: node.arg,
-      unit: _angleUnit,
-      evaluatedNumericArg: numArg,
-      exactRationalArg: ratArg,
-      piMultipleRational: piMult,
-    );
-    final approxNum = double.tryParse(res.decimalApproxLatex.replaceAll('°', '').replaceAll('^\\circ', '').replaceAll(',', '.'));
-    if (approxNum != null) {
-      _lastEvaluatedRational = Rational.fromDouble(approxNum, 100000);
-    }
-    return res;
-  }
-
-  StepByStepResolution _evaluateTopLevelLog(LogNode node) {
-    final baseRat = node.base != null ? _evalToRationalQuick(node.base!) : null;
-    final argRat = _evalToRationalQuick(node.arg);
-    if (argRat != null && (node.base == null || baseRat != null)) {
-      final res = LogarithmSolver.solve(
-        base: baseRat,
-        argument: argRat,
-        isNaturalLn: node.isNaturalLn,
-        customExprLatex: node.toLatex(),
-      );
-      final parsedDec = double.tryParse(res.decimalApproxLatex.replaceAll(',', '.'));
-      if (parsedDec != null) {
-        _lastEvaluatedRational = Rational.fromDouble(parsedDec, 100000);
-      }
-      return res;
-    }
-
-    // Fallback cuando base o argumento incluyen raíces/decimales no reducidos aún
-    final argD = _evalToDoubleQuick(node.arg);
-    final baseD = node.isNaturalLn
-        ? math.e
-        : (node.base != null ? _evalToDoubleQuick(node.base!) : 10.0);
-    if (argD == null || argD <= 0 || baseD == null || baseD <= 0 || (baseD - 1).abs() < 1e-12) {
-      return LogarithmSolver.solve(
-        base: baseRat,
-        argument: Rational(argD != null && argD <= 0 ? 0 : 1),
-        isNaturalLn: node.isNaturalLn,
-        customExprLatex: node.toLatex(),
-      );
-    }
-    final val = math.log(argD) / math.log(baseD);
-    final decStr = Rational.fromDouble(val, 1000000).toDecimalLatex();
-    _lastEvaluatedRational = Rational.fromDouble(val, 1000000);
-    return StepByStepResolution(
-      originalInputLatex: node.toLatex(),
-      steps: [
+    if (_steps.isEmpty && current is ResolvedRationalNode) {
+      _steps.add(
         MathStep(
           index: 1,
-          shortTitle: 'Cálculo aproximado del logaritmo',
-          latexExpression: '${node.toLatex()} \\approx $decStr',
-          pedagogicalNote: 'Evaluamos numéricamente el argumento y calculamos el logaritmo.',
+          shortTitle: 'Resultado directo',
+          latexExpression: '$origLatex = $exact',
+          pedagogicalNote: 'La expresión ya es irreducible.',
         ),
-      ],
-      exactResultLatex: decStr,
-      decimalApproxLatex: decStr,
-    );
+      );
+      return StepByStepResolution(
+        originalInputLatex: origLatex,
+        steps: List.unmodifiable(_steps),
+        exactResultLatex: exact,
+        decimalApproxLatex: decimal,
+      );
+    }
+    return res;
   }
 
   void _addStep({
@@ -299,110 +161,52 @@ class StepEvaluator {
           latex:
               '\\text{Sustituimos } $varLatex = ${val.toLatex()} \\text{ en la expresion}',
           note:
-              'Recuperamos el valor almacenado en la memoria $upper (${val.toLatex()}) para evaluar la expresión.',
+              'Reemplazamos el valor numérico guardado en la memoria de la calculadora.',
         );
         return ResolvedRationalNode(val);
 
-      case CbrtNode(:final radicand):
-        if (radicand is! ResolvedRationalNode) {
-          return CbrtNode(_reduceNextStep(radicand, fullRoot: fullRoot));
-        }
-        final val = radicand.value;
-        if (val.isInteger) {
-          final n = val.numerator;
-          final sign = n < 0 ? -1 : 1;
-          final absN = n.abs();
-          final cbrtApprox = math.pow(absN, 1 / 3).round();
-          if (cbrtApprox * cbrtApprox * cbrtApprox == absN) {
-            final resVal = sign * cbrtApprox;
-            _addStep(
-              title: 'Raíz cúbica exacta',
-              latex: '\\sqrt[3]{$n} = $resVal',
-              note: '$n es un cubo perfecto ($resVal · $resVal · $resVal = $n).',
-            );
-            return ResolvedRationalNode(Rational(resVal));
-          }
-        }
-        final doubleVal = (math.pow(val.toDouble().abs(), 1 / 3) * (val.toDouble() < 0 ? -1 : 1)).toDouble();
-        _addStep(
-          title: 'Raíz cúbica',
-          latex: '\\sqrt[3]{${val.toLatex()}} \\approx ${doubleVal.toStringAsFixed(4)}',
-          note: 'Calculamos la raíz cúbica decimal aproximada.',
+      case CbrtNode():
+        return EvaluatorRootsHelper.reduceCbrt(
+          node,
+          fullRoot: fullRoot,
+          reduceNextStep: _reduceNextStep,
+          addStep: _addStep,
         );
-        return ResolvedRationalNode(Rational.fromDouble(doubleVal));
 
-      case NthRootNode(:final n, :final radicand):
-        if (radicand is! ResolvedRationalNode) {
-          return NthRootNode(n, _reduceNextStep(radicand, fullRoot: fullRoot));
-        }
-        final val = radicand.value;
-        final doubleVal = math.pow(val.toDouble(), 1 / n).toDouble();
-        _addStep(
-          title: 'Raíz de índice $n',
-          latex: '\\sqrt[$n]{${val.toLatex()}} \\approx ${doubleVal.toStringAsFixed(4)}',
-          note: 'Calculamos la raíz de índice $n.',
+      case NthRootNode():
+        return EvaluatorRootsHelper.reduceNthRoot(
+          node,
+          fullRoot: fullRoot,
+          reduceNextStep: _reduceNextStep,
+          addStep: _addStep,
         );
-        return ResolvedRationalNode(Rational.fromDouble(doubleVal));
 
       case McmNode(:final args):
-        return _reduceMcmOrMcd(args, isMcm: true, fullRoot: fullRoot);
+        return EvaluatorSpecialNodesHelper.reduceMcmOrMcd(
+          args,
+          isMcm: true,
+          fullRoot: fullRoot,
+          reduceNextStep: _reduceNextStep,
+          addStep: _addStep,
+        );
 
       case McdNode(:final args):
-        return _reduceMcmOrMcd(args, isMcm: false, fullRoot: fullRoot);
+        return EvaluatorSpecialNodesHelper.reduceMcmOrMcd(
+          args,
+          isMcm: false,
+          fullRoot: fullRoot,
+          reduceNextStep: _reduceNextStep,
+          addStep: _addStep,
+        );
 
-      case SqrtNode(:final radicand):
-        if (radicand is IntNode) {
-          final n = radicand.value;
-          if (n < 0) {
-            _addStep(
-              title: 'Raíz cuadrada de número negativo',
-              latex: '\\sqrt{$n} \\implies \\text{Sin solucion real}',
-              note: 'No existe la raíz cuadrada real de un número negativo.',
-              warning: 'Una raíz cuadrada con radicando negativo no tiene solución real.',
-            );
-            return ResolvedRationalNode(Rational(0));
-          }
-          final sqrtInt = math.sqrt(n).toInt();
-          if (sqrtInt * sqrtInt == n) {
-            _addStep(
-              title: 'Raíz cuadrada exacta',
-              latex: '\\sqrt{$n} = $sqrtInt',
-              note: '$n es un cuadrado perfecto ($sqrtInt · $sqrtInt = $n).',
-            );
-            return ResolvedRationalNode(Rational(sqrtInt));
-          }
-          final res = RadicalAndFactorSolver.simplifySquareRoot(n);
-          for (final s in res.steps) {
-            _steps.add(s);
-          }
-          return ExactRadicalNode(1, n);
-        }
-        if (radicand is! ResolvedRationalNode) {
-          return SqrtNode(_reduceNextStep(radicand, fullRoot: fullRoot));
-        }
-        final val = radicand.value;
-        if (val.numerator < 0) {
-          _addStep(
-            title: 'Raíz cuadrada de número negativo',
-            latex: '\\sqrt{${val.toLatex()}} \\implies \\text{Sin solucion real}',
-            note: 'No existe la raíz cuadrada real de un número negativo.',
-          );
-          return ResolvedRationalNode(Rational(0));
-        }
-        if (val.isInteger) {
-          final n = val.numerator;
-          final sqrtInt = math.sqrt(n).toInt();
-          if (sqrtInt * sqrtInt == n) {
-            _addStep(
-              title: 'Raíz cuadrada exacta',
-              latex: '\\sqrt{$n} = $sqrtInt',
-              note: '$n es un cuadrado perfecto.',
-            );
-            return ResolvedRationalNode(Rational(sqrtInt));
-          }
-          return ExactRadicalNode(1, n);
-        }
-        return ResolvedRationalNode(Rational.fromDouble(math.sqrt(val.toDouble())));
+      case SqrtNode():
+        return EvaluatorRootsHelper.reduceSqrt(
+          node,
+          fullRoot: fullRoot,
+          reduceNextStep: _reduceNextStep,
+          addStep: _addStep,
+          steps: _steps,
+        );
 
       case IntNode(:final value):
         return ResolvedRationalNode(Rational(value));
@@ -411,10 +215,17 @@ class StepEvaluator {
         return ResolvedRationalNode(node.toRational());
 
       case PiNode():
-        return ResolvedRationalNode(Rational.fromDouble(math.pi, 1000000));
+        return ResolvedRationalNode(
+          Rational.fromDouble(math.pi, 1000000),
+          isApproximateDecimal: true,
+        );
 
       case TrigNode():
-        final res = _evaluateTopLevelTrig(node);
+        final res = EvaluatorSpecialNodesHelper.evaluateTopLevelTrig(
+          node,
+          angleUnit: _angleUnit,
+          setLastEvaluatedRational: (r) => _lastEvaluatedRational = r,
+        );
         for (final s in res.steps) {
           _steps.add(s);
         }
@@ -423,22 +234,25 @@ class StepEvaluator {
                 .replaceAll('^\\circ', '')
                 .replaceAll(',', '.')) ??
             double.tryParse(res.exactResultLatex.replaceAll(',', '.'));
-        final approxD = _evalToDoubleQuick(node) ?? parsedDec ?? 0.0;
-        final info = _rationalFromResultLatexOrDouble(res.exactResultLatex, approxD);
+        final approxD = EvaluatorQuickEval.evalToDoubleQuick(node, angleUnit: _angleUnit) ?? parsedDec ?? 0.0;
+        final info = EvaluatorQuickEval.rationalFromResultLatexOrDouble(res.exactResultLatex, approxD);
         return ResolvedRationalNode(
           info.rational,
           isApproximateDecimal: info.isApproximateDecimal,
         );
 
       case LogNode():
-        final res = _evaluateTopLevelLog(node);
+        final res = EvaluatorSpecialNodesHelper.evaluateTopLevelLog(
+          node,
+          setLastEvaluatedRational: (r) => _lastEvaluatedRational = r,
+        );
         for (final s in res.steps) {
           _steps.add(s);
         }
         final parsedDec = double.tryParse(res.decimalApproxLatex.replaceAll(',', '.')) ??
             double.tryParse(res.exactResultLatex.replaceAll(',', '.'));
-        final approxD = _evalToDoubleQuick(node) ?? parsedDec ?? 0.0;
-        final info = _rationalFromResultLatexOrDouble(res.exactResultLatex, approxD);
+        final approxD = EvaluatorQuickEval.evalToDoubleQuick(node) ?? parsedDec ?? 0.0;
+        final info = EvaluatorQuickEval.rationalFromResultLatexOrDouble(res.exactResultLatex, approxD);
         return ResolvedRationalNode(
           info.rational,
           isApproximateDecimal: info.isApproximateDecimal,
@@ -463,19 +277,30 @@ class StepEvaluator {
           seconds: seconds,
           isNegative: isNegative,
         );
-        return ResolvedRationalNode(Rational.fromDouble(dms.toDecimalDegrees(), 1000000));
+        final decDeg = dms.toDecimalDegrees();
+        final decStr = Rational.fromDouble(decDeg, 1000000).toDecimalLatex();
+        _addStep(
+          title: 'Conversión sexagesimal a grados decimales',
+          latex: '${dms.toLatex()} = $decStr°',
+          note:
+              'Convertimos grados, minutos y segundos a forma decimal: D + M/60 + S/3600.',
+        );
+        return ResolvedRationalNode(
+          Rational.fromDouble(decDeg, 1000000),
+          isApproximateDecimal: true,
+        );
 
       case FractionNode(:final numerator, :final denominator):
-        final raw = Rational.raw(numerator, denominator);
+        final raw = Rational(numerator, denominator);
+        final simplified = raw.simplify();
         if (raw.isReducible) {
-          final common = Rational.gcd(numerator, denominator);
-          final simplified = raw.simplify();
+          final gcd = Rational.gcd(numerator, denominator);
           _addStep(
-            title: 'Simplificar fracción inicial',
+            title: 'Simplificación de fracción',
             latex:
-                '\\frac{$numerator : $common}{$denominator : $common} = ${simplified.toLatex()}',
+                '\\frac{$numerator : $gcd}{$denominator : $gcd} = ${simplified.toLatex()}',
             note:
-                'Dividimos numerador y denominador entre su M.C.D. ($common) antes de operar para trabajar con números más pequeños.',
+                'Dividimos numerador y denominador entre su M.C.D. ($gcd) para obtener la fracción irreducible.',
           );
           return ResolvedRationalNode(simplified);
         }
@@ -510,11 +335,17 @@ class StepEvaluator {
         if (operand is IntNode) {
           return ResolvedRationalNode(Rational(-operand.value));
         }
-        if (operand is ResolvedRationalNode) {
-          final v = operand.value;
-          return ResolvedRationalNode(Rational(-v.numerator, v.denominator));
+        if (operand is! ResolvedRationalNode) {
+          return UnaryMinusNode(_reduceNextStep(operand, fullRoot: fullRoot));
         }
-        return UnaryMinusNode(_reduceNextStep(operand, fullRoot: fullRoot));
+        final val = operand.value;
+        final neg = Rational(-val.numerator, val.denominator);
+        _addStep(
+          title: 'Signo negativo',
+          latex: '-(${val.toLatex()}) = ${neg.toLatex()}',
+          note: 'Cambiamos el signo del valor numérico.',
+        );
+        return ResolvedRationalNode(neg);
 
       // CASO CON PARÉNTESIS: (-a)^n
       case PowerNode(:final base, :final exponent):
@@ -539,14 +370,28 @@ class StepEvaluator {
         if (base is! ResolvedRationalNode) {
           return PowerNode(_reduceNextStep(base, fullRoot: fullRoot), exponent);
         }
-
-        final result = base.value.pow(exponent);
+        final baseVal = base.value;
+        if (exponent < 0) {
+          final inverted = Rational(baseVal.denominator, baseVal.numerator);
+          final posExp = -exponent;
+          _addStep(
+            title: 'Exponente negativo',
+            latex:
+                '\\left(${baseVal.toLatex()}\\right)^{$exponent} = \\left(${inverted.toLatex()}\\right)^{$posExp}',
+            note:
+                'Invertimos la base para transformar el exponente en positivo: (a/b)⁻ⁿ = (b/a)ⁿ.',
+          );
+          return PowerNode(ResolvedRationalNode(inverted), posExp);
+        }
+        final finalVal = baseVal.pow(exponent);
         _addStep(
-          title: 'Resolver potencia',
-          latex: '${node.toLatex()} = ${result.toLatex()}',
-          note: 'Elevamos la base al exponente $exponent.',
+          title: 'Cálculo de potencia',
+          latex:
+              '\\left(${baseVal.toLatex()}\\right)^{$exponent} = ${finalVal.toLatex()}',
+          note:
+              'Elevamos tanto el numerador como el denominador al exponente $exponent.',
         );
-        return ResolvedRationalNode(result);
+        return ResolvedRationalNode(finalVal);
 
       case BinaryOpNode(:final left, :final op, :final right):
         if (left is! ResolvedRationalNode) {
@@ -554,7 +399,6 @@ class StepEvaluator {
             _reduceNextStep(left, fullRoot: fullRoot),
             op,
             right,
-            parenthesized: node.parenthesized,
           );
         }
         if (right is! ResolvedRationalNode) {
@@ -562,487 +406,14 @@ class StepEvaluator {
             left,
             op,
             _reduceNextStep(right, fullRoot: fullRoot),
-            parenthesized: node.parenthesized,
           );
         }
-
-        return _evaluateBinaryRational(left, op, right);
-    }
-  }
-
-  ExprNode _reduceMcmOrMcd(
-    List<ExprNode> args, {
-    required bool isMcm,
-    required ExprNode fullRoot,
-  }) {
-    for (int i = 0; i < args.length; i++) {
-      if (args[i] is! ResolvedRationalNode) {
-        final nextArgs = List<ExprNode>.from(args);
-        nextArgs[i] = _reduceNextStep(args[i], fullRoot: fullRoot);
-        return isMcm ? McmNode(nextArgs) : McdNode(nextArgs);
-      }
-    }
-
-    final nums = <int>[];
-    for (final node in args) {
-      final rat = (node as ResolvedRationalNode).value.simplify();
-      if (!rat.isInteger || rat.numerator <= 0) {
-        throw const FormatException(
-          'm.c.m. y M.C.D. requieren números enteros positivos mayores que 0.',
+        return EvaluatorBinaryOpHelper.evaluateBinaryRational(
+          leftNode: left,
+          op: op,
+          rightNode: right,
+          addStep: _addStep,
         );
-      }
-      nums.add(rat.numerator);
     }
-
-    if (nums.length < 2) {
-      throw const FormatException(
-        'm.c.m. y M.C.D. requieren al menos 2 números positivos.',
-      );
-    }
-
-    // Paso 1: Descomposición factorial de TODOS los números
-    final factorMaps = nums.map(Rational.primeFactorsMap).toList();
-    final factorRows = <String>[];
-    for (int i = 0; i < nums.length; i++) {
-      factorRows.add('${nums[i]} = ${Rational.factorMapToLatex(factorMaps[i])}');
-    }
-    _addStep(
-      title: 'Descomposición en factores primos',
-      latex: '\\begin{aligned} ${factorRows.join(r' \\ ')} \\end{aligned}',
-      note:
-          'Descomponemos cada uno de los ${nums.length} números en producto de factores primos.',
-    );
-
-    // Paso 2: Regla ESO para m.c.m. o M.C.D.
-    final fnLatex = isMcm ? r'\text{m.c.m.}' : r'\text{M.C.D.}';
-    final argsListLatex = nums.join(' ; ');
-
-    if (isMcm) {
-      final allPrimes = <int>{
-        for (final m in factorMaps) ...m.keys,
-      }.toList()
-        ..sort();
-      final selectedMap = <int, int>{};
-      for (final p in allPrimes) {
-        int maxExp = 0;
-        for (final m in factorMaps) {
-          final e = m[p] ?? 0;
-          if (e > maxExp) maxExp = e;
-        }
-        selectedMap[p] = maxExp;
-      }
-
-      final lcmVal = Rational.lcmMany(nums);
-      final prodLatex = Rational.factorMapToLatex(selectedMap);
-      final exprLatex = prodLatex == '$lcmVal'
-          ? '$fnLatex\\left($argsListLatex\\right) = $lcmVal'
-          : '$fnLatex\\left($argsListLatex\\right) = $prodLatex = $lcmVal';
-
-      _addStep(
-        title: 'Regla ESO del m.c.m. (comunes y no comunes al mayor exponente)',
-        latex: exprLatex,
-        note:
-            'Tomamos todos los factores primos (comunes y no comunes) elevados al mayor exponente y multiplicamos.',
-      );
-      return ResolvedRationalNode(Rational(lcmVal));
-    } else {
-      final commonPrimes = factorMaps.first.keys.where((p) {
-        return factorMaps.every((m) => m.containsKey(p));
-      }).toList()
-        ..sort();
-
-      final selectedMap = <int, int>{};
-      for (final p in commonPrimes) {
-        int minExp = factorMaps.first[p]!;
-        for (int i = 1; i < factorMaps.length; i++) {
-          final e = factorMaps[i][p]!;
-          if (e < minExp) minExp = e;
-        }
-        selectedMap[p] = minExp;
-      }
-
-      final gcdVal = Rational.gcdMany(nums);
-      final prodLatex = Rational.factorMapToLatex(selectedMap);
-      final exprLatex = (commonPrimes.isEmpty || prodLatex == '$gcdVal')
-          ? '$fnLatex\\left($argsListLatex\\right) = $gcdVal'
-          : '$fnLatex\\left($argsListLatex\\right) = $prodLatex = $gcdVal';
-
-      _addStep(
-        title: 'Regla ESO del M.C.D. (comunes al menor exponente)',
-        latex: exprLatex,
-        note: commonPrimes.isEmpty
-            ? 'No comparten factores primos comunes; por tanto, son primos entre sí y su M.C.D. es 1.'
-            : 'Tomamos únicamente los factores primos comunes a todos elevados al menor exponente.',
-      );
-      return ResolvedRationalNode(Rational(gcdVal));
-    }
-  }
-
-  ResolvedRationalNode _evaluateBinaryRational(
-    ResolvedRationalNode leftNode,
-    BinaryOperator op,
-    ResolvedRationalNode rightNode,
-  ) {
-    final a = leftNode.value;
-    final b = rightNode.value;
-    final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
-
-    if (isApprox) {
-      final result = switch (op) {
-        BinaryOperator.add => a + b,
-        BinaryOperator.subtract => a - b,
-        BinaryOperator.multiply => a * b,
-        BinaryOperator.divide => b.isZero
-            ? throw const FormatException('División por cero.')
-            : a / b,
-      };
-
-      final signSymbol = op == BinaryOperator.add
-          ? '+'
-          : (op == BinaryOperator.subtract
-              ? '-'
-              : (op == BinaryOperator.multiply ? r'\cdot' : ':'));
-
-      final aLatex = leftNode.isApproximateDecimal ? a.toDecimalLatex() : a.toLatex();
-      final bLatex = rightNode.isApproximateDecimal ? b.toDecimalLatex() : b.toLatex();
-      final rightStr = b.isNegative ? '($bLatex)' : bLatex;
-      final resDec = result.toDecimalLatex();
-
-      _addStep(
-        title: 'Operar aproximaciones decimales',
-        latex: '$aLatex $signSymbol $rightStr \\approx $resDec',
-        note: 'Operamos numéricamente manteniendo la precisión decimal.',
-      );
-
-      return ResolvedRationalNode(result, isApproximateDecimal: true);
-    }
-
-    switch (op) {
-      case BinaryOperator.add:
-      case BinaryOperator.subtract:
-        final signSymbol = op == BinaryOperator.add ? '+' : '-';
-
-        // Si tienen distinto denominador, explicamos el m.c.m. y amplificamos
-        if (a.denominator != b.denominator) {
-          final commonDen = Rational.lcm(a.denominator, b.denominator);
-          final factorA = commonDen ~/ a.denominator;
-          final factorB = commonDen ~/ b.denominator;
-
-          final factALatex = Rational.primeFactorizationLatex(a.denominator);
-          final factBLatex = Rational.primeFactorizationLatex(b.denominator);
-
-          _addStep(
-            title: 'Denominador común (m.c.m.)',
-            latex:
-                '\\text{m.c.m.}(${a.denominator}, ${b.denominator}) = $commonDen \\quad \\left(${a.denominator} = $factALatex, \\; ${b.denominator} = $factBLatex\\right)',
-            note:
-                'Factorizamos los denominadores y tomamos los factores comunes y no comunes elevados al mayor exponente.',
-          );
-
-          final newNumA = a.numerator * factorA;
-          final newNumB = b.numerator * factorB;
-
-          _addStep(
-            title: 'Amplificar fracciones al denominador $commonDen',
-            latex:
-                '\\frac{\\textcolor{#2563EB}{$factorA} \\cdot ${AlgebraicLatexFormatter.parenIfNegative(a.numerator)}}{$commonDen} $signSymbol \\frac{\\textcolor{#2563EB}{$factorB} \\cdot ${AlgebraicLatexFormatter.parenIfNegative(b.numerator)}}{$commonDen} = \\frac{$newNumA}{$commonDen} $signSymbol \\frac{$newNumB}{$commonDen}',
-            note:
-                'Dividimos el m.c.m. ($commonDen) entre cada denominador antiguo y multiplicamos por su numerador.',
-          );
-
-          final combinedNum =
-              op == BinaryOperator.add ? newNumA + newNumB : newNumA - newNumB;
-          final unreduced = Rational.raw(combinedNum, commonDen);
-          final simplified = unreduced.simplify();
-          final numExprLatex = '$newNumA $signSymbol ${AlgebraicLatexFormatter.parenIfNegative(newNumB)}';
-
-          if (unreduced.isReducible) {
-            final gcd = Rational.gcd(combinedNum, commonDen);
-            _addStep(
-              title: 'Operar numeradores y simplificar a fracción irreducible',
-              latex:
-                  '\\frac{$numExprLatex}{$commonDen} = \\frac{$combinedNum : $gcd}{$commonDen : $gcd} = ${simplified.toLatex()}',
-              note:
-                  'Operamos los numeradores y simplificamos dividiendo entre el M.C.D. ($gcd).',
-            );
-          } else {
-            _addStep(
-              title: 'Operar numeradores',
-              latex: '\\frac{$numExprLatex}{$commonDen} = ${simplified.toLatex()}',
-              note: 'La fracción resultante ya es irreducible.',
-            );
-          }
-          return ResolvedRationalNode(simplified);
-        }
-
-        // Mismo denominador o números enteros
-        final result = op == BinaryOperator.add ? a + b : a - b;
-        final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
-        final rightStr = b.numerator < 0 ? '(${b.toLatex()})' : b.toLatex();
-        final addLatex = isApprox
-            ? '${a.toDecimalLatex()} $signSymbol ${b.toDecimalLatex()} \\approx ${result.toDecimalLatex()}'
-            : '${a.toLatex()} $signSymbol $rightStr = ${result.toLatex()}';
-        _addStep(
-          title: isApprox
-              ? 'Operación con valores aproximados'
-              : (a.isInteger && b.isInteger
-                  ? 'Operar números enteros'
-                  : 'Fracciones con igual denominador'),
-          latex: addLatex,
-          note: isApprox
-              ? 'Realizamos la operación con los valores numéricos respetando la regla de los signos.'
-              : (a.isInteger && b.isInteger
-                  ? 'Resolvemos la operación entera respetando la regla de los signos.'
-                  : 'Mantenemos el denominador común (${a.denominator}) y operamos los numeradores.'),
-        );
-        return ResolvedRationalNode(result, isApproximateDecimal: isApprox);
-
-      case BinaryOperator.multiply:
-        final result = a * b;
-        final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
-        final rightStr = b.numerator < 0 ? '(${b.toLatex()})' : b.toLatex();
-        final mulLatex = isApprox
-            ? '${a.toDecimalLatex()} \\cdot ${b.toDecimalLatex()} \\approx ${result.toDecimalLatex()}'
-            : ((a.isInteger && b.isInteger)
-                ? '${a.toLatex()} \\cdot $rightStr = ${result.toLatex()}'
-                : '${a.toLatex()} \\cdot $rightStr = \\frac{${a.numerator} \\cdot ${AlgebraicLatexFormatter.parenIfNegative(b.numerator)}}{${a.denominator} \\cdot ${b.denominator}} = ${result.toLatex()}');
-        _addStep(
-          title: isApprox
-              ? 'Multiplicación de valores aproximados'
-              : ((a.isInteger && b.isInteger) ? 'Multiplicar enteros' : 'Multiplicación en línea'),
-          latex: mulLatex,
-          note: isApprox
-              ? 'Calculamos el producto numérico respetando la regla de los signos.'
-              : ((a.isInteger && b.isInteger)
-                  ? 'Calculamos el producto respetando la regla de los signos.'
-                  : 'Multiplicamos en línea: numerador por numerador y denominador por denominador.'),
-        );
-        return ResolvedRationalNode(result, isApproximateDecimal: isApprox);
-
-      case BinaryOperator.divide:
-        final result = a / b;
-        final isApprox = leftNode.isApproximateDecimal || rightNode.isApproximateDecimal;
-        final rightStr = b.numerator < 0 ? '(${b.toLatex()})' : b.toLatex();
-        final divLatex = isApprox
-            ? '${a.toDecimalLatex()} : ${b.toDecimalLatex()} \\approx ${result.toDecimalLatex()}'
-            : ((a.isInteger && b.isInteger)
-                ? '${a.toLatex()} : $rightStr = ${result.toLatex()}'
-                : '${a.toLatex()} : $rightStr = \\frac{${a.numerator} \\cdot ${b.denominator}}{${a.denominator} \\cdot ${AlgebraicLatexFormatter.parenIfNegative(b.numerator)}} = ${result.toLatex()}');
-        _addStep(
-          title: isApprox
-              ? 'División de valores aproximados'
-              : ((a.isInteger && b.isInteger)
-                  ? 'División exacta o en forma de fracción'
-                  : 'División de fracciones (productos cruzados)'),
-          latex: divLatex,
-          note: isApprox
-              ? 'Efectuamos el cociente numérico respetando la regla de los signos.'
-              : ((a.isInteger && b.isInteger)
-                  ? 'Dividimos los dos números y simplificamos si es fracción irreducible.'
-                  : 'Multiplicamos en cruz (o multiplicamos la primera fracción por la inversa de la segunda).'),
-        );
-        return ResolvedRationalNode(result, isApproximateDecimal: isApprox);
-    }
-  }
-
-  ({Rational rational, bool isApproximateDecimal}) _rationalFromResultLatexOrDouble(
-    String latex,
-    double fallback,
-  ) {
-    final trimmed = latex.trim();
-    final intParsed = int.tryParse(trimmed);
-    if (intParsed != null) {
-      return (rational: Rational(intParsed), isApproximateDecimal: false);
-    }
-    final fracM = RegExp(r'^(-?)\\frac\{(\d+)\}\{(\d+)\}$').firstMatch(trimmed);
-    if (fracM != null) {
-      final sign = fracM[1] == '-' ? -1 : 1;
-      return (
-        rational: Rational(sign * int.parse(fracM[2]!), int.parse(fracM[3]!)),
-        isApproximateDecimal: false,
-      );
-    }
-    final decParsed = double.tryParse(trimmed.replaceAll(',', '.'));
-    if (decParsed != null && !decParsed.isNaN && !decParsed.isInfinite) {
-      return (
-        rational: Rational.fromDouble(decParsed, 1000000),
-        isApproximateDecimal: true,
-      );
-    }
-    if (!fallback.isNaN && !fallback.isInfinite) {
-      return (
-        rational: Rational.fromDouble(fallback, 1000000),
-        isApproximateDecimal: true,
-      );
-    }
-    return (rational: Rational(0), isApproximateDecimal: false);
-  }
-
-  List<({DmsValue value, bool isSubtract})>? _tryCollectDmsTerms(ExprNode node) {
-    if (node is DmsNode) {
-      return [
-        (
-          value: DmsValue(
-            degrees: node.degrees,
-            minutes: node.minutes,
-            seconds: node.seconds,
-            isNegative: node.isNegative,
-          ),
-          isSubtract: false,
-        ),
-      ];
-    }
-    if (node is UnaryMinusNode && node.operand is DmsNode) {
-      final d = node.operand as DmsNode;
-      return [
-        (
-          value: DmsValue(
-            degrees: d.degrees,
-            minutes: d.minutes,
-            seconds: d.seconds,
-            isNegative: d.isNegative,
-          ),
-          isSubtract: true,
-        ),
-      ];
-    }
-    if (node is BinaryOpNode &&
-        (node.op == BinaryOperator.add || node.op == BinaryOperator.subtract)) {
-      final lTerms = _tryCollectDmsTerms(node.left);
-      final rTerms = _tryCollectDmsTerms(node.right);
-      if (lTerms == null || rTerms == null) return null;
-      return [
-        ...lTerms,
-        for (final t in rTerms)
-          (
-            value: t.value,
-            isSubtract: node.op == BinaryOperator.subtract ? !t.isSubtract : t.isSubtract,
-          ),
-      ];
-    }
-    return null;
-  }
-
-  Rational? _extractPiMultiple(ExprNode node) {
-    if (node is PiNode) return Rational(1);
-    if (node is UnaryMinusNode) {
-      final sub = _extractPiMultiple(node.operand);
-      return sub == null ? null : -sub;
-    }
-    if (node is BinaryOpNode) {
-      if (node.op == BinaryOperator.multiply) {
-        final lPi = _extractPiMultiple(node.left);
-        final rRat = _evalToRationalQuick(node.right);
-        if (lPi != null && rRat != null) return lPi * rRat;
-        final rPi = _extractPiMultiple(node.right);
-        final lRat = _evalToRationalQuick(node.left);
-        if (rPi != null && lRat != null) return rPi * lRat;
-      } else if (node.op == BinaryOperator.divide) {
-        final lPi = _extractPiMultiple(node.left);
-        final rRat = _evalToRationalQuick(node.right);
-        if (lPi != null && rRat != null && !rRat.isZero) return lPi / rRat;
-      }
-    }
-    return null;
-  }
-
-  Rational? _evalToRationalQuick(ExprNode node) {
-    return switch (node) {
-      IntNode(:final value) => Rational(value),
-      DecimalNode() => node.toRational(),
-      FractionNode(:final numerator, :final denominator) =>
-        denominator == 0 ? null : Rational(numerator, denominator),
-      ResolvedRationalNode(:final value) => value,
-      VariableNode(:final name) => _memoryVariables[name.toUpperCase()] ?? Rational(0),
-      PercentNode(:final operand) => () {
-          final v = _evalToRationalQuick(operand);
-          return v == null ? null : v / Rational(100);
-        }(),
-      UnaryMinusNode(:final operand) => () {
-          final v = _evalToRationalQuick(operand);
-          return v == null ? null : -v;
-        }(),
-      PowerNode(:final base, :final exponent) => () {
-          final v = _evalToRationalQuick(base);
-          if (v == null || (exponent < 0 && v.isZero)) return null;
-          return v.pow(exponent);
-        }(),
-      BinaryOpNode(:final left, :final op, :final right) => () {
-          final l = _evalToRationalQuick(left);
-          final r = _evalToRationalQuick(right);
-          if (l == null || r == null) return null;
-          return switch (op) {
-            BinaryOperator.add => l + r,
-            BinaryOperator.subtract => l - r,
-            BinaryOperator.multiply => l * r,
-            BinaryOperator.divide => r.isZero ? null : l / r,
-          };
-        }(),
-      _ => null,
-    };
-  }
-
-  double? _evalToDoubleQuick(ExprNode node) {
-    final rat = _evalToRationalQuick(node);
-    if (rat != null) return rat.toDouble();
-    return switch (node) {
-      PiNode() => math.pi,
-      DmsNode(:final degrees, :final minutes, :final seconds, :final isNegative) =>
-        DmsValue(
-          degrees: degrees,
-          minutes: minutes,
-          seconds: seconds,
-          isNegative: isNegative,
-        ).toDecimalDegrees(),
-      SqrtNode(:final radicand) => () {
-          final v = _evalToDoubleQuick(radicand);
-          return (v == null || v < 0) ? null : math.sqrt(v);
-        }(),
-      TrigNode(:final function, :final arg) => () {
-          final a = _evalToDoubleQuick(arg);
-          if (a == null) return null;
-          final rad = _angleUnit == AngleUnit.deg ? a * math.pi / 180.0 : a;
-          return switch (function) {
-            TrigFunction.sin => math.sin(rad),
-            TrigFunction.cos => math.cos(rad),
-            TrigFunction.tan => math.tan(rad),
-            TrigFunction.asin => math.asin(a.clamp(-1.0, 1.0)) *
-                (_angleUnit == AngleUnit.deg ? 180.0 / math.pi : 1.0),
-            TrigFunction.acos => math.acos(a.clamp(-1.0, 1.0)) *
-                (_angleUnit == AngleUnit.deg ? 180.0 / math.pi : 1.0),
-            TrigFunction.atan => math.atan(a) *
-                (_angleUnit == AngleUnit.deg ? 180.0 / math.pi : 1.0),
-          };
-        }(),
-      LogNode(:final base, :final arg, :final isNaturalLn) => () {
-          final a = _evalToDoubleQuick(arg);
-          if (a == null || a <= 0) return null;
-          if (isNaturalLn) return math.log(a);
-          final b = base != null ? _evalToDoubleQuick(base) : 10.0;
-          if (b == null || b <= 0 || (b - 1.0).abs() < 1e-12) return null;
-          return math.log(a) / math.log(b);
-        }(),
-      UnaryMinusNode(:final operand) => () {
-          final v = _evalToDoubleQuick(operand);
-          return v == null ? null : -v;
-        }(),
-      PowerNode(:final base, :final exponent) => () {
-          final b = _evalToDoubleQuick(base);
-          if (b == null) return null;
-          return math.pow(b, exponent).toDouble();
-        }(),
-      BinaryOpNode(:final left, :final op, :final right) => () {
-          final l = _evalToDoubleQuick(left);
-          final r = _evalToDoubleQuick(right);
-          if (l == null || r == null) return null;
-          return switch (op) {
-            BinaryOperator.add => l + r,
-            BinaryOperator.subtract => l - r,
-            BinaryOperator.multiply => l * r,
-            BinaryOperator.divide => r == 0 ? null : l / r,
-          };
-        }(),
-      _ => null,
-    };
   }
 }

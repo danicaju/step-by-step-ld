@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../domain/math_engine/solvers/matrix_solver.dart';
 import 'casio_cell_value_text.dart';
+import 'matrix/matrix_bracket.dart';
+import 'matrix/matrix_editor_chips.dart';
 
 /// Cuadrícula matricial editable integrada dentro de la LCD Casio ClassWiz
 /// con selector libre de dimensiones (1..4 Filas × 1..4 Columnas) independiente para MatA y MatB.
@@ -217,7 +219,7 @@ class CasioMatrixEditorView extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 5),
-                        _MatrixBracket(
+                        MatrixBracket(
                           isLeft: true,
                           isDeterminant: selectedOperation ==
                                   MatrixOperation.determinant &&
@@ -256,7 +258,7 @@ class CasioMatrixEditorView extends StatelessWidget {
                             }),
                           ),
                         ),
-                        _MatrixBracket(
+                        MatrixBracket(
                           isLeft: false,
                           isDeterminant: selectedOperation ==
                                   MatrixOperation.determinant &&
@@ -365,36 +367,13 @@ class CasioMatrixEditorView extends StatelessWidget {
     Color? accentColor,
     required VoidCallback onTap,
   }) {
-    final Color baseSelected = accentColor ?? const Color(0xFF2563EB);
-    final Color bg = selected
-        ? baseSelected
-        : (isOledDark ? const Color(0xFF1E293B) : const Color(0xFFBAC7BE));
-    final Color fg = selected
-        ? Colors.white
-        : (isOledDark ? const Color(0xFF94A3B8) : const Color(0xFF334155));
-
-    return GestureDetector(
+    return MatrixEditorChips.lcdPill(
       key: key,
+      label: label,
+      selected: selected,
+      isOledDark: isOledDark,
+      accentColor: accentColor,
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(
-            color: selected ? Colors.white : Colors.transparent,
-            width: selected ? 1.0 : 0.0,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: fg,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
     );
   }
 
@@ -404,35 +383,12 @@ class CasioMatrixEditorView extends StatelessWidget {
     required bool selected,
     required VoidCallback onTap,
   }) {
-    final Color bg = selected
-        ? const Color(0xFF2563EB)
-        : (isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC7D3C9));
-    final Color fg = selected
-        ? Colors.white
-        : (isOledDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155));
-
-    return GestureDetector(
+    return MatrixEditorChips.lcdDimPill(
       key: key,
+      label: label,
+      selected: selected,
+      isOledDark: isOledDark,
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(3),
-          border: Border.all(
-            color: selected ? Colors.cyanAccent : Colors.transparent,
-            width: selected ? 1.0 : 0.0,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: fg,
-            fontSize: 9.0,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
     );
   }
 
@@ -442,102 +398,12 @@ class CasioMatrixEditorView extends StatelessWidget {
     required bool selected,
     required VoidCallback onTap,
   }) {
-    final Color bg = selected
-        ? (isOledDark ? const Color(0xFF2563EB) : const Color(0xFF1E3A5F))
-        : (isOledDark ? const Color(0xFF1E293B) : const Color(0xFFCBD5E1));
-    final Color fg = selected
-        ? Colors.white
-        : (isOledDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155));
-
-    return GestureDetector(
+    return MatrixEditorChips.lcdActionChip(
       key: key,
+      label: label,
+      selected: selected,
+      isOledDark: isOledDark,
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(
-            color: selected
-                ? const Color(0xFF60A5FA)
-                : (isOledDark
-                    ? const Color(0xFF334155)
-                    : const Color(0xFF94A3B8)),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: fg,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
     );
-  }
-}
-
-class _MatrixBracket extends StatelessWidget {
-  final bool isLeft;
-  final bool isDeterminant;
-  final Color color;
-  final double height;
-
-  const _MatrixBracket({
-    required this.isLeft,
-    required this.isDeterminant,
-    required this.color,
-    required this.height,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (isDeterminant) {
-      return Container(
-        width: 2.2,
-        height: height,
-        color: color,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-      );
-    }
-    return CustomPaint(
-      size: Size(6, height),
-      painter: _BracketPainter(isLeft: isLeft, color: color),
-    );
-  }
-}
-
-class _BracketPainter extends CustomPainter {
-  final bool isLeft;
-  final Color color;
-
-  _BracketPainter({required this.isLeft, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
-
-    final path = Path();
-    if (isLeft) {
-      path.moveTo(size.width, 0);
-      path.lineTo(0, 0);
-      path.lineTo(0, size.height);
-      path.lineTo(size.width, size.height);
-    } else {
-      path.moveTo(0, 0);
-      path.lineTo(size.width, 0);
-      path.lineTo(size.width, size.height);
-      path.lineTo(0, size.height);
-    }
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _BracketPainter oldDelegate) {
-    return oldDelegate.isLeft != isLeft || oldDelegate.color != color;
   }
 }

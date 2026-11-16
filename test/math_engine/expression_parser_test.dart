@@ -93,5 +93,25 @@ void main() {
       expect(result!.$1, '1/2 ');
       expect(result.$2, 4);
     });
+
+    test('handlePowerRightArrow permite salir de la potencia o cerrar exponente con flecha derecha', () {
+      // Exponente simple 5^3 -> añade espacio para salir a línea base
+      final resSimple = ExpressionParser.handlePowerRightArrow('5^3', 3);
+      expect(resSimple, isNotNull);
+      expect(resSimple!.$1, '5^3 ');
+      expect(resSimple.$2, 4);
+
+      // Exponente con paréntesis abierto no cerrado 5^(3 -> cierra con )
+      final resParen = ExpressionParser.handlePowerRightArrow('5^(3', 4);
+      expect(resParen, isNotNull);
+      expect(resParen!.$1, '5^(3)');
+      expect(resParen.$2, 5);
+    });
+
+    test('Llamadas a funciones sin cerrar no inyectan prematuramente parentesis de cierre', () {
+      final liveSin = ExpressionParser.rawToLiveLatex('sin(30');
+      expect(liveSin, contains(r'\sin(30'));
+      expect(liveSin, isNot(contains(r'\right)')));
+    });
   });
 }
