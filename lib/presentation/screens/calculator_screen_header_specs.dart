@@ -36,6 +36,25 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
         return _systemSpecs();
       case 4:
         return _polySpecs();
+      case 5:
+        return [
+          _HeaderSpec(
+            keyName: 'hdr_graph_kind',
+            prefix: 'Tipo',
+            value: _graphKind,
+            items: const [
+              LcdDropdownItem(value: 0, label: 'ax^2+bx+c', key: Key('graph_kind_0')),
+              LcdDropdownItem(value: 1, label: 'Racional (px+q)/(rx+s)', key: Key('graph_kind_1')),
+            ],
+            onSelect: (v) {
+              _graphKind = v;
+              _graphActiveIndex = 0;
+              _currentGraphAnalysis = null;
+              _selectedGraphPoint = null;
+              _resetResolutionView();
+            },
+          ),
+        ];
       case 6:
         return [
           _HeaderSpec(

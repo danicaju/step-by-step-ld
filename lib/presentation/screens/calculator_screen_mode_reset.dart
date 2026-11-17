@@ -58,6 +58,10 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
     for (int i = 0; i < _graphValues.length; i++) {
       _graphValues[i] = '';
     }
+    for (int i = 0; i < _ratValues.length; i++) {
+      _ratValues[i] = '';
+    }
+    _graphKind = 0;
     _graphActiveIndex = 0;
     _currentGraphAnalysis = null;
     _selectedGraphPoint = null;
@@ -108,6 +112,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
     for (int i = 0; i < _vecUCells.length; i++) {
       _vecUCells[i] = '';
       _vecVCells[i] = '';
+      _vecWCells[i] = '';
     }
     _vectorActiveRow = 0;
     _vectorActiveCol = 0;

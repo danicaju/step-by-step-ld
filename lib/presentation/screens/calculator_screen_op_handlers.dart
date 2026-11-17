@@ -25,7 +25,10 @@ extension _CalculatorScreenOpHandlers on _CalculatorScreenState {
     final hasV = _vecVCells.any((c) => c.trim().isNotEmpty);
     updateState(() {
       _vectorOp = op;
-      if (op == VectorOperation.crossAndArea) _vectorDim = 3;
+      if (op == VectorOperation.crossAndArea || op.needsThirdVector) {
+        _vectorDim = 3;
+      }
+      if (_vectorActiveRow >= _vectorRowCount(op)) _vectorActiveRow = 0;
       if (!op.needsSecondVector) {
         _vectorActiveRow = 0;
       } else if (hasU && !hasV) {
@@ -33,7 +36,10 @@ extension _CalculatorScreenOpHandlers on _CalculatorScreenState {
         _vectorActiveCol = 0;
       }
     });
-    if ((!op.needsSecondVector && hasU) || (op.needsSecondVector && hasU && hasV)) {
+    final hasW = _vecWCells.any((c) => c.trim().isNotEmpty);
+    if ((!op.needsSecondVector && hasU) ||
+        (op.needsSecondVector && !op.needsThirdVector && hasU && hasV) ||
+        (op.needsThirdVector && hasU && hasV && hasW)) {
       _solveCurrentMode();
     }
   }

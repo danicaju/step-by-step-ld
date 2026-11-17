@@ -60,8 +60,17 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
     }
   }
 
+  int _vectorRowCount(VectorOperation op) =>
+      op.needsThirdVector ? 3 : (op.needsSecondVector ? 2 : 1);
+
+  List<String> get _vectorActiveCells => switch (_vectorActiveRow) {
+        1 => _vecVCells,
+        2 => _vecWCells,
+        _ => _vecUCells,
+      };
+
   void _vectorInsertToken(String token) {
-    final cells = _vectorActiveRow == 1 ? _vecVCells : _vecUCells;
+    final cells = _vectorActiveCells;
     cells[_vectorActiveCol] = _appendTokenToNumericCell(
       cells[_vectorActiveCol],
       token,
@@ -69,7 +78,7 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
   }
 
   void _vectorBackspace() {
-    final cells = _vectorActiveRow == 1 ? _vecVCells : _vecUCells;
+    final cells = _vectorActiveCells;
     final cur = cells[_vectorActiveCol];
     if (cur.isNotEmpty) {
       cells[_vectorActiveCol] = cur.substring(0, cur.length - 1);
@@ -81,8 +90,8 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
       _vectorActiveCol++;
       return;
     }
-    if (_vectorOp.needsSecondVector && _vectorActiveRow == 0) {
-      _vectorActiveRow = 1;
+    if (_vectorActiveRow < _vectorRowCount(_vectorOp) - 1) {
+      _vectorActiveRow++;
       _vectorActiveCol = 0;
       return;
     }
@@ -93,24 +102,23 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
     if (dCol < 0) {
       if (_vectorActiveCol > 0) {
         _vectorActiveCol--;
-      } else if (_vectorOp.needsSecondVector && _vectorActiveRow == 1) {
-        _vectorActiveRow = 0;
+      } else if (_vectorActiveRow > 0) {
+        _vectorActiveRow--;
         _vectorActiveCol = _vectorDim - 1;
       }
     } else if (dCol > 0) {
       if (_vectorActiveCol < _vectorDim - 1) {
         _vectorActiveCol++;
-      } else if (_vectorOp.needsSecondVector && _vectorActiveRow == 0) {
-        _vectorActiveRow = 1;
+      } else if (_vectorActiveRow < _vectorRowCount(_vectorOp) - 1) {
+        _vectorActiveRow++;
         _vectorActiveCol = 0;
       }
     }
     if (dRow < 0 && _vectorActiveRow > 0) {
-      _vectorActiveRow = 0;
+      _vectorActiveRow--;
     } else if (dRow > 0 &&
-        _vectorOp.needsSecondVector &&
-        _vectorActiveRow == 0) {
-      _vectorActiveRow = 1;
+        _vectorActiveRow < _vectorRowCount(_vectorOp) - 1) {
+      _vectorActiveRow++;
     }
   }
 
@@ -118,7 +126,9 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
     updateState(() {
       _activeResolution = null;
       _vectorDim = dim;
-      if (dim == 2 && _vectorOp == VectorOperation.crossAndArea) {
+      if (dim == 2 &&
+          (_vectorOp == VectorOperation.crossAndArea ||
+              _vectorOp.needsThirdVector)) {
         _vectorOp = VectorOperation.dotAndAngle;
       }
       _vectorActiveCol = _vectorActiveCol.clamp(0, dim - 1);

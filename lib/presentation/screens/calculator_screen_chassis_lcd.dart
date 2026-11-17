@@ -155,6 +155,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                                 selectedOperation: _vectorOp,
                                                 cellsU: _vecUCells,
                                                 cellsV: _vecVCells,
+                                                cellsW: _vecWCells,
                                                 activeRow: _vectorActiveRow,
                                                 activeCol: _vectorActiveCol,
                                                 isOledDark: _isOledDark,

@@ -9,12 +9,15 @@ enum VectorOperation {
   dotAndAngle('u·v y Ángulo'),
   crossAndArea('u×v y Área'),
   add('u + v'),
-  subtract('u - v');
+  subtract('u - v'),
+  mixedProduct('[u,v,w]');
 
   final String shortLabel;
   const VectorOperation(this.shortLabel);
 
   bool get needsSecondVector => this != VectorOperation.modulus;
+
+  bool get needsThirdVector => this == VectorOperation.mixedProduct;
 }
 
 /// Vector exacto en 2D o 3D con componentes racionales ([Rational]).

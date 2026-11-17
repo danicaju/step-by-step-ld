@@ -9,7 +9,8 @@ class CasioVectorEditorView extends StatelessWidget {
   final VectorOperation selectedOperation;
   final List<String> cellsU; // 3 entradas: x, y, z
   final List<String> cellsV; // 3 entradas: x, y, z
-  final int activeRow; // 0 = u, 1 = v
+  final List<String>? cellsW; // 3 entradas (producto mixto)
+  final int activeRow; // 0 = u, 1 = v, 2 = w
   final int activeCol; // 0 = x, 1 = y, 2 = z
   final bool isOledDark;
   final void Function(int row, int col)? onCellTap;
@@ -25,6 +26,7 @@ class CasioVectorEditorView extends StatelessWidget {
     required this.selectedOperation,
     required this.cellsU,
     required this.cellsV,
+    this.cellsW,
     required this.activeRow,
     required this.activeCol,
     this.isOledDark = false,
@@ -108,6 +110,16 @@ class CasioVectorEditorView extends StatelessWidget {
                       mutedColor: mutedColor,
                     ),
                   ],
+                  if (selectedOperation.needsThirdVector && cellsW != null) ...[
+                    const SizedBox(height: 6),
+                    _buildVectorRow(
+                      prefix: 'w⃗ = (',
+                      rowIdx: 2,
+                      values: cellsW!,
+                      textColor: textColor,
+                      mutedColor: mutedColor,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -176,7 +188,7 @@ class CasioVectorEditorView extends StatelessWidget {
               ),
             ),
           _buildCoordCell(
-            key: Key('vector_${rowIdx == 0 ? 'u' : 'v'}_cell_$c'),
+            key: Key('vector_${const ['u', 'v', 'w'][rowIdx]}_cell_$c'),
             value: values[c],
             hint: compNames[c],
             isActive: activeRow == rowIdx && activeCol == c,

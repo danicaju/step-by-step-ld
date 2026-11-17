@@ -46,7 +46,7 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
       case 4:
         return _ruffiniValues;
       case 5:
-        return _graphValues;
+        return _graphKind == 1 ? _ratValues : _graphValues;
       default:
         return [];
     }
@@ -60,7 +60,7 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
       case 4:
         return _ruffiniLabels;
       case 5:
-        return _graphLabels;
+        return _graphKind == 1 ? _ratLabels : _graphLabels;
       default:
         return [];
     }

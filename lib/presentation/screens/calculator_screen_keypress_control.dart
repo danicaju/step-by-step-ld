@@ -172,6 +172,7 @@ extension _CalculatorScreenKeypressControl on _CalculatorScreenState {
           for (int i = 0; i < _vecUCells.length; i++) {
             _vecUCells[i] = '';
             _vecVCells[i] = '';
+            _vecWCells[i] = '';
           }
           _vectorActiveRow = 0;
           _vectorActiveCol = 0;

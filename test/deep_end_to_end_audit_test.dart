@@ -2,6 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:casio_tutor_calc/presentation/widgets/lcd/lcd_menu_navigation.dart';
 import 'support/e2e_helpers.dart';
+import 'support/header_select.dart';
+
+Future<void> goMode(WidgetTester t, int n) async {
+  await tapF(t, find.text('MODE'));
+  for (var g = 0; g < 4 && find.byKey(Key('menu_mode_$n')).evaluate().isEmpty; g++) {
+    await tapF(t, find.byKey(const Key('menu_page_next')));
+  }
+  await tapF(t, find.byKey(Key('menu_mode_$n')));
+}
+
 
 void main() {
   group('E2E editor: parentesis, funciones y castillos', () {
@@ -157,6 +167,28 @@ void main() {
 
     test('menuMove sigue siendo total', () {
       expect(menuMove(0, 'right'), 1);
+    });
+  });
+
+  group('E2E UI: M5 racional y M10 producto mixto', () {
+    testWidgets('M5 Racional (2x+1)/(x-3): dominio y asintotas por teclado', (t) async {
+      await boot(t);
+      await goMode(t, 5);
+      await pickHeader(t, 'hdr_graph_kind', 'graph_kind_1');
+      await keys(t, ['2', '=', '1', '=', '1', '=', '-', '3', '=']);
+      expect(result(t), allOf(contains('x = 3'), contains('y = 2')));
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('M10 [u,v,w] = -1 tecleando tres vectores', (t) async {
+      await boot(t);
+      await goMode(t, 10);
+      await pickHeader(t, 'hdr_vector_op', 'vector_op_mixedProduct');
+      await keys(t, ['1', '=', '2', '=', '2', '=']);
+      await keys(t, ['2', '=', '0', '=', '1', '=']);
+      await keys(t, ['0', '=', '1', '=', '1', '=']);
+      expect(result(t), contains('-1'));
+      expect(t.takeException(), isNull);
     });
   });
 }

@@ -222,10 +222,14 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
         final v = _vectorOp.needsSecondVector
             ? _buildRationalVectorFromCells(_vecVCells, _vectorDim)
             : null;
+        final w = _vectorOp.needsThirdVector
+            ? _buildRationalVectorFromCells(_vecWCells, _vectorDim)
+            : null;
         final res = VectorSolver.solve(
           operation: _vectorOp,
           u: u,
           v: v,
+          w: w,
         );
         updateState(() {
           _activeResolution = res;

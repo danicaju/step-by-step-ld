@@ -16,6 +16,7 @@ class VectorSolver {
     required VectorOperation operation,
     required RationalVector u,
     RationalVector? v,
+    RationalVector? w,
   }) {
     return switch (operation) {
       VectorOperation.modulus => modulus(u),
@@ -30,6 +31,11 @@ class VectorSolver {
       VectorOperation.add => add(
           u,
           v ?? RationalVector.fromInts(u.dimension == 2 ? [0, 0] : [0, 0, 0]),
+        ),
+      VectorOperation.mixedProduct => mixedProduct(
+          u,
+          v ?? RationalVector.fromInts([0, 1, 0]),
+          w ?? RationalVector.fromInts([0, 0, 1]),
         ),
       VectorOperation.subtract => subtract(
           u,

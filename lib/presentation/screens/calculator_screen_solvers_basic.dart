@@ -251,6 +251,10 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
 
 
   void _solveMode5() {
+      if (_graphKind == 1) {
+        _solveMode5Rational();
+        return;
+      }
       final a = _parseCoeffValue(_graphValues[0], defaultValue: 1);
       final b = _parseCoeffValue(_graphValues[1], defaultValue: 0);
       final c = _parseCoeffValue(_graphValues[2], defaultValue: 0);
@@ -273,4 +277,24 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
       return;
     }
 
+
+  void _solveMode5Rational() {
+    final p = _parseCoeffValue(_ratValues[0], defaultValue: 1);
+    final q = _parseCoeffValue(_ratValues[1], defaultValue: 0);
+    final r = _parseCoeffValue(_ratValues[2], defaultValue: 1);
+    final s = _parseCoeffValue(_ratValues[3], defaultValue: 0);
+    try {
+      final res = RationalFunctionSolver.analyze('($p*x+($q))/($r*x+($s))');
+      updateState(() {
+        _currentGraphAnalysis = null;
+        _selectedGraphPoint = null;
+        _activeResolution = res;
+      });
+      _recordCurrentResolutionToHistory(res, 'M5: Funcion racional');
+    } on FormatException catch (e) {
+      _showLcdError(e.message);
+    } catch (e) {
+      _showLcdError('Error en la funcion racional: $e');
+    }
+  }
 }

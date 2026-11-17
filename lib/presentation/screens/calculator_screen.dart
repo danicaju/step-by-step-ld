@@ -11,6 +11,7 @@ import '../../domain/math_engine/solvers/calculus_solver.dart';
 import '../../domain/math_engine/solvers/complex_solver.dart';
 import '../../domain/math_engine/solvers/exact/extended_calc_solver.dart';
 import '../../domain/math_engine/solvers/function_graph_solver.dart';
+import '../../domain/math_engine/solvers/rational_function_solver.dart';
 import '../../domain/math_engine/solvers/inequality_solver.dart';
 import '../../domain/math_engine/solvers/linear_system_solver.dart';
 import '../../domain/math_engine/solvers/matrix_solver.dart';
@@ -190,6 +191,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   final List<String> _graphValues = ['', '', ''];
   final List<String> _graphLabels = ['a', 'b', 'c'];
   int _graphActiveIndex = 0;
+  int _graphKind = 0; // 0 = cuadratica, 1 = racional (px+q)/(rx+s)
+  final List<String> _ratValues = ['', '', '', ''];
+  final List<String> _ratLabels = ['p', 'q', 'r', 's'];
   bool _showGraphView = true;
   FunctionAnalysisResult? _currentGraphAnalysis;
   NotablePoint? _selectedGraphPoint;
@@ -242,7 +246,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   VectorOperation _vectorOp = VectorOperation.dotAndAngle;
   final List<String> _vecUCells = List<String>.filled(3, '');
   final List<String> _vecVCells = List<String>.filled(3, '');
-  int _vectorActiveRow = 0; // 0 = u, 1 = v
+  final List<String> _vecWCells = List<String>.filled(3, '');
+  int _vectorActiveRow = 0; // 0 = u, 1 = v, 2 = w
   int _vectorActiveCol = 0; // 0 = x, 1 = y, 2 = z
 
   // Estado Modo 10 (Números Complejos: Binómica ⬄ Polar)
