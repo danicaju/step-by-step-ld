@@ -11,16 +11,18 @@ class LiveLatexFormatter {
 
   static String finalizeForEvaluation(String raw) {
     var out = TemplateNavigationHelper.finalizeMcmMcdInput(raw);
-    int balance = 0;
+    // Pila de aperturas pendientes: cierra en orden inverso `(` y `{`.
+    final stack = <String>[];
     for (int i = 0; i < out.length; i++) {
-      if (out[i] == '(') {
-        balance++;
-      } else if (out[i] == ')' && balance > 0) {
-        balance--;
+      final ch = out[i];
+      if (ch == '(' || ch == '{') {
+        stack.add(ch);
+      } else if ((ch == ')' || ch == '}') && stack.isNotEmpty) {
+        stack.removeLast();
       }
     }
-    if (balance > 0) {
-      out = '$out${')' * balance}';
+    if (stack.isNotEmpty) {
+      out += stack.reversed.map((o) => o == '(' ? ')' : '}').join();
     }
     return out;
   }

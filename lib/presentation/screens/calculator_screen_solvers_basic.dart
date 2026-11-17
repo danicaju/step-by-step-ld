@@ -43,8 +43,8 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
 
 
   void _solveMode2() {
-      final lhsTrim = _eqLeftRaw.trim();
-      final rhsTrim = _eqRightRaw.trim();
+      final lhsTrim = ExpressionParser.finalizeForEvaluation(_eqLeftRaw.trim());
+      final rhsTrim = ExpressionParser.finalizeForEvaluation(_eqRightRaw.trim());
       if (lhsTrim.isEmpty || rhsTrim.isEmpty) {
         _showLcdError('Completa ambos miembros de la ecuación (ej: 2x^2 - 4x = x^2 - 3).');
         return;

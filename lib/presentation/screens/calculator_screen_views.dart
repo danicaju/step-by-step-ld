@@ -167,18 +167,6 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
     );
   }
 
-  Widget _buildRuffiniDegreeSelector() {
-    return RuffiniDegreeSelectorView(
-      currentDegree: _ruffiniDegree,
-      isOledDark: _isOledDark,
-      onSelectDegree: (deg) {
-        updateState(() {
-          _setRuffiniDegree(deg, enterTemplate: true);
-        });
-      },
-    );
-  }
-
   Widget _buildMethodTab({
     Key? key,
     required String label,

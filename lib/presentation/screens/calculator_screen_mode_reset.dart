@@ -53,7 +53,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
     _sysActiveIndex = 0;
 
     _polyIsNotableMode = false;
-    _setRuffiniDegree(2, enterTemplate: mode != 4);
+    _setRuffiniDegree(3, enterTemplate: true);
 
     for (int i = 0; i < _graphValues.length; i++) {
       _graphValues[i] = '';

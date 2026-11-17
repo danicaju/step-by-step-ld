@@ -282,7 +282,9 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
 
   void _solveMode12() {
       try {
-        final expr = _calculusExprRaw.trim().isEmpty ? '0' : _calculusExprRaw.trim();
+        final expr = _calculusExprRaw.trim().isEmpty
+            ? '0'
+            : ExpressionParser.finalizeForEvaluation(_calculusExprRaw.trim());
         final x0 = _parseRationalCell(_calculusX0Raw, defaultValue: Rational(0));
         final limA = _parseRationalCell(_calculusLimitARaw, defaultValue: Rational(0));
         final limB = _parseRationalCell(_calculusLimitBRaw, defaultValue: Rational(1));

@@ -78,11 +78,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                         customBodyView: (_calculatorMode == 7 &&
                                 _isChoosingIneqSysUnknowns)
                             ? _buildIneqSysUnknownsSelector()
-                            : (_calculatorMode == 4 &&
-                                    !_polyIsNotableMode &&
-                                    _isChoosingRuffiniDegree)
-                                ? _buildRuffiniDegreeSelector()
-                                : (_calculatorMode == 8
+                            : (_calculatorMode == 8
                                     ? CasioStatTableView(
                                         rows: _statRows,
                                         activeRow: _statActiveRow,

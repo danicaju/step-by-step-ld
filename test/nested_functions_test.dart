@@ -13,6 +13,7 @@ String live(String raw) => ExpressionParser.rawToLiveLatex(raw);
 }
 
 void main() {
+  parenAutoCloseTests();
   powerTests();
   group('Anidamiento trigonometrico abierto (sin saltos de linea)', () {
     test('sin(cos(tan( sin cerrar', () {
@@ -86,21 +87,50 @@ void powerTests() {
     for (final t in ['^2', '^3', '^(']) {
       test('0 inicial + $t conserva 0 como base', () {
         final (raw, pos) = ExpressionParser.insertAtCursor('0', 1, t);
-        expect(raw, '0$t');
-        expect(pos, raw.length);
+        final close = t.endsWith('(') ? ')' : '';
+        expect(raw, '0$t$close');
+        expect(pos, '0$t'.length);
       });
       test('editor vacio + $t', () {
         final (raw, _) = ExpressionParser.insertAtCursor('', 0, t);
-        expect(raw, '0$t');
+        expect(raw, '0$t${t.endsWith('(') ? ')' : ''}');
       });
       test('tras operador + $t', () {
         final (raw, _) = ExpressionParser.insertAtCursor('2+', 2, t);
-        expect(raw, '2+0$t');
+        expect(raw, '2+0$t${t.endsWith('(') ? ')' : ''}');
       });
     }
     test('tras un operando no anade base', () {
       final (raw, _) = ExpressionParser.insertAtCursor('5', 1, '^2');
       expect(raw, '5^2');
+    });
+  });
+}
+
+void parenAutoCloseTests() {
+  group('Parentesis auto-pareados', () {
+    test('( inserta el par con el cursor dentro', () {
+      final (raw, pos) = ExpressionParser.insertAtCursor('2+', 2, '(');
+      expect(raw, '2+()');
+      expect(pos, 3);
+    });
+    test('sin( y log_( insertan el cierre', () {
+      expect(ExpressionParser.insertAtCursor('0', 1, 'sin('), ('sin()', 4));
+      expect(ExpressionParser.insertAtCursor('', 0, 'log_('), ('log_()', 5));
+    });
+    test(') sobrescribe el cierre existente', () {
+      final (raw, pos) = ExpressionParser.insertAtCursor('(2+3)', 4, ')');
+      expect(raw, '(2+3)');
+      expect(pos, 5);
+    });
+    test('borrar apertura vacia elimina el par', () {
+      expect(ExpressionParser.deleteAtCursor('2+()', 3), ('2+', 2));
+      expect(ExpressionParser.deleteAtCursor('sin()', 4), ('0', 1));
+    });
+    test('finalizeForEvaluation balancea parentesis y llaves', () {
+      expect(ExpressionParser.finalizeForEvaluation('(2+3'), '(2+3)');
+      expect(ExpressionParser.finalizeForEvaluation('sin(30'), 'sin(30)');
+      expect(ExpressionParser.finalizeForEvaluation(r'\sqrt{(4+5'), r'\sqrt{(4+5)}');
     });
   });
 }

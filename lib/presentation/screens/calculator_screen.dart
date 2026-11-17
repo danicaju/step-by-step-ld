@@ -51,7 +51,6 @@ import '../../domain/math_engine/solvers/linear_inequality_2d_solver.dart';
 import '../widgets/calculator_bezel_widgets.dart';
 import '../widgets/calculator_keypad_view.dart';
 import '../widgets/modes/calculator_method_tab.dart';
-import '../widgets/modes/ruffini_degree_selector_view.dart';
 import '../widgets/modes/inequality_system_editor_view.dart';
 
 part 'calculator_screen_optn.dart';

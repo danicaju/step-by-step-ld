@@ -635,7 +635,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('Modo 4 muestra selector previo de grado (2.º–6.º), soporta grado 5 y 6', (tester) async {
+    testWidgets('Modo 4 abre el editor directo con grado en cabecera, soporta grado 5 y 6', (tester) async {
       tester.view.physicalSize = const Size(1200, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -653,15 +653,10 @@ void main() {
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '4'));
       await tester.pumpAndSettle();
 
-      // Debe aparecer el selector previo de grado dentro de la LCD
-      expect(find.text('ELIGE GRADO DE P(x)'), findsOneWidget);
-      for (int deg = 2; deg <= 6; deg++) {
-        expect(find.byKey(Key('ruffini_degree_$deg')), findsOneWidget);
-      }
-
-      // Elegir grado 5 tocando su tarjeta
-      await tester.tap(find.byKey(const Key('ruffini_degree_5')));
-      await tester.pumpAndSettle();
+      // M4 abre directo el editor (sin tarjetas): grado 3 por defecto, cambio por cabecera
+      expect(find.text('ELIGE GRADO DE P(x)'), findsNothing);
+      expect(find.text('RUFFINI GRADO 3'), findsOneWidget);
+      await pickHeader(tester, 'hdr_poly_degree', 'ruffini_tab_5');
 
       expect(find.text('RUFFINI GRADO 5'), findsOneWidget);
       // 'e' también es leyenda ALPHA de las teclas 1 y ×10ˣ: buscar solo en la LCD

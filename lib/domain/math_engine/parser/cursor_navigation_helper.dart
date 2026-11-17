@@ -88,22 +88,25 @@ class CursorNavigationHelper {
         );
       }
     }
+    // Un parentesis de apertura (o una funcion `sin(`, `log_(`...) inserta el par
+    // completo con el cursor dentro: el buffer real nunca queda desbalanceado.
+    final pair = token.endsWith('(') ? '$token)' : token;
     // Una potencia nunca queda huérfana: sin operando previo se usa `0` como base.
     if (token.startsWith('^') && raw.isEmpty) {
-      return ('0$token', 1 + token.length);
+      return ('0$pair', 1 + token.length);
     }
     if (raw == '0' && currentPos == 1 && !keepLeadingZero && !token.startsWith('^')) {
-      return (token, token.length);
+      return (pair, token.length);
     }
     final safe = snapCursorOutsideKeywords(raw, currentPos);
     if (token.startsWith('^') && (safe == 0 || '+-*/(,;=<>≤≥:'.contains(raw[safe - 1]))) {
-      final withBase = '${raw.substring(0, safe)}0$token${raw.substring(safe)}';
+      final withBase = '${raw.substring(0, safe)}0$pair${raw.substring(safe)}';
       return (withBase, safe + 1 + token.length);
     }
     if (token == ')'&& safe < raw.length && raw[safe] == ')') {
       return (raw, safe + 1);
     }
-    final updated = raw.substring(0, safe) + token + raw.substring(safe);
+    final updated = raw.substring(0, safe) + pair + raw.substring(safe);
     return (updated, safe + token.length);
   }
 
@@ -128,9 +131,13 @@ class CursorNavigationHelper {
     final prefix = raw.substring(0, safe);
     final suffix = raw.substring(safe);
 
+    // Borrar una apertura vacia `(|)` o `sin(|)` elimina tambien su cierre.
+    final emptyPair = suffix.startsWith(')');
     for (final kw in atomicKeywords) {
       if (prefix.endsWith(kw)) {
-        final nextRaw = prefix.substring(0, prefix.length - kw.length) + suffix;
+        final dropClose = emptyPair && kw.endsWith('(');
+        final nextRaw = prefix.substring(0, prefix.length - kw.length) +
+            (dropClose ? suffix.substring(1) : suffix);
         if (nextRaw.isEmpty) return (emptyResult, emptyCursor);
         return (nextRaw, safe - kw.length);
       }
@@ -141,7 +148,9 @@ class CursorNavigationHelper {
       return (nextRaw, safe - 2);
     }
 
-    final nextRaw = prefix.substring(0, prefix.length - 1) + suffix;
+    final dropClose = emptyPair && prefix.endsWith('(');
+    final nextRaw = prefix.substring(0, prefix.length - 1) +
+        (dropClose ? suffix.substring(1) : suffix);
     if (nextRaw.isEmpty) return (emptyResult, emptyCursor);
     return (nextRaw, safe - 1);
   }
