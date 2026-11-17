@@ -15,7 +15,7 @@ Future<void> _boot(WidgetTester tester) async {
 }
 
 Future<void> _key(WidgetTester tester, String label) async {
-  await tester.tap(find.text(label).first);
+  await tester.tap(label == '=' ? find.text(label).last : find.text(label).first);
   await tester.pumpAndSettle();
 }
 

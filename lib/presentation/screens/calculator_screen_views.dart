@@ -12,7 +12,7 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
         'Ej: 2^(x+1) = 8',
         'Ej: log_(2, x+1) = 3',
       ];
-      return '${hints[_eqKind.clamp(0, hints.length - 1)]}  (◀ ▶ cambia de miembro, = resuelve)';
+      return '${hints[_eqKind.clamp(0, hints.length - 1)]}\n◀ ▶ miembro · = resuelve\nALPHA + ) = x  |  ALPHA + CALC = \'=\'';
     }
     if (_calculatorMode == 3 && _systemDim == 3) {
       return 'Introduce x, y, z, d con = o D-Pad (vacío=0) y elige Gauss / Cramer';

@@ -124,6 +124,8 @@ extension _CalculatorScreenChassis on _CalculatorScreenState {
                             } else {
                               _openQuickOptnModal();
                             }
+                          } else if (_isAlphaActive && _calculatorMode == 2) {
+                            _insertEqualsInEquation();
                           } else {
                             _handleKeyPress('CALC');
                           }

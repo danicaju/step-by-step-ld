@@ -124,7 +124,7 @@ class KeypadScientificRows extends StatelessWidget {
             children: [
               CasioPhysicalKey(
                 label: '(',
-                alphaLabel: 'Y',
+                alphaLabel: 'y',
                 backgroundColor: const Color(0xFF253042),
                 minHeight: sciMinH,
                 isShiftActive: isShiftActive,
@@ -133,7 +133,7 @@ class KeypadScientificRows extends StatelessWidget {
               ),
               CasioPhysicalKey(
                 label: ')',
-                alphaLabel: 'X',
+                alphaLabel: 'x',
                 backgroundColor: const Color(0xFF253042),
                 minHeight: sciMinH,
                 isShiftActive: isShiftActive,

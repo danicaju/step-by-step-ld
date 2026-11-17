@@ -71,6 +71,7 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
               _resetResolutionView();
             },
           ),
+          _signSpec('hdr_ineq_sign'),
         ];
       case 7:
         return [
@@ -104,6 +105,7 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
               _activeStepIndex = 0;
             },
           ),
+          _signSpec('hdr_ineqsys_sign'),
         ];
       case 9:
         return [
@@ -201,6 +203,20 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
       default:
         return const [];
     }
+  }
+
+  /// Desplegable `Signo` (< ≤ > ≥) de M6/M7: reemplaza el signo existente o lo inserta en el cursor.
+  _HeaderSpec _signSpec(String keyName) {
+    return _HeaderSpec(
+      keyName: keyName,
+      prefix: 'Signo',
+      value: _inequalitySign.index,
+      items: [
+        for (final s in InequalitySign.values)
+          LcdDropdownItem(value: s.index, label: s.symbol, key: Key('ineq_sign_${s.name}')),
+      ],
+      onSelect: (i) => _setInequalitySign(InequalitySign.values[i], insertIfMissing: true),
+    );
   }
 
   List<_HeaderSpec> _systemSpecs() {

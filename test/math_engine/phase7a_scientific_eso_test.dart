@@ -394,7 +394,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('ALPHA'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, 'X').first);
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, 'x').first);
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, 'x²'));
       await tester.pumpAndSettle();
@@ -404,7 +404,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('ALPHA'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, 'X').first);
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, 'x').first);
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('CALC'));

@@ -3,33 +3,8 @@ part of 'calculator_screen.dart';
 extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
   List<Widget> _buildAdvancedModesToolbar() {
     return [
-      if (_calculatorMode == 6) ...[
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      _buildMethodTab(
-                        key: const Key('ineq_var_x'),
-                        label: 'x',
-                        selected: false,
-                        onTap: _insertVariableX,
-                      ),
-                      for (final s in InequalitySign.values) ...[
-                        const SizedBox(width: 3),
-                        _buildMethodTab(
-                          key: Key('ineq_sign_${s.name}'),
-                          label: s.symbol,
-                          selected: _inequalitySign == s,
-                          onTap: () {
-                            updateState(() {
-                              _setInequalitySign(s, insertIfMissing: true);
-                            });
-                          },
-                        ),
-                      ],
-                    ],
-                  ),
-                ] else if (_calculatorMode == 7) ...[
-                  if (!_isChoosingIneqSysUnknowns) ...[
+      if (_calculatorMode == 7) ...[
+                  if (!_isChoosingIneqSysUnknowns && _activeResolution != null) ...[
                     const SizedBox(height: 3),
                     Row(
                       children: [
@@ -54,35 +29,6 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                               onTap: () {
                                 updateState(() {
                                   _show2DRegionView = !_show2DRegionView;
-                                });
-                              },
-                            ),
-                          ],
-                        ] else ...[
-                          _buildMethodTab(
-                            key: const Key('ineq_sys_var_x'),
-                            label: 'x',
-                            selected: false,
-                            onTap: _insertVariableX,
-                          ),
-                          if (_ineqSysUnknowns == 2) ...[
-                            const SizedBox(width: 3),
-                            _buildMethodTab(
-                              key: const Key('ineq_sys_var_y'),
-                              label: 'y',
-                              selected: false,
-                              onTap: _insertVariableY,
-                            ),
-                          ],
-                          for (final s in InequalitySign.values) ...[
-                            const SizedBox(width: 3),
-                            _buildMethodTab(
-                              key: Key('ineq_sys_sign_${s.name}'),
-                              label: s.symbol,
-                              selected: _inequalitySign == s,
-                              onTap: () {
-                                updateState(() {
-                                  _setInequalitySign(s, insertIfMissing: true);
                                 });
                               },
                             ),
@@ -182,7 +128,7 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                         ),
                     ],
                   ),
-                ] else if (_calculatorMode == 12) ...[
+                ] else if (_calculatorMode == 12 && _activeResolution != null) ...[
                   const SizedBox(height: 3),
                   Row(
                     children: [
@@ -194,22 +140,6 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                           onTap: () {
                             updateState(() {
                               _activeResolution = null;
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 4),
-                      ] else ...[
-                        _buildMethodTab(
-                          key: const Key('calculus_x_btn'),
-                          label: 'x',
-                          selected: false,
-                          onTap: () {
-                            updateState(() {
-                              if (_calculusActiveField != 0) {
-                                _calculusActiveField = 0;
-                              }
-                              _activeResolution = null;
-                              _applyRawInsertion('x');
                             });
                           },
                         ),

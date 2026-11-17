@@ -51,13 +51,14 @@ void main() {
     expect(find.byKey(const Key('ruffini_tab_3')), findsNothing, reason: 'sin botones de grado abajo');
   });
 
-  testWidgets('M6: sin boton Signo azul; barra inferior solo x y signos', (tester) async {
+  testWidgets('M6: signo en cabecera LCD y sin barra inferior', (tester) async {
     await _boot(tester);
     await _openMode(tester, 6);
     expect(find.byKey(const Key('lcd_ineq_sign_btn')), findsNothing);
     expect(find.byKey(const Key('hdr_ineq_kind')), findsOneWidget);
-    expect(find.byKey(const Key('ineq_var_x')), findsOneWidget);
-    expect(find.byKey(const Key('ineq_sign_less')), findsOneWidget);
+    expect(find.byKey(const Key('hdr_ineq_sign')), findsOneWidget);
+    expect(find.byKey(const Key('ineq_var_x')), findsNothing);
+    expect(find.byKey(const Key('ineq_sign_less')), findsNothing, reason: 'cerrado: items no visibles');
   });
 
   testWidgets('M11 y M12: sin boton Calcular', (tester) async {

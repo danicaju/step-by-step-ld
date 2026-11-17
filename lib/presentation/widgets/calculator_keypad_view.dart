@@ -118,6 +118,8 @@ class CalculatorKeypadView extends StatelessWidget {
                               CompactControlKey(
                                 label: 'CALC',
                                 caption: 'OPTN',
+                                alphaCaption: '=',
+                                isAlphaActive: isAlphaActive,
                                 backgroundColor: const Color(0xFF253042),
                                 textColor: Colors.white,
                                 onTap: onOptnPressed,

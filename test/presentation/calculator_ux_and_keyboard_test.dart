@@ -165,7 +165,7 @@ void main() {
       // Teclear coeficiente '1' y pulsar '='
       await tester.tap(find.text('1'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
 
       // Teclear '-' y '5' y pulsar '='
@@ -173,13 +173,13 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('5'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
 
       // Teclear '6' y pulsar '=' -> debe resolver parábola y = x² - 5x + 6
       await tester.tap(find.text('6'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
 
       // Cambiar a vista de pasos en la LCD para verificar PASO 1/
@@ -251,7 +251,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('ALPHA'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, 'X').first); // Escribe 'x'
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, 'x').first); // Escribe 'x'
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('replay_right'))); // Salta al slot b
       await tester.pumpAndSettle();
@@ -259,7 +259,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Pulsar '=' -> Debe resolver (2x + 3)² y mostrar pasos
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
 
       expect(find.textContaining('PASO 1/'), findsOneWidget);
@@ -282,17 +282,17 @@ void main() {
       // Coeficientes: 1, -5, 6
       await tester.tap(find.text('1'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('-'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('5'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('6'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('mode5_view_toggle')));
@@ -300,7 +300,7 @@ void main() {
       expect(find.textContaining('PASO 1/'), findsOneWidget);
 
       // Pulsar '=' debe avanzar al PASO 2
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
       expect(find.textContaining('PASO 2/'), findsOneWidget);
     });
@@ -331,7 +331,7 @@ void main() {
       expect(find.text('4:Polinomios / Ruffini'), findsOneWidget);
 
       // 4. Confirmar con '=': entra en Modo 4
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('hdr_poly_kind')), findsOneWidget);
 
@@ -611,18 +611,18 @@ void main() {
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '2'));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('eq_var_x')), findsOneWidget);
-      expect(find.byKey(const Key('eq_sign_equals')), findsOneWidget);
+      expect(find.byKey(const Key('eq_var_x')), findsNothing);
+      expect(find.byKey(const Key('eq_sign_equals')), findsNothing);
 
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '2'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('eq_var_x')));
+      await alphaKey(tester, ')');
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '+'));
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '4'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('eq_sign_equals')));
+      await alphaCalc(tester);
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '1'));
       await tester.pumpAndSettle();

@@ -1,3 +1,4 @@
+import '../support/header_select.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -123,7 +124,7 @@ void main() {
         isTrue,
       );
 
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
 
       final lcdAfterEval = tester.widget<CasioLcdScreen>(find.byType(CasioLcdScreen));
@@ -163,7 +164,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('M2: ECUACIONES'), findsOneWidget);
-      expect(find.byKey(const Key('eq_sign_equals')), findsOneWidget);
+      expect(find.byKey(const Key('eq_sign_equals')), findsNothing);
 
       // DEL sobre el primer miembro vacío no debe romper la pantalla ni borrar '='
       await tester.tap(find.text('DEL'));
@@ -171,21 +172,21 @@ void main() {
 
       await tester.tap(find.text('2'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('eq_var_x')));
+      await alphaKey(tester, ')');
       await tester.pumpAndSettle();
       await tester.tap(find.text('+'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('4'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('eq_sign_equals')));
+      await alphaCalc(tester);
       await tester.pumpAndSettle();
       await tester.tap(find.text('1'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('6'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
 
       final lcd = tester.widget<CasioLcdScreen>(find.byType(CasioLcdScreen));

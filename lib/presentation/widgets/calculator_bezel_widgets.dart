@@ -8,12 +8,16 @@ class CompactControlKey extends StatefulWidget {
   final Color backgroundColor;
   final Color textColor;
   final bool isActive;
+  final String? alphaCaption;
+  final bool isAlphaActive;
   final VoidCallback onTap;
 
   const CompactControlKey({
     super.key,
     required this.label,
     this.caption,
+    this.alphaCaption,
+    this.isAlphaActive = false,
     required this.backgroundColor,
     required this.textColor,
     this.isActive = false,
@@ -29,6 +33,7 @@ class _CompactControlKeyState extends State<CompactControlKey> {
 
   @override
   Widget build(BuildContext context) {
+    final showAlpha = widget.isAlphaActive && widget.alphaCaption != null;
     final effectiveBorder =
         widget.isActive ? Colors.white : const Color(0xFF494E5B);
 
@@ -70,20 +75,37 @@ class _CompactControlKeyState extends State<CompactControlKey> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.caption != null)
-                  Text(
-                    widget.caption!,
-                    style: const TextStyle(
-                      color: Color(0xFFE5A93C),
-                      fontSize: 7,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.6,
-                    ),
+                if (widget.caption != null || widget.alphaCaption != null)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.caption != null)
+                        Text(
+                          widget.caption!,
+                          style: const TextStyle(
+                            color: Color(0xFFE5A93C),
+                            fontSize: 7,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      if (widget.caption != null && widget.alphaCaption != null)
+                        const SizedBox(width: 6),
+                      if (widget.alphaCaption != null)
+                        Text(
+                          widget.alphaCaption!,
+                          style: const TextStyle(
+                            color: Color(0xFFE05D5D),
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                    ],
                   ),
                 Text(
-                  widget.label,
+                  showAlpha ? widget.alphaCaption! : widget.label,
                   style: TextStyle(
-                    color: widget.textColor,
+                    color: showAlpha ? const Color(0xFFE05D5D) : widget.textColor,
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.3,

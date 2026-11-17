@@ -56,7 +56,8 @@ void main() {
       await t.pumpAndSettle();
     }
 
-    Future<void> txt(WidgetTester t, String s) => tap(t, find.text(s).first);
+    Future<void> txt(WidgetTester t, String s) =>
+        tap(t, s == '=' ? find.text(s).last : find.text(s).first);
     Future<void> frac(WidgetTester t) => tap(t, find.byKey(const Key('fraction_key_icon')));
     Future<void> pad(WidgetTester t, String k) => tap(t, find.byKey(Key('replay_$k')));
 

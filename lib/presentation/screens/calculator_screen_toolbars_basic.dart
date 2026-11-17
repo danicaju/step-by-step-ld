@@ -4,26 +4,7 @@ extension _CalculatorScreenToolbarsBasic on _CalculatorScreenState {
   List<Widget> _buildBasicModesToolbar() {
     return [
                 // Barra interactiva contextual para Modos 2..11
-                if (_calculatorMode == 2) ...[
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      _buildMethodTab(
-                        key: const Key('eq_var_x'),
-                        label: 'x  (incógnita)',
-                        selected: false,
-                        onTap: _insertVariableX,
-                      ),
-                      const SizedBox(width: 4),
-                      _buildMethodTab(
-                        key: const Key('eq_sign_equals'),
-                        label: '⇄ Miembro (=)',
-                        selected: _eqActiveSide == 1,
-                        onTap: _insertEqualsInEquation,
-                      ),
-                    ],
-                  ),
-                ] else if (_calculatorMode == 4 && _polyIsNotableMode) ...[
+                if (_calculatorMode == 4 && _polyIsNotableMode) ...[
                   // M3 y M4 (Ruffini) no tienen barra inferior: sus selectores viven en la cabecera LCD.
                   const SizedBox(height: 3),
                   Row(

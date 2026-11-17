@@ -318,10 +318,10 @@ void main() {
       // Escribir '-2x + 4 < 10' usando teclado físico y chip '<'
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '-'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '2'));
-      await tester.tap(find.byKey(const Key('ineq_var_x')));
+      await alphaKey(tester, ')');
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '+'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '4'));
-      await tester.tap(find.byKey(const Key('ineq_sign_less')));
+      await pickHeader(tester, 'hdr_ineq_sign', 'ineq_sign_less');
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '1'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '0'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
@@ -338,14 +338,14 @@ void main() {
       expect(find.text('M6: INEC. 2°'), findsOneWidget);
 
       // Escribir x^2 - 4x + 3 <= 0 en el editor natural y resolver
-      await tester.tap(find.byKey(const Key('ineq_var_x')));
+      await alphaKey(tester, ')');
       await tester.tap(find.widgetWithText(CasioPhysicalKey, 'x²'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '-'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '4'));
-      await tester.tap(find.byKey(const Key('ineq_var_x')));
+      await alphaKey(tester, ')');
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '+'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '3'));
-      await tester.tap(find.byKey(const Key('ineq_sign_lessOrEqual')));
+      await pickHeader(tester, 'hdr_ineq_sign', 'ineq_sign_lessOrEqual');
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '0'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();

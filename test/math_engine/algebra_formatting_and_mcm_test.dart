@@ -140,7 +140,7 @@ void main() {
       // 24 + '=' => resuelve m.c.m.(12 ; 18 ; 24) = 72 en 2 pasos
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '2'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '4'));
-      await tester.tap(find.text('='));
+      await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
 
       expect(find.text('PASO 1/2'), findsOneWidget);

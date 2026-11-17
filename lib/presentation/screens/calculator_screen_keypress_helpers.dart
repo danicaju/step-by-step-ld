@@ -200,17 +200,6 @@ extension _CalculatorScreenKeypressHelpers on _CalculatorScreenState {
     });
   }
 
-  void _insertVariableY() {
-    updateState(() {
-      _isShiftActive = false;
-      _isAlphaActive = false;
-      if (_activeResolution != null) {
-        _clearActiveResolutionCursor();
-      }
-      _applyRawInsertion('y');
-    });
-  }
-
   void _insertEqualsInEquation() {
     if (_calculatorMode == 2) {
       updateState(() {
