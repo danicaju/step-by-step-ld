@@ -2,12 +2,14 @@ import 'expression_tokenizer.dart';
 export 'expression_tokenizer.dart';
 import '../ast/ast_nodes.dart';
 import 'cursor_navigation_helper.dart';
+import 'fraction_template.dart';
 import 'template_navigation_helper.dart';
 import 'live_latex_formatter.dart';
 
 export 'cursor_navigation_helper.dart';
 export 'template_navigation_helper.dart';
 export 'slash_fraction_converter.dart';
+export 'fraction_template.dart';
 export 'live_latex_formatter.dart';
 
 class ExpressionParser {
@@ -36,6 +38,7 @@ class ExpressionParser {
   static (String raw, int cursor)? handleTwoSlotRightArrow(String raw, int cursorPos) =>
       TemplateNavigationHelper.handleTwoSlotRightArrow(raw, cursorPos);
   static (String raw, int cursor)? handleTwoSlotLeftArrow(String raw, int cursorPos) =>
+      FractionTemplate.handleLeft(raw, cursorPos) ??
       TemplateNavigationHelper.handleTwoSlotLeftArrow(raw, cursorPos);
   static (String raw, int cursor)? handleStructuredBlockRightArrow(String raw, int cursorPos) =>
       TemplateNavigationHelper.handleStructuredBlockRightArrow(raw, cursorPos);

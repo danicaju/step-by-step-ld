@@ -247,11 +247,27 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
   void _calculusMoveDpad({required int dRow, required int dCol}) {
     if (_calculusActiveField == 0) {
       if (dCol < 0) {
-        _calculusCursorPos =
-            ExpressionParser.stepCursorLeft(_calculusExprRaw, _calculusCursorPos);
+        final fl = ExpressionParser.handleTwoSlotLeftArrow(
+            _calculusExprRaw, _calculusCursorPos);
+        _calculusCursorPos = fl != null
+            ? fl.$2
+            : ExpressionParser.stepCursorLeft(_calculusExprRaw, _calculusCursorPos);
       } else if (dCol > 0) {
-        _calculusCursorPos =
-            ExpressionParser.stepCursorRight(_calculusExprRaw, _calculusCursorPos);
+        final fr = ExpressionParser.handleFractionRightArrow(
+            _calculusExprRaw, _calculusCursorPos);
+        if (fr != null) {
+          _calculusExprRaw = fr.$1;
+          _calculusCursorPos = fr.$2;
+        } else {
+          _calculusCursorPos = ExpressionParser.stepCursorRight(
+              _calculusExprRaw, _calculusCursorPos);
+        }
+      } else if (dRow != 0 &&
+          ExpressionParser.jumpFractionUpDown(
+                  _calculusExprRaw, _calculusCursorPos, isUp: dRow < 0) !=
+              null) {
+        _calculusCursorPos = ExpressionParser.jumpFractionUpDown(
+            _calculusExprRaw, _calculusCursorPos, isUp: dRow < 0)!;
       } else if (dRow > 0 &&
           (_calculusOp == CalculusOperation.tangentLine ||
               _calculusOp == CalculusOperation.definiteIntegral)) {

@@ -139,12 +139,7 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
         if (_calculatorMode == 7) {
           final cur = _ineqSysRowInputs[_ineqSysActiveRow];
           final pos = _ineqSysRowCursors[_ineqSysActiveRow];
-          final (nextRaw, advancedPos) = ExpressionParser.insertAtCursor(
-            cur,
-            pos,
-            '/',
-            keepLeadingZero: true,
-          );
+          final (nextRaw, advancedPos) = FractionTemplate.insert(cur, pos);
           _ineqSysRowInputs[_ineqSysActiveRow] = nextRaw;
           _ineqSysRowCursors[_ineqSysActiveRow] = advancedPos;
           return true;
@@ -189,28 +184,10 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
             _eqRightCursorPos = 0;
           }
           final sideRaw = _eqActiveSide == 0 ? _eqLeftRaw : _eqRightRaw;
-          if (sideRaw.isEmpty || sideRaw == '0') {
-            if (_eqActiveSide == 0) {
-              _eqLeftRaw = '/';
-              _eqLeftCursorPos = 0;
-            } else {
-              _eqRightRaw = '/';
-              _eqRightCursorPos = 0;
-            }
-            return true;
-          }
           final sideCur =
               (_eqActiveSide == 0 ? _eqLeftCursorPos : _eqRightCursorPos)
                   .clamp(0, sideRaw.length);
-          final stayInNum =
-              sideCur == 0 || '+-*(,;'.contains(sideRaw[sideCur - 1]);
-          final (nextRaw, advancedPos) = ExpressionParser.insertAtCursor(
-            sideRaw,
-            sideCur,
-            '/',
-            keepLeadingZero: false,
-          );
-          final finalCur = stayInNum ? sideCur : advancedPos;
+          final (nextRaw, finalCur) = FractionTemplate.insert(sideRaw, sideCur);
           if (_eqActiveSide == 0) {
             _eqLeftRaw = nextRaw;
             _eqLeftCursorPos = finalCur;
@@ -221,39 +198,16 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
           return true;
         }
         if (_calculatorMode == 12 && _calculusActiveField == 0) {
-          if (_calculusExprRaw.isEmpty || _calculusExprRaw == '0') {
-            _calculusExprRaw = '/';
-            _calculusCursorPos = 0;
-          } else {
-            final cur = _calculusCursorPos.clamp(0, _calculusExprRaw.length);
-            final stayInNum =
-                cur == 0 || '+-*(,;'.contains(_calculusExprRaw[cur - 1]);
-            final (nextRaw, advancedPos) = ExpressionParser.insertAtCursor(
-              _calculusExprRaw,
-              cur,
-              '/',
-              keepLeadingZero: true,
-            );
-            _calculusExprRaw = nextRaw;
-            _calculusCursorPos = stayInNum ? cur : advancedPos;
-          }
+          final cur = _calculusCursorPos.clamp(0, _calculusExprRaw.length);
+          final (nextRaw, nextCur) = FractionTemplate.insert(_calculusExprRaw, cur);
+          _calculusExprRaw = nextRaw;
+          _calculusCursorPos = nextCur;
           return true;
         }
-        if (_rawInput.isEmpty || _rawInput == '0') {
-          _rawInput = '/';
-          _cursorPos = 0;
-        } else {
-          final cur = _cursorPos.clamp(0, _rawInput.length);
-          final stayInNum = cur == 0 || '+-*(,;='.contains(_rawInput[cur - 1]);
-          final (nextRaw, advancedPos) = ExpressionParser.insertAtCursor(
-            _rawInput,
-            cur,
-            '/',
-            keepLeadingZero: true,
-          );
-          _rawInput = nextRaw;
-          _cursorPos = stayInNum ? cur : advancedPos;
-        }
+        final cur = _cursorPos.clamp(0, _rawInput.length);
+        final (nextRaw, nextCur) = FractionTemplate.insert(_rawInput, cur);
+        _rawInput = nextRaw;
+        _cursorPos = nextCur;
         return true;
       }
 

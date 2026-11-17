@@ -1,5 +1,6 @@
 import 'balanced_scan.dart';
 import 'expression_tokenizer.dart';
+import 'fraction_template.dart';
 import 'slash_fraction_converter.dart';
 
 class CursorNavigationHelper {
@@ -119,6 +120,10 @@ class CursorNavigationHelper {
     if (safe <= 0) {
       return (raw, 0);
     }
+    final fracDel = FractionTemplate.delete(raw, safe);
+    if (fracDel != null) {
+      return fracDel.$1.isEmpty ? (emptyResult, emptyCursor) : fracDel;
+    }
     final prefix = raw.substring(0, safe);
     final suffix = raw.substring(safe);
 
@@ -152,6 +157,10 @@ class CursorNavigationHelper {
       if (raw[i] != '/') continue;
       final numStart = SlashFractionConverter.scanNumeratorLeft(raw, i, '');
       final denEnd = SlashFractionConverter.scanDenominatorRight(raw, i, '');
+      // Con grupos `(num)/(den)` el cursor pegado por fuera de la fraccion no cuenta.
+      final grouped = i > numStart && raw[i - 1] == ')' && raw[numStart] == '(' &&
+          i + 1 < raw.length && raw[i + 1] == '(' && raw[denEnd - 1] == ')';
+      if (grouped && (safe == numStart || safe == denEnd)) continue;
       if (safe >= numStart && safe <= denEnd) {
         final width = denEnd - numStart;
         if (width < bestWidth) {
@@ -192,6 +201,8 @@ class CursorNavigationHelper {
   ) {
     if (raw.isEmpty) return null;
     final safe = snapCursorOutsideKeywords(raw, cursorPos).clamp(0, raw.length);
+    final tpl = FractionTemplate.handleRight(raw, safe);
+    if (tpl != null) return tpl;
     if (safe != raw.length) return null;
     if (raw.endsWith(' ')) return null;
 
@@ -201,7 +212,7 @@ class CursorNavigationHelper {
 
     // Asegurar que no hay operadores después de la barra (el cursor está al final del denominador)
     final afterSlash = raw.substring(lastSlash + 1);
-    if (afterSlash.isEmpty) return null;
+    if (afterSlash.isEmpty || afterSlash.startsWith('(')) return null;
     // No interceptar si hay una plantilla (log_, ln, root...) abierta sin cerrar.
     if (BalancedScan.openDepth(raw) > 0) return null;
 
