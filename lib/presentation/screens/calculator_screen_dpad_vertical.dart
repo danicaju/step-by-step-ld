@@ -30,6 +30,7 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
         return;
       }
       if (_headerDpad('up')) return;
+      if (_m5Dpad('up')) return;
       if (_calculatorMode == 4 &&
           !_polyIsNotableMode &&
           _isChoosingRuffiniDegree &&
@@ -157,6 +158,7 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
         return;
       }
       if (_headerDpad('down')) return;
+      if (_m5Dpad('down')) return;
       if (_calculatorMode == 4 &&
           !_polyIsNotableMode &&
           _isChoosingRuffiniDegree &&

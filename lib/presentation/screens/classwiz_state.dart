@@ -4,6 +4,7 @@ import '../../domain/math_engine/core/rational.dart';
 import '../../domain/math_engine/models/step_resolution.dart';
 import '../widgets/lcd/lcd_list_menu.dart';
 import '../widgets/modes/proportion_conversion_widget.dart';
+import 'm5_state.dart';
 
 export '../../domain/math_engine/arithmetic/classwiz_constants.dart';
 export '../../domain/math_engine/arithmetic/classwiz_key_actions.dart';
@@ -11,7 +12,13 @@ export '../../domain/math_engine/arithmetic/classwiz_rewrites.dart';
 export '../../domain/math_engine/arithmetic/unit_conversions.dart';
 export '../../domain/math_engine/arithmetic/casio_iberia_arsenal.dart';
 export '../../domain/math_engine/proportion/proportion_conversion_solver.dart';
+export '../../domain/math_engine/calculus/function_table.dart';
+export '../../domain/math_engine/calculus/limits_asymptotes_solver.dart';
+export '../painters/universal_function_painter.dart';
 export '../widgets/lcd/lcd_list_menu.dart';
+export '../widgets/modes/function_table_widget.dart';
+export '../widgets/modes/limit_form_widget.dart';
+export 'm5_state.dart';
 export '../widgets/modes/proportion_conversion_widget.dart';
 export '../widgets/lcd/lcd_reset_view.dart';
 
@@ -45,6 +52,9 @@ class ClassWizState {
 
   /// Formulario de Regla de 3 / Factores de conversion (OPTN de M1), `null` si cerrado.
   ProportionFormState? prop;
+
+  /// Estado de M5 (vistas Limites / TABLE y estudio de f(x) libre).
+  final M5State m5 = M5State();
 
   bool resetOpen = false;
   int resetStage = 0; // 0 = menu, 1 = confirmacion

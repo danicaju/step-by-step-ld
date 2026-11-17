@@ -67,6 +67,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
     _currentGraphAnalysis = null;
     _selectedGraphPoint = null;
     _showGraphView = true;
+    _cw.m5.reset();
 
     _ineqDegree = 1;
     _inequalitySign = InequalitySign.less;

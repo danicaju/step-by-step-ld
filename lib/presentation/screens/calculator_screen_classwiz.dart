@@ -66,6 +66,7 @@ extension _CalculatorScreenClassWiz on _CalculatorScreenState {
     if (_cw.resetOpen) return _handleResetKey(key);
     if (_cw.list != null) return _handleListKey(key);
     if (_cw.prop != null) return _handlePropKey(key);
+    if (_handleM5Key(key)) return true;
     if (_cw.stoPending) return _handleStoKey(key);
     if (!_isShiftActive || !_hwFreeEditing) return false;
     switch (key) {

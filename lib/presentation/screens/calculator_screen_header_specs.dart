@@ -38,17 +38,42 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
         return _polySpecs();
       case 5:
         return [
+          if (_m5.view == 0)
+            _HeaderSpec(
+              keyName: 'hdr_graph_kind',
+              prefix: 'Tipo',
+              value: _graphKind,
+              items: const [
+                LcdDropdownItem(value: 0, label: 'ax^2+bx+c', key: Key('graph_kind_0')),
+                LcdDropdownItem(value: 1, label: 'Racional (px+q)/(rx+s)', key: Key('graph_kind_1')),
+                LcdDropdownItem(value: 2, label: 'f(x) libre', key: Key('graph_kind_2')),
+              ],
+              onSelect: (v) {
+                _graphKind = v;
+                _graphActiveIndex = 0;
+                _currentGraphAnalysis = null;
+                _selectedGraphPoint = null;
+                _m5.study = null;
+                if (v == 2) {
+                  _rawInput = '0';
+                  _cursorPos = 1;
+                }
+                _resetResolutionView();
+              },
+            ),
           _HeaderSpec(
-            keyName: 'hdr_graph_kind',
-            prefix: 'Tipo',
-            value: _graphKind,
+            keyName: 'hdr_graph_view',
+            prefix: 'Vista',
+            value: _m5.view,
             items: const [
-              LcdDropdownItem(value: 0, label: 'ax^2+bx+c', key: Key('graph_kind_0')),
-              LcdDropdownItem(value: 1, label: 'Racional (px+q)/(rx+s)', key: Key('graph_kind_1')),
+              LcdDropdownItem(value: 0, label: 'Estudio + Gráfica', key: Key('graph_view_0')),
+              LcdDropdownItem(value: 1, label: 'Límites lim', key: Key('graph_view_1')),
+              LcdDropdownItem(value: 2, label: 'Tabla f(x), g(x)', key: Key('graph_view_2')),
             ],
             onSelect: (v) {
-              _graphKind = v;
-              _graphActiveIndex = 0;
+              _m5.view = v;
+              _m5.study = null;
+              _lcdErrorKind = null;
               _currentGraphAnalysis = null;
               _selectedGraphPoint = null;
               _resetResolutionView();

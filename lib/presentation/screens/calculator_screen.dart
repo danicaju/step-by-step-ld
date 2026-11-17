@@ -86,6 +86,7 @@ part 'calculator_screen_calc.dart';
 part 'calculator_screen_memkeys.dart';
 part 'calculator_screen_multistmt.dart';
 part 'calculator_screen_keypress.dart';
+part 'calculator_screen_m5.dart';
 part 'calculator_screen_chassis.dart';
 part 'calculator_screen_chassis_lcd.dart';
 part 'calculator_screen_views.dart';

@@ -20,7 +20,7 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
       (_calculatorMode == 4 &&
           !_polyIsNotableMode &&
           !_isChoosingRuffiniDegree) ||
-      _calculatorMode == 5;
+      (_calculatorMode == 5 && !_m5Custom);
 
   /// Modos con celdas estructuradas donde solo entran tokens numéricos (`0-9`, `-`, `/`, `.`).
   bool get _isGridOrStructuredMode =>

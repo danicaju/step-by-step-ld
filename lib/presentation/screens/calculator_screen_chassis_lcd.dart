@@ -10,6 +10,8 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
     if (_cw.prop != null) {
       return _lcdErrorKind != null ? _buildLcdErrorScreen()! : _buildPropWidget();
     }
+    final m5Graph = _buildM5Graph();
+    if (m5Graph != null) return m5Graph;
     return (_lcdErrorKind != null && !_isMenuOpen && !_isSetupOpen)
         ? _buildLcdErrorScreen()!
         : _isMenuOpen || _isSetupOpen
@@ -278,7 +280,9 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                     isOledDark: _isOledDark,
                                   )
                                 : null,
-                        coefficientView: _isCoefficientMode
+                        coefficientView: _m5FormActive
+                            ? _buildM5Form()
+                            : _isCoefficientMode
                             ? CasioCoefficientView(
                                 mode: _calculatorMode,
                                 cellValues: _currentCellValues,
