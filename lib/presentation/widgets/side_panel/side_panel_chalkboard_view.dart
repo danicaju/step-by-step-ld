@@ -268,7 +268,7 @@ class StepBoardTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isActive
-                ? const Color(0xFF2E86DE)
+                ? const Color(0xFFE5A93C)
                 : const Color(0xFF2C323E),
             width: isActive ? 1.6 : 1.0,
           ),
@@ -285,7 +285,7 @@ class StepBoardTile extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isActive
-                        ? const Color(0xFF2E86DE)
+                        ? const Color(0xFFE5A93C)
                         : const Color(0xFF334155),
                     borderRadius: BorderRadius.circular(4),
                   ),

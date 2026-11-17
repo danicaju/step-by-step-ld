@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../utils/key_click_sound.dart';
+import 'repeat_press.dart';
 
 /// D-Pad circular/ovalado ergonómico de estilo Casio ClassWiz (108x84 px).
 class CasioReplayPad extends StatelessWidget {
@@ -244,11 +245,19 @@ class _DPadDirectionButton extends StatefulWidget {
 
 class _DPadDirectionButtonState extends State<_DPadDirectionButton> {
   bool _isPressed = false;
+  final RepeatPress _repeat = RepeatPress();
+
+  @override
+  void dispose() {
+    _repeat.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
       message: widget.tooltip,
+      triggerMode: TooltipTriggerMode.manual,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) {
@@ -256,15 +265,21 @@ class _DPadDirectionButtonState extends State<_DPadDirectionButton> {
             setState(() => _isPressed = true);
             HapticFeedback.lightImpact();
             KeyClickSound.playControl();
+            _repeat.start(widget.onTap!);
           }
         },
         onTapUp: (_) {
           if (widget.onTap != null) {
             setState(() => _isPressed = false);
-            widget.onTap!();
+            final repeated = _repeat.fired;
+            _repeat.cancel();
+            if (!repeated) widget.onTap!();
           }
         },
-        onTapCancel: () => setState(() => _isPressed = false),
+        onTapCancel: () {
+          _repeat.cancel();
+          setState(() => _isPressed = false);
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 60),
           alignment: widget.alignment,

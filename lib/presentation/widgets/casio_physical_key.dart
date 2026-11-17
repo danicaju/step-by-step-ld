@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../utils/key_click_sound.dart';
+import 'repeat_press.dart';
 
 class CasioPhysicalKey extends StatefulWidget {
   final String label;
@@ -16,6 +17,12 @@ class CasioPhysicalKey extends StatefulWidget {
   final bool isShiftActive;
   final bool isAlphaActive;
 
+  /// Altura de la sombra: teclas numericas (alto) vs cientificas (bajo).
+  final double? relief;
+
+  /// Mantener pulsada repite la accion (DEL).
+  final bool repeatable;
+
   const CasioPhysicalKey({
     super.key,
     required this.label,
@@ -29,6 +36,8 @@ class CasioPhysicalKey extends StatefulWidget {
     this.minHeight,
     this.isShiftActive = false,
     this.isAlphaActive = false,
+    this.relief,
+    this.repeatable = false,
   });
 
   @override
@@ -37,10 +46,17 @@ class CasioPhysicalKey extends StatefulWidget {
 
 class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
   bool _isPressed = false;
+  final RepeatPress _repeat = RepeatPress();
+
+  @override
+  void dispose() {
+    _repeat.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = widget.backgroundColor ?? const Color(0xFF2B2E36);
+    final bgColor = widget.backgroundColor ?? const Color(0xFF3B4049);
 
     final bool showShiftFace = widget.isShiftActive &&
         widget.shiftLabel != null &&
@@ -113,12 +129,18 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
                   setState(() => _isPressed = true);
                   HapticFeedback.lightImpact();
                   KeyClickSound.playForLabel(widget.label);
+                  if (widget.repeatable) _repeat.start(widget.onTap);
                 },
                 onTapUp: (_) {
                   setState(() => _isPressed = false);
-                  widget.onTap();
+                  final repeated = _repeat.fired;
+                  _repeat.cancel();
+                  if (!repeated) widget.onTap();
                 },
-                onTapCancel: () => setState(() => _isPressed = false),
+                onTapCancel: () {
+                  _repeat.cancel();
+                  setState(() => _isPressed = false);
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 50),
                   constraints: widget.minHeight != null
@@ -140,10 +162,10 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
                     ),
                     boxShadow: _isPressed
                         ? const []
-                        : const [
+                        : [
                             BoxShadow(
-                              color: Color(0xAA000000),
-                              offset: Offset(0, 3),
+                              color: const Color(0xAA000000),
+                              offset: Offset(0, widget.relief ?? (bgColor.computeLuminance() < 0.03 ? 1.5 : 3.5)),
                               blurRadius: 1.0,
                             ),
                           ],

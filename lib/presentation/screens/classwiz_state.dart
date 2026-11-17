@@ -2,12 +2,28 @@ import 'dart:math';
 
 import '../../domain/math_engine/core/rational.dart';
 import '../../domain/math_engine/models/step_resolution.dart';
+import '../widgets/lcd/lcd_list_menu.dart';
 
+export '../../domain/math_engine/arithmetic/classwiz_constants.dart';
 export '../../domain/math_engine/arithmetic/classwiz_key_actions.dart';
+export '../../domain/math_engine/arithmetic/classwiz_rewrites.dart';
+export '../../domain/math_engine/arithmetic/unit_conversions.dart';
+export '../widgets/lcd/lcd_list_menu.dart';
 export '../widgets/lcd/lcd_reset_view.dart';
 
 /// Vista alternativa de la linea de resultado (FACT, ° ' ", a b/c, ENG).
 enum CwView { normal, factor, dms, fraction, eng }
+
+/// Nivel de un menu de lista (OPTN/CONST/CONV) con su padre para volver con AC.
+class LcdListState {
+  final String kind;
+  final String title;
+  final List<LcdListItem> items;
+  final LcdListState? parent;
+  int cursor = 0;
+
+  LcdListState(this.kind, this.title, this.items, {this.parent});
+}
 
 /// Estado de las teclas ClassWiz de la fase CW-2 (un unico campo en la pantalla).
 ///
@@ -20,6 +36,8 @@ class ClassWizState {
   String? note;
 
   bool stoPending = false;
+
+  LcdListState? list;
 
   bool resetOpen = false;
   int resetStage = 0; // 0 = menu, 1 = confirmacion

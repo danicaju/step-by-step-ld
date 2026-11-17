@@ -58,7 +58,7 @@ class CasioCalculusEditorView extends StatelessWidget {
     };
 
     final bodyLatex = expressionRaw.isEmpty
-        ? (activeField == 0 ? r'\textcolor{#2E86DE}{\blacksquare}' : '0')
+        ? (activeField == 0 ? r'\textcolor{#1A2530}{\blacksquare}' : '0')
         : ExpressionParser.rawToLiveLatex(
             expressionRaw,
             cursorPos: activeField == 0 ? expressionCursorPos : null,

@@ -139,7 +139,9 @@ void main() {
       await boot(t);
       await tapF(t, find.text('SHIFT'));
       await calcKey(t);
-      await tapF(t, find.byKey(const Key('optn_insert_Ran#')));
+      await key(t, '4'); // Otras funciones
+      await pad(t, 'right');
+      await key(t, '2'); // Ran#
       await key(t, '=');
       final r = ClassWizKeyActions.rationalFromLatex(result(t)!);
       expect(r, isNotNull);
@@ -151,7 +153,9 @@ void main() {
       await boot(t);
       await tapF(t, find.text('SHIFT'));
       await calcKey(t);
-      await tapF(t, find.byKey(const Key('optn_insert_RanInt#(')));
+      await key(t, '4'); // Otras funciones
+      await pad(t, 'right');
+      await key(t, '3'); // RanInt#(
       await key(t, '4');
       await pad(t, 'right');
       await key(t, '4');

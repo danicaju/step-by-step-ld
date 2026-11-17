@@ -734,6 +734,11 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('CALC'));
       await tester.pumpAndSettle();
+      expect(find.byKey(const Key('lcd_list_menu')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('replay_right'))); // pagina 2
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('list_item_4'))); // Exportar / Copiar
+      await tester.pumpAndSettle();
 
       expect(find.text('OPTN · Opciones Rápidas (STEP-BY-STEP LD)'), findsOneWidget);
       expect(find.text('Exportar desarrollo a PNG transparente'), findsOneWidget);

@@ -6,6 +6,14 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
         _rawInput = ClassWizKeyActions.substituteRandoms(_rawInput, _cw.random);
         _cursorPos = _rawInput.length;
       }
+      if (ClassWizConstants.containsConstants(_rawInput)) {
+        _solveConstants();
+        return;
+      }
+      if (ClassWizRewrites.needsRewrite(_rawInput)) {
+        _rawInput = ClassWizRewrites.prepare(_rawInput, _angleUnit);
+        _cursorPos = _rawInput.length;
+      }
       if ((_rawInput.contains('∶') || _rawInput.contains('=')) &&
           _solveMultiStatement()) {
         return;

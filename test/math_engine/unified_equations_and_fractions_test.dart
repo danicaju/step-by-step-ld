@@ -62,11 +62,11 @@ void main() {
   group('ExpressionParser fracciones verticales y navegación ▼/▲', () {
     test('Fracción vacía "/" nunca mete 0 en el numerador y coloca el cursor arriba', () {
       final latexTop = ExpressionParser.rawToLiveLatex('/', cursorPos: 0);
-      expect(latexTop, startsWith(r'\frac{\textcolor{#2E86DE}{\blacksquare}}{'));
-      expect(latexTop, isNot(contains('0')));
+      expect(latexTop, startsWith(r'\frac{\textcolor{#1A2530}{\blacksquare}}{'));
+      expect(latexTop.replaceAll('#1A2530', ''), isNot(contains('0')));
 
       final latexBottom = ExpressionParser.rawToLiveLatex('/', cursorPos: 1);
-      expect(latexBottom, startsWith(r'\frac{\square}{\textcolor{#2E86DE}{\blacksquare}}'));
+      expect(latexBottom, startsWith(r'\frac{\square}{\textcolor{#1A2530}{\blacksquare}}'));
     });
 
     test('Todas las divisiones y fracciones anidadas se renderizan con \\frac', () {

@@ -121,6 +121,8 @@ extension _CalculatorScreenChassis on _CalculatorScreenState {
                             });
                             if (_calculatorMode == 8) {
                               _openStatOptionsModal();
+                            } else if (const [1, 9, 10].contains(_calculatorMode)) {
+                              updateState(() => _openList('optn'));
                             } else {
                               _openQuickOptnModal();
                             }

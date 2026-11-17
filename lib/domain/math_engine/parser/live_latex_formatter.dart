@@ -3,11 +3,12 @@ import 'live_function_formatter.dart';
 import 'cursor_navigation_helper.dart';
 import 'template_navigation_helper.dart';
 import 'slash_fraction_converter.dart';
+import '../arithmetic/classwiz_constants.dart';
 
 class LiveLatexFormatter {
   static const String _cursorSentinel = '\uE000';
-  static const String _cursorMidLatex = r'\textcolor{#2E86DE}{\mid}';
-  static const String _cursorBoxLatex = r'\textcolor{#2E86DE}{\blacksquare}';
+  static const String _cursorMidLatex = r'\textcolor{#1A2530}{\mid}';
+  static const String _cursorBoxLatex = r'\textcolor{#1A2530}{\blacksquare}';
 
   static String finalizeForEvaluation(String raw) {
     var out = TemplateNavigationHelper.finalizeMcmMcdInput(raw);
@@ -213,6 +214,17 @@ class LiveLatexFormatter {
 
     // 6. Memoria ANS y variables
     out = out.replaceAll('Ran#', r'\mathrm{Ran}\#');
+    out = out.replaceAllMapped(
+      ClassWizConstants.tokenRe,
+      (m) => ClassWizConstants.byToken(m.group(0)!)!.latex,
+    );
+    for (final (tok, tex) in const [
+      ('#k', r'\mathrm{k}'), ('#M', r'\mathrm{M}'), ('#G', r'\mathrm{G}'),
+      ('#m', r'\mathrm{m}'), ('#u', r'\mu '), ('#n', r'\mathrm{n}'),
+      ('#r', r'^{r}'), ('#g', r'^{g}'),
+    ]) {
+      out = out.replaceAll(tok, tex);
+    }
     out = out.replaceAll('ANS', r'\text{Ans}');
     out = out.replaceAll('ans', r'\text{Ans}');
 

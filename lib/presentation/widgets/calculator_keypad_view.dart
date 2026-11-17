@@ -120,7 +120,7 @@ class CalculatorKeypadView extends StatelessWidget {
                                 caption: 'OPTN',
                                 alphaCaption: '=',
                                 isAlphaActive: isAlphaActive,
-                                backgroundColor: const Color(0xFF253042),
+                                backgroundColor: const Color(0xFF1F2227),
                                 textColor: Colors.white,
                                 onTap: onOptnPressed,
                               ),

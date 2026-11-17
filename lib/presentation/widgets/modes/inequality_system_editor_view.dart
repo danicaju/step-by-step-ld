@@ -279,7 +279,7 @@ class InequalitySystemEditorView extends StatelessWidget {
                                         final String rowTex;
                                         if (raw.isEmpty) {
                                           rowTex = isActive
-                                              ? r'\textcolor{#2E86DE}{\blacksquare}'
+                                              ? r'\textcolor{#1A2530}{\blacksquare}'
                                               : (ineqSysUnknowns == 1
                                                   ? r'2x - 3 \le 5'
                                                   : r'x + y \le 4');

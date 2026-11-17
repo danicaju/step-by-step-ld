@@ -172,7 +172,7 @@ class LcdCalcPrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final valueDisplay = calcValueRaw.isEmpty ? r'\textcolor{#2E86DE}{\blacksquare}' : calcValueRaw;
+    final valueDisplay = calcValueRaw.isEmpty ? r'\textcolor{#1A2530}{\blacksquare}' : calcValueRaw;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

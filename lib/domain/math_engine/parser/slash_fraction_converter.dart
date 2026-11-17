@@ -2,8 +2,8 @@
 
 class SlashFractionConverter {
   static const String cursorSentinel = '\uE000';
-  static const String cursorMidLatex = r'\textcolor{#2E86DE}{\mid}';
-  static const String cursorBoxLatex = r'\textcolor{#2E86DE}{\blacksquare}';
+  static const String cursorMidLatex = r'\textcolor{#1A2530}{\mid}';
+  static const String cursorBoxLatex = r'\textcolor{#1A2530}{\blacksquare}';
 
   static String convertSlashesToLatex(String src, String cursorSentinel) {
     String out = src;

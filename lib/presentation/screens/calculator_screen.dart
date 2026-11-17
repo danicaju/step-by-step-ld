@@ -55,6 +55,7 @@ import '../widgets/calculator_keypad_view.dart';
 import '../widgets/modes/calculator_method_tab.dart';
 import '../widgets/modes/inequality_system_editor_view.dart';
 import 'classwiz_state.dart';
+import '../widgets/solar_panel.dart';
 
 part 'calculator_screen_optn.dart';
 part 'calculator_screen_lcd_error.dart';
@@ -97,12 +98,10 @@ class CalculatorScreen extends StatefulWidget {
 
 class _CalculatorScreenState extends State<CalculatorScreen> {
   void updateState(VoidCallback fn) => setState(fn);
-
   final StepEvaluator _evaluator = StepEvaluator();
   final ExpressionParser _parser = ExpressionParser();
   final CalculatorMemoryManager _memory = CalculatorMemoryManager();
   final ClassHistoryService _historyService = ClassHistoryService();
-
   bool _isShiftActive = false;
   bool _isAlphaActive = false;
   bool _showDecimalApprox = false;
@@ -110,7 +109,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   int _multiStmtIndex = 0;
   final ClassWizState _cw = ClassWizState();
   bool _historySuppressed = false;
-  bool get _showDisp => _multiStmtResults.length > 1 && _activeResolution != null && _multiStmtIndex < _multiStmtResults.length - 1;
   LcdTheme _lcdTheme = LcdTheme.classic;
   bool get _isOledDark => _lcdTheme == LcdTheme.night;
   bool _isSoundMuted = KeyClickSound.isMuted;
@@ -305,7 +303,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     if (_calculatorMode == 2) {
       final String leftTex = _eqLeftRaw.isEmpty
           ? (showLiveCursor && _eqActiveSide == 0
-              ? r'\textcolor{#2E86DE}{\blacksquare}'
+              ? r'\textcolor{#1A2530}{\blacksquare}'
               : r'\square')
           : ExpressionParser.rawToLiveLatex(
               _eqLeftRaw,
@@ -315,7 +313,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             );
       final String rightTex = _eqRightRaw.isEmpty
           ? (showLiveCursor && _eqActiveSide == 1
-              ? r'\textcolor{#2E86DE}{\blacksquare}'
+              ? r'\textcolor{#1A2530}{\blacksquare}'
               : r'\square')
           : ExpressionParser.rawToLiveLatex(
               _eqRightRaw,
@@ -344,10 +342,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         toolbarHeight: 46,
         titleSpacing: 12,
         backgroundColor: const Color(0xFF141619),
-        title: const FittedBox(
+        title: FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
-          child: Column(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SolarPanel(),
+              const SizedBox(width: 10),
+              Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -370,6 +373,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   fontSize: 8.5,
                 ),
               ),
+            ],
+          ),
             ],
           ),
         ),

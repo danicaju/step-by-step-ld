@@ -52,6 +52,6 @@ CasioLcdScreen lcd(WidgetTester t) => t.widget<CasioLcdScreen>(find.byType(Casio
 String live(WidgetTester t) => lcd(t)
     .currentInputLatex
     .replaceAll(' ', '')
-    .replaceAll(r'\textcolor{#2E86DE}{\mid}', '');
+    .replaceAll(r'\textcolor{#1A2530}{\mid}', '');
 
 String? result(WidgetTester t) => lcd(t).currentResolution?.exactResultLatex;

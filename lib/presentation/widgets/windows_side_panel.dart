@@ -91,7 +91,7 @@ class WindowsSidePanel extends StatelessWidget {
                     label: 'HISTORIAL',
                     badgeText: '${historyEntries.length}',
                     selected: activeTabIndex == 0,
-                    accentColor: const Color(0xFF2E86DE),
+                    accentColor: const Color(0xFFE5A93C),
                     onTap: () => onTabChanged(0),
                   ),
                 ),

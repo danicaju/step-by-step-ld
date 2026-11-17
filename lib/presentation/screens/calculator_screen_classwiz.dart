@@ -64,11 +64,17 @@ extension _CalculatorScreenClassWiz on _CalculatorScreenState {
   bool _handleClassWizHw(String key) {
     _cw.note = null;
     if (_cw.resetOpen) return _handleResetKey(key);
+    if (_cw.list != null) return _handleListKey(key);
     if (_cw.stoPending) return _handleStoKey(key);
     if (!_isShiftActive || !_hwFreeEditing) return false;
     switch (key) {
       case '9':
         _openReset();
+        return true;
+      case '7':
+      case '8':
+        if (_calculatorMode != 1) return false;
+        _openList(key == '7' ? 'const' : 'conv');
         return true;
       case '(':
         if (_calculatorMode != 1) return false;
@@ -168,4 +174,211 @@ extension _CalculatorScreenClassWiz on _CalculatorScreenState {
           _cw.resetStage = 1;
         }),
       );
+}
+
+/// Menus de lista en la LCD: OPTN (M1/M9/M10), CONST (SHIFT+7) y CONV (SHIFT+8).
+extension _CalculatorScreenListMenu on _CalculatorScreenState {
+  static const List<LcdListItem> _hypItems = [
+    LcdListItem('sinh(', 'sinh', detail: 'seno hiperbólico'),
+    LcdListItem('cosh(', 'cosh', detail: 'coseno hiperb.'),
+    LcdListItem('tanh(', 'tanh', detail: 'tangente hiperb.'),
+  ];
+  static const List<LcdListItem> _sufItems = [
+    LcdListItem('#k', 'k', detail: '×10³'),
+    LcdListItem('#M', 'M', detail: '×10⁶'),
+    LcdListItem('#G', 'G', detail: '×10⁹'),
+    LcdListItem('#m', 'm', detail: '×10⁻³'),
+    LcdListItem('#u', 'µ', detail: '×10⁻⁶'),
+    LcdListItem('#n', 'n', detail: '×10⁻⁹'),
+  ];
+  static const List<LcdListItem> _angItems = [
+    LcdListItem('°', '°', detail: 'grados'),
+    LcdListItem('#r', 'r', detail: 'radianes'),
+    LcdListItem('#g', 'g', detail: 'gradianes'),
+  ];
+  static const List<LcdListItem> _othItems = [
+    LcdListItem('Abs(', '|x|'),
+    LcdListItem('!', 'n!'),
+    LcdListItem('nCr', 'nCr'),
+    LcdListItem('nPr', 'nPr'),
+    LcdListItem('ℯ', 'ℯ'),
+    LcdListItem('Ran#', 'Ran#'),
+    LcdListItem('RanInt#(', 'RanInt#('),
+  ];
+
+  /// Abre el menu [kind] (`optn`, `const`, `conv`) en la LCD.
+  void _openList(String kind) {
+    _isShiftActive = false;
+    _isAlphaActive = false;
+    switch (kind) {
+      case 'const':
+        _setList('const', 'CONST', [
+          for (final c in ClassWizConstants.all)
+            LcdListItem(c.token, '${c.plain}  ${c.name}',
+                detail: ClassWizConstants.plainValue(c.value)),
+        ]);
+      case 'conv':
+        _setList('conv', 'CONV', [
+          for (var i = 0; i < UnitConversions.all.length; i++)
+            LcdListItem('$i', UnitConversions.all[i].label),
+        ]);
+      default:
+        if (_calculatorMode == 9) {
+          _setList('optn', 'OPTN · Matrices', const [
+            LcdListItem('MatA', 'MatA'),
+            LcdListItem('MatB', 'MatB'),
+            LcdListItem('Trn', 'Trn', detail: 'transpuesta'),
+          ]);
+        } else if (_calculatorMode == 10) {
+          _setList('optn', 'OPTN · Vectores', const [
+            LcdListItem('VctA', 'VctA', detail: 'u'),
+            LcdListItem('VctB', 'VctB', detail: 'v'),
+          ]);
+        } else {
+          _setList('optn', 'OPTN', const [
+            LcdListItem('hyp', 'Funciones Hiperbólicas'),
+            LcdListItem('suf', 'Sufijos Ingeniería'),
+            LcdListItem('ang', 'Unidades Angulares'),
+            LcdListItem('oth', 'Otras funciones'),
+            LcdListItem('exp', 'Exportar / Copiar'),
+          ]);
+        }
+    }
+  }
+
+  void _setList(String kind, String title, List<LcdListItem> items, {LcdListState? parent}) {
+    _cw.list = LcdListState(kind, title, items, parent: parent);
+  }
+
+  /// Teclado fisico con el menu abierto. Siempre consume la pulsacion.
+  bool _handleListKey(String key) {
+    final l = _cw.list!;
+    _isShiftActive = false;
+    _isAlphaActive = false;
+    final n = int.tryParse(key);
+    if (key == 'AC') {
+      _cw.list = l.parent;
+    } else if (key == '=') {
+      _listSelect(l.items[l.cursor]);
+    } else if (n != null && n >= 1 && n <= LcdListMenu.perPage) {
+      final idx = (l.cursor ~/ LcdListMenu.perPage) * LcdListMenu.perPage + n - 1;
+      if (idx < l.items.length) {
+        l.cursor = idx;
+        _listSelect(l.items[idx]);
+      }
+    }
+    return true;
+  }
+
+  void _listDpad(String dir) {
+    final l = _cw.list!;
+    final len = l.items.length;
+    const per = LcdListMenu.perPage;
+    switch (dir) {
+      case 'up':
+        l.cursor = (l.cursor - 1 + len) % len;
+      case 'down':
+        l.cursor = (l.cursor + 1) % len;
+      case 'left':
+        l.cursor = ((l.cursor ~/ per - 1) * per).clamp(0, len - 1);
+      case 'right':
+        final next = (l.cursor ~/ per + 1) * per;
+        if (next < len) l.cursor = next;
+    }
+  }
+
+  void _listSelect(LcdListItem item) {
+    final l = _cw.list!;
+    switch (l.kind) {
+      case 'optn':
+        _optnSelect(item);
+      case 'conv':
+        _cw.list = null;
+        _applyConversion(int.parse(item.id));
+      default:
+        _cw.list = null;
+        _insertListToken(item.id);
+    }
+  }
+
+  void _insertListToken(String token) {
+    if (_activeResolution != null) _clearActiveResolutionCursor();
+    _applyRawInsertion(token);
+  }
+
+  void _optnSelect(LcdListItem item) {
+    final l = _cw.list!;
+    switch (item.id) {
+      case 'hyp':
+        _setList('sub', 'Hiperbólicas', _hypItems, parent: l);
+      case 'suf':
+        _setList('sub', 'Sufijos', _sufItems, parent: l);
+      case 'ang':
+        _setList('sub', 'Unidades angulares', _angItems, parent: l);
+      case 'oth':
+        _setList('sub', 'Otras funciones', _othItems, parent: l);
+      case 'exp':
+        _cw.list = null;
+        _openQuickOptnModal();
+      case 'MatA' || 'MatB':
+        _cw.list = null;
+        _activeResolution = null;
+        _matrixActiveTarget = item.id == 'MatA' ? 0 : 1;
+        _matrixActiveRow = 0;
+        _matrixActiveCol = 0;
+      case 'Trn':
+        _cw.list = null;
+        _selectMatrixOp(MatrixOperation.transpose);
+      case 'VctA' || 'VctB':
+        _cw.list = null;
+        _activeResolution = null;
+        _vectorActiveRow = item.id == 'VctA' ? 0 : 1;
+        _vectorActiveCol = 0;
+      default:
+        _cw.list = null;
+        _insertListToken(item.id);
+    }
+  }
+
+  Widget _buildListMenu() {
+    final l = _cw.list!;
+    return LcdListMenu(
+      theme: _lcdTheme,
+      title: l.title,
+      items: l.items,
+      cursor: l.cursor,
+      onTapItem: (i) => updateState(() {
+        l.cursor = i;
+        _listSelect(l.items[i]);
+      }),
+    );
+  }
+
+  /// CONV: convierte el valor actual (resultado, expresion o Ans) con [index].
+  void _applyConversion(int index) {
+    if (_activeResolution == null && _rawInput.trim() != '0') _solveCurrentMode();
+    final res = _activeResolution;
+    final value = (res == null ? null : ClassWizKeyActions.rationalFromLatex(res.exactResultLatex)) ??
+        _memory.ans;
+    final out = UnitConversions.all[index].solve(value);
+    _activeResolution = out;
+    _activeStepIndex = out.steps.length - 1;
+    _showDecimalApprox = false;
+    _memory.setAns(ClassWizKeyActions.rationalFromLatex(out.exactResultLatex) ?? value);
+    _recordCurrentResolutionToHistory(out, 'M1: CONV');
+  }
+
+  /// Expresiones con constantes fisicas (`&c`, `&h`...): evaluacion en `double`.
+  void _solveConstants() {
+    try {
+      final res = ClassWizConstants.solve(_rawInput, ans: _memory.ans.toDouble());
+      updateState(() {
+        _activeResolution = res;
+        _activeStepIndex = 0;
+      });
+      _recordCurrentResolutionToHistory(res, 'M1: CONST');
+    } on FormatException catch (e) {
+      _showLcdError('Sintaxis incompleta: ${e.message}');
+    }
+  }
 }

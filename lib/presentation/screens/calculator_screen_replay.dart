@@ -48,3 +48,27 @@ extension _CalculatorScreenReplay on _CalculatorScreenState {
     }
   }
 }
+
+/// Flechas de borde de la LCD segun historial, pasos y cursor.
+extension _CalculatorScreenEdgeArrows on _CalculatorScreenState {
+  LcdEdgeFlags _edgeFlags() {
+    if (_calculatorMode != 1 && _calculatorMode != 2) return const LcdEdgeFlags();
+    final res = _activeResolution;
+    final older = _nextReplayIndex(_replayIndex, 1) >= 0;
+    final newer = _replayIndex >= 0;
+    if (res != null) {
+      return LcdEdgeFlags(
+        up: older,
+        down: newer,
+        left: _activeStepIndex > 0,
+        right: _activeStepIndex < res.steps.length - 1,
+      );
+    }
+    return LcdEdgeFlags(
+      up: older,
+      down: newer,
+      left: _calculatorMode == 1 && _cursorPos > 0 && _rawInput != '0',
+      right: _calculatorMode == 1 && _cursorPos < _rawInput.length,
+    );
+  }
+}

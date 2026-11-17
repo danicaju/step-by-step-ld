@@ -8,12 +8,15 @@ import 'lcd/lcd_mode_menu.dart';
 import 'lcd/lcd_setup_and_submenus.dart';
 import 'lcd/lcd_pedagogical_box.dart';
 import 'lcd/lcd_palette.dart';
+import 'lcd/lcd_blink.dart';
 
 export 'lcd/lcd_math_sanitizer.dart';
 export 'lcd/lcd_status_bar.dart';
 export 'lcd/lcd_mode_menu.dart';
 export 'lcd/lcd_setup_and_submenus.dart';
 export 'lcd/lcd_pedagogical_box.dart';
+import 'lcd/lcd_edge_arrows.dart';
+export 'lcd/lcd_edge_arrows.dart';
 
 
 class CasioLcdScreen extends StatelessWidget {
@@ -25,6 +28,7 @@ class CasioLcdScreen extends StatelessWidget {
   final bool isMemoryActive;
   final bool showDisp;
   final bool showSto;
+  final LcdEdgeFlags? edgeFlags;
   final String? resultOverrideLatex;
   final String calcVarLabel;
   final bool isOledDark;
@@ -65,6 +69,7 @@ class CasioLcdScreen extends StatelessWidget {
     this.isMemoryActive = false,
     this.showDisp = false,
     this.showSto = false,
+    this.edgeFlags,
     this.resultOverrideLatex,
     this.calcVarLabel = 'x',
     this.isOledDark = false,
@@ -122,7 +127,9 @@ class CasioLcdScreen extends StatelessWidget {
       LcdMathSanitizer.sanitizeForMathTex(latex);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => LcdBlinkBuilder(builder: _buildLcd);
+
+  Widget _buildLcd(BuildContext context, bool cursorOn) {
     final bool hasSteps =
         currentResolution != null && currentResolution!.steps.isNotEmpty;
 
@@ -138,6 +145,8 @@ class CasioLcdScreen extends StatelessWidget {
     } else {
       displayLatex = currentInputLatex.isEmpty ? '0' : currentInputLatex;
     }
+
+    displayLatex = LcdBlink.apply(displayLatex, on: cursorOn, dark: isOledDark);
 
     final String stepTitle = hasSteps
         ? currentResolution!.steps[activeStepIndex].shortTitle
@@ -167,7 +176,7 @@ class CasioLcdScreen extends StatelessWidget {
     final Color originalFormulaColor = palette.original;
     final Color stepTitleColor = palette.title;
 
-    return Container(
+    final Widget lcdBody = Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(2.5, 3.0, 2.0, 1.5),
       decoration: BoxDecoration(
@@ -401,6 +410,19 @@ class CasioLcdScreen extends StatelessWidget {
                 },
               ),
       ),
+    );
+    final flags = edgeFlags;
+    if (flags == null || !flags.any) return lcdBody;
+    return Stack(
+      children: [
+        lcdBody,
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.all(5),
+            child: LcdEdgeArrows(flags: flags, color: formulaColor),
+          ),
+        ),
+      ],
     );
   }
 }

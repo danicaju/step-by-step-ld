@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../domain/math_engine/core/calculator_settings.dart';
+
 /// Barra de estado superior de la LCD Casio ClassWiz (S, A, M, DEG/RAD, modo activo, audio, contraste).
 class LcdStatusBar extends StatelessWidget {
   final bool isShiftActive;
@@ -64,15 +66,27 @@ class LcdStatusBar extends StatelessWidget {
         StatusBadge(
           label: 'M',
           active: isMemoryActive,
-          activeColor: const Color(0xFF10B981),
+          activeColor: const Color(0xFF1A2530),
+          inverted: true,
           isOledDark: isOledDark,
         ),
+        if (CalculatorSettings.numberFormat != NumberFormatMode.norm) ...[
+          const SizedBox(width: 4),
+          StatusBadge(
+            label: CalculatorSettings.numberFormat == NumberFormatMode.fix ? 'FIX' : 'SCI',
+            active: true,
+            activeColor: const Color(0xFF1A2530),
+            inverted: true,
+            isOledDark: isOledDark,
+          ),
+        ],
         if (showSto) ...[
           const SizedBox(width: 4),
           StatusBadge(
             label: 'STO',
             active: true,
-            activeColor: const Color(0xFFE5A93C),
+            activeColor: const Color(0xFF1A2530),
+            inverted: true,
             isOledDark: isOledDark,
           ),
         ],
@@ -81,7 +95,8 @@ class LcdStatusBar extends StatelessWidget {
           StatusBadge(
             label: 'Disp',
             active: true,
-            activeColor: const Color(0xFFE5A93C),
+            activeColor: const Color(0xFF1A2530),
+            inverted: true,
             isOledDark: isOledDark,
           ),
         ],
@@ -229,6 +244,7 @@ class StatusBadge extends StatelessWidget {
   final bool active;
   final Color activeColor;
   final bool isOledDark;
+  final bool inverted;
 
   const StatusBadge({
     super.key,
@@ -236,6 +252,7 @@ class StatusBadge extends StatelessWidget {
     required this.active,
     required this.activeColor,
     required this.isOledDark,
+    this.inverted = false,
   });
 
   @override
@@ -250,13 +267,17 @@ class StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1.5),
       decoration: BoxDecoration(
-        color: active ? activeColor : inactiveBg,
+        color: active
+            ? (inverted && isOledDark ? const Color(0xFFC8D6CD) : activeColor)
+            : inactiveBg,
         borderRadius: BorderRadius.circular(2.5),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: active ? Colors.white : inactiveFg,
+          color: active
+              ? (inverted && isOledDark ? const Color(0xFF141918) : (inverted ? const Color(0xFFC8D6CD) : Colors.white))
+              : inactiveFg,
           fontSize: 9,
           fontWeight: FontWeight.w900,
           fontFamily: 'monospace',

@@ -6,6 +6,11 @@ extension _CalculatorScreenMultiStmt on _CalculatorScreenState {
   static const String _stmtSep = '∶';
   static final RegExp _assignRe = RegExp(r'^([A-FXY])\s*=\s*(.+)$');
 
+  bool get _showDisp =>
+      _multiStmtResults.length > 1 &&
+      _activeResolution != null &&
+      _multiStmtIndex < _multiStmtResults.length - 1;
+
   void _resetMultiStatement() {
     _multiStmtResults = const [];
     _multiStmtIndex = 0;

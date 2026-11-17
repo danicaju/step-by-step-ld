@@ -72,7 +72,7 @@ void main() {
     String live(WidgetTester t) => lcd(t)
         .currentInputLatex
         .replaceAll(' ', '')
-        .replaceAll(r'\textcolor{#2E86DE}{\mid}', '');
+        .replaceAll(r'\textcolor{#1A2530}{\mid}', '');
 
     testWidgets('M12 arranca vacio sin fraccion fantasma y x^2 -> 2x', (t) async {
       await boot(t);
