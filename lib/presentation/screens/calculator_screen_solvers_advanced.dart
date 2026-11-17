@@ -57,12 +57,7 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
             : (_ineqDegree == 3
                 ? 'Escribe una inecuación con valor absoluto o racional (ej: |x - 5| < 3 o (x-2)/(x+1) >= 0).'
                 : 'Escribe una inecuación de 1.º grado (ej: 3x - 5 >= 7 - x).');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(hint),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError(hint);
         return;
       }
       try {
@@ -82,19 +77,9 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
           _ => 'M6: Inecuaciones 1.º Grado',
         });
       } on FormatException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error en inecuación: ${e.message}'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Error en inecuación: ${e.message}');
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al resolver: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Error al resolver: $e');
       }
       return;
     }
@@ -108,12 +93,7 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
           .toList();
 
       if (activeRows.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Introduce las inecuaciones del sistema en las filas de la llave.'),
-            backgroundColor: Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Introduce las inecuaciones del sistema en las filas de la llave.');
         return;
       }
 
@@ -131,12 +111,7 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
             'M7: Sistema Inecuaciones 1D ($_ineqSysRows Inec.)',
           );
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al resolver sistema 1D: $e'),
-              backgroundColor: const Color(0xFFB91C1C),
-            ),
-          );
+          _showLcdError('Error al resolver sistema 1D: $e');
         }
         return;
       } else {
@@ -154,12 +129,7 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
             'M7: Región Factible 2D ($_ineqSysRows Inec.)',
           );
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al calcular región factible 2D: $e'),
-              backgroundColor: const Color(0xFFB91C1C),
-            ),
-          );
+          _showLcdError('Error al calcular región factible 2D: $e');
         }
         return;
       }
@@ -196,19 +166,9 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
         });
         _recordCurrentResolutionToHistory(res, 'M8: Estadística 1-Var');
       } on FormatException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError(e.message);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error en Estadística: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Error en Estadística: $e');
       }
       return;
     }
@@ -248,19 +208,9 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
           'M9: Matrices (${_matrixOp.shortLabel})',
         );
       } on FormatException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError(e.message);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error en Matrices: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Error en Matrices: $e');
       }
       return;
     }
@@ -285,19 +235,9 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
           'M10: Vectores (${_vectorOp.shortLabel})',
         );
       } on FormatException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError(e.message);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error en Vectores: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Error en Vectores: $e');
       }
       return;
     }
@@ -332,19 +272,9 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
           'M11: Complejos (${_complexOp.shortLabel})',
         );
       } on FormatException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError(e.message);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error en Complejos: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Error en Complejos: $e');
       }
       return;
     }
@@ -372,19 +302,9 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
           'M12: Cálculo (${_calculusOp.shortLabel})',
         );
       } on FormatException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError(e.message);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error en Cálculo: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Error en Cálculo: $e');
       }
       return;
     }

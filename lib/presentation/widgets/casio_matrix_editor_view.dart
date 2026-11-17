@@ -25,6 +25,9 @@ class CasioMatrixEditorView extends StatelessWidget {
   final void Function(int target, int rows, int cols)? onUpdateDimensions;
   final ValueChanged<MatrixOperation>? onSelectOperation;
 
+  /// `true` si operación y dimensiones viven en los desplegables de la cabecera LCD.
+  final bool operationsInHeader;
+
   const CasioMatrixEditorView({
     super.key,
     required this.rowsA,
@@ -43,6 +46,7 @@ class CasioMatrixEditorView extends StatelessWidget {
     this.onSwitchMatrixTarget,
     this.onUpdateDimensions,
     this.onSelectOperation,
+    this.operationsInHeader = false,
   });
 
   bool get _isSquareOnlyOp =>
@@ -90,7 +94,7 @@ class CasioMatrixEditorView extends StatelessWidget {
                   key: const Key('matrix_tab_B'),
                   label: 'MatB',
                   selected: activeMatrixTarget == 1,
-                  accentColor: const Color(0xFF0EA5E9),
+                  accentColor: const Color(0xFF5A6B60),
                   onTap: () => onSwitchMatrixTarget?.call(1),
                 ),
               ],
@@ -108,7 +112,7 @@ class CasioMatrixEditorView extends StatelessWidget {
 
               // Selector de dimensiones: cuadradas (2..4) si es determinante/inversa/adjunta,
               // o selector libre F x C (1..4) si es rectangular/Gauss/operaciones
-              if (_isSquareOnlyOp) ...[
+              if (operationsInHeader) ...const <Widget>[] else if (_isSquareOnlyOp) ...[
                 Text(
                   'Dim:',
                   style: TextStyle(
@@ -278,6 +282,7 @@ class CasioMatrixEditorView extends StatelessWidget {
         const SizedBox(height: 3),
 
         // 3. Tira de operaciones rápidas dentro de la LCD
+        if (!operationsInHeader)
         SizedBox(
           height: 22,
           child: SingleChildScrollView(
@@ -312,7 +317,7 @@ class CasioMatrixEditorView extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final Color activeBg =
-        isOledDark ? const Color(0xFF172554) : const Color(0xFF141A17);
+        isOledDark ? const Color(0xFF1A2530) : const Color(0xFF141A17);
     final Color activeText =
         isOledDark ? const Color(0xFFF8FAFC) : const Color(0xFFFFFBEB);
     final Color idleBg =
@@ -325,7 +330,7 @@ class CasioMatrixEditorView extends StatelessWidget {
             ? const Color(0xFF0F172A)
             : const Color(0xFF64748B));
     final Color activeBorder =
-        isOledDark ? const Color(0xFF2E86DE) : const Color(0xFFE5A93C);
+        isOledDark ? const Color(0xFFE5A93C) : const Color(0xFFE5A93C);
     final Color idleBorder =
         isOledDark ? const Color(0xFF3B4D46) : const Color(0xFF88998E);
 

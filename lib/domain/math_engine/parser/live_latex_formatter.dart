@@ -1,4 +1,5 @@
 import 'balanced_scan.dart';
+import 'live_function_formatter.dart';
 import 'cursor_navigation_helper.dart';
 import 'template_navigation_helper.dart';
 import 'slash_fraction_converter.dart';
@@ -197,19 +198,7 @@ class LiveLatexFormatter {
     out = out.replaceAll('√$c', '\\sqrt{$_cursorBoxLatex}');
     out = out.replaceAll(RegExp(r'√(?![\\{])'), r'\sqrt{\square}');
 
-    // 5d. Logaritmo en base arbitraria log_(base,arg)
-    out = _replaceBalancedPrefix(out, 'log_(', (inner, _) {
-      String slot(String x) => x == c ? _cursorBoxLatex : (x.isEmpty ? r'\square' : x);
-      final parts = BalancedScan.splitTopLevel(inner);
-      if (parts.length > 1) {
-        final arg = slot(parts.sublist(1).join(','));
-        return '\\log_{${slot(parts[0])}}\\left($arg\\right)';
-      }
-      final base = inner.isEmpty ? _cursorBoxLatex : slot(inner);
-      return '\\log_{$base}\\left(\\square\\right)';
-    });
-
-    // 5e. Funciones trigonométricas y log / ln
+    // 5d0. Funciones trigonométricas y log / ln (antes de log_ para no robarle cierres)
     out = _formatFunctionCalls(out, c);
 
     // 5f. Sexagesimal, porcentaje y constante pi
@@ -291,110 +280,8 @@ class LiveLatexFormatter {
     return out;
   }
 
-  static String _formatFunctionCalls(String src, String cursorSentinel) {
-    // Soporte para potencias de funciones trigonométricas directas (ej: sin^2(x) o sin^(2)(x))
-    final trigPowerPattern = RegExp(
-      r'\b(sin|cos|tan)\^([0-9]+|\([0-9]+\))\(',
-      caseSensitive: false,
-    );
-    String out = src;
-    int pSearch = 0;
-    while (true) {
-      final m = trigPowerPattern.firstMatch(out.substring(pSearch));
-      if (m == null) break;
-      final fullMatch = m.group(0)!;
-      final matchStart = pSearch + m.start;
-      final fn = m.group(1)!.toLowerCase();
-      final exp = m.group(2)!.replaceAll('(', '').replaceAll(')', '');
-      final openIdx = matchStart + fullMatch.length - 1;
-      int depth = 1;
-      int? closeIdx;
-      for (int i = openIdx + 1; i < out.length; i++) {
-        if (out[i] == '(') depth++;
-        if (out[i] == ')') {
-          depth--;
-          if (depth == 0) {
-            closeIdx = i;
-            break;
-          }
-        }
-      }
-      final inner = closeIdx != null
-          ? out.substring(openIdx + 1, closeIdx)
-          : out.substring(openIdx + 1);
-      final recInner = _formatFunctionCalls(inner, cursorSentinel);
-      final formattedInner = recInner == cursorSentinel
-          ? _cursorBoxLatex
-          : (recInner.isEmpty ? r'\square' : recInner);
-      final replacement = closeIdx != null
-          ? '\\$fn^{$exp}\\left($formattedInner\\right)'
-          : '\\$fn^{$exp}($formattedInner';
-      final endIdx = closeIdx != null ? closeIdx + 1 : out.length;
-      out = out.substring(0, matchStart) + replacement + out.substring(endIdx);
-      pSearch = matchStart + replacement.length;
-      if (closeIdx == null) break;
-    }
-
-    final mapping = <String, String>{
-      'sin⁻¹(': r'\sin^{-1}',
-      'cos⁻¹(': r'\cos^{-1}',
-      'tan⁻¹(': r'\tan^{-1}',
-      'arcsin(': r'\sin^{-1}',
-      'arccos(': r'\cos^{-1}',
-      'arctan(': r'\tan^{-1}',
-      'asin(': r'\sin^{-1}',
-      'acos(': r'\cos^{-1}',
-      'atan(': r'\tan^{-1}',
-      'sin(': r'\sin',
-      'cos(': r'\cos',
-      'tan(': r'\tan',
-      'log(': r'\log',
-      'ln(': r'\ln',
-    };
-
-    for (final entry in mapping.entries) {
-      final token = entry.key;
-      final latexFn = entry.value;
-      int searchFrom = 0;
-      while (true) {
-        final idx = out.indexOf(token, searchFrom);
-        if (idx == -1) break;
-        final openIdx = idx + token.length - 1;
-        int depth = 1;
-        int? closeIdx;
-        for (int i = openIdx + 1; i < out.length; i++) {
-          if (out[i] == '(') depth++;
-          if (out[i] == ')') {
-            depth--;
-            if (depth == 0) {
-              closeIdx = i;
-              break;
-            }
-          }
-        }
-        if (closeIdx != null) {
-          final inner = out.substring(openIdx + 1, closeIdx);
-          final recInner = _formatFunctionCalls(inner, cursorSentinel);
-          final formattedInner = recInner == cursorSentinel
-              ? _cursorBoxLatex
-              : (recInner.isEmpty ? r'\square' : recInner);
-          final replacement = '$latexFn\\left($formattedInner\\right)';
-          out = out.substring(0, idx) + replacement + out.substring(closeIdx + 1);
-          searchFrom = idx + replacement.length;
-        } else {
-          final inner = out.substring(openIdx + 1);
-          final recInner = _formatFunctionCalls(inner, cursorSentinel);
-          final formattedInner = recInner == cursorSentinel
-              ? _cursorBoxLatex
-              : (recInner.isEmpty ? r'\square' : recInner);
-          final replacement = '$latexFn($formattedInner';
-          out = out.substring(0, idx) + replacement;
-          break;
-        }
-      }
-    }
-    return out;
-  }
+  static String _formatFunctionCalls(String src, String cursorSentinel) =>
+      LiveFunctionFormatter.format(src, cursorSentinel, _cursorBoxLatex);
 
   /// Parsea la cadena del teclado y devuelve el AST tipado para StepEvaluator
 }

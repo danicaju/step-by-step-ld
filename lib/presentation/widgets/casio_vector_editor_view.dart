@@ -16,6 +16,9 @@ class CasioVectorEditorView extends StatelessWidget {
   final ValueChanged<int>? onChangeDimension;
   final ValueChanged<VectorOperation>? onSelectOperation;
 
+  /// `true` si la operación se elige en el desplegable de la cabecera LCD.
+  final bool operationsInHeader;
+
   const CasioVectorEditorView({
     super.key,
     required this.dimension,
@@ -28,6 +31,7 @@ class CasioVectorEditorView extends StatelessWidget {
     this.onCellTap,
     this.onChangeDimension,
     this.onSelectOperation,
+    this.operationsInHeader = false,
   });
 
   @override
@@ -41,6 +45,7 @@ class CasioVectorEditorView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Barra superior dentro de la LCD: selector [2D] / [3D]
+        if (!operationsInHeader)
         SizedBox(
           height: 22,
           child: Row(
@@ -112,6 +117,7 @@ class CasioVectorEditorView extends StatelessWidget {
         const SizedBox(height: 4),
 
         // Barra inferior de acciones rápidas en LCD (100% visible en móvil/desktop)
+        if (!operationsInHeader)
         SizedBox(
           height: 24,
           child: Row(
@@ -300,7 +306,7 @@ class CasioVectorEditorView extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final bg = selected
-        ? (isOledDark ? const Color(0xFF7C5CFF) : const Color(0xFF1D4ED8))
+        ? const Color(0xFF1A2530)
         : (isOledDark ? const Color(0xFF1A2421) : const Color(0xFFCAD6CE));
     final fg = selected
         ? Colors.white

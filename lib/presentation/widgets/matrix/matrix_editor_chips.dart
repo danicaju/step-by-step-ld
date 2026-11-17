@@ -9,10 +9,10 @@ class MatrixEditorChips {
     Color? accentColor,
     required VoidCallback onTap,
   }) {
-    final Color baseSelected = accentColor ?? const Color(0xFF181E29);
+    final Color baseSelected = accentColor ?? const Color(0xFF1A2530);
     final Color bg = selected
         ? baseSelected
-        : (isOledDark ? const Color(0xFF1E293B) : const Color(0xFFBAC7BE));
+        : (isOledDark ? const Color(0xFF1E293B) : const Color(0xFFBDCEBE));
     final Color fg = selected
         ? Colors.white
         : (isOledDark ? const Color(0xFF94A3B8) : const Color(0xFF334155));
@@ -26,8 +26,8 @@ class MatrixEditorChips {
           color: bg,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: selected ? const Color(0xFF2B3445) : Colors.transparent,
-            width: selected ? 1.0 : 0.0,
+            color: selected ? const Color(0xFF1A2530) : const Color(0xFF7A8A7E),
+            width: 1.0,
           ),
         ),
         child: Text(
@@ -50,7 +50,7 @@ class MatrixEditorChips {
     required VoidCallback onTap,
   }) {
     final Color bg = selected
-        ? const Color(0xFF181E29)
+        ? const Color(0xFF1A2530)
         : (isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD));
     final Color fg = selected
         ? Colors.white
@@ -65,8 +65,8 @@ class MatrixEditorChips {
           color: bg,
           borderRadius: BorderRadius.circular(3),
           border: Border.all(
-            color: selected ? const Color(0xFF2B3445) : Colors.transparent,
-            width: selected ? 1.0 : 0.0,
+            color: selected ? const Color(0xFF1A2530) : const Color(0xFF7A8A7E),
+            width: 1.0,
           ),
         ),
         child: Text(
@@ -89,7 +89,7 @@ class MatrixEditorChips {
     required VoidCallback onTap,
   }) {
     final Color bg = selected
-        ? const Color(0xFF181E29)
+        ? const Color(0xFF1A2530)
         : (isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD));
     final Color fg = selected
         ? Colors.white
@@ -105,7 +105,7 @@ class MatrixEditorChips {
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
             color: selected
-                ? const Color(0xFF2B3445)
+                ? const Color(0xFF1A2530)
                 : (isOledDark
                     ? const Color(0xFF334155)
                     : const Color(0xFF7A8C80)),

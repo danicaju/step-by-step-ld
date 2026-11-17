@@ -163,15 +163,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
       }
     } catch (_) {}
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Escribe un número entero positivo (ej: 360) para descomponer con FACT.',
-        ),
-        backgroundColor: Color(0xFFD97706),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    _showLcdError('Escribe un número entero positivo (ej: 360) para descomponer con FACT.');
   }
 
   int _parseCoeffValue(String raw, {int defaultValue = 0}) {
@@ -330,13 +322,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
       parsedX = null;
     }
     if (parsedX == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Introduce un número válido para x (ej: -3 o 1/2).'),
-          backgroundColor: Color(0xFFB91C1C),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      _showLcdError('Introduce un número válido para x (ej: -3 o 1/2).');
       return;
     }
 
@@ -356,12 +342,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
       _showDecimalApprox = false;
       _recordCurrentResolutionToHistory(res, 'M1: CALC');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No se pudo evaluar la expresión: $e'),
-          backgroundColor: const Color(0xFFB91C1C),
-        ),
-      );
+      _showLcdError('No se pudo evaluar la expresión: $e');
     }
   }
 

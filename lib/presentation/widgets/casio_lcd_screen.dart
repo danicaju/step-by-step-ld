@@ -207,9 +207,11 @@ class CasioLcdScreen extends StatelessWidget {
                   final double maxNoteHeight = lcdConstraints.maxHeight.isFinite
                       ? (lcdConstraints.maxHeight * 0.34).clamp(28.0, 68.0)
                       : 68.0;
+                  final double headerExtra = headerSelectors != null ? 30.0 : 0.0;
                   final bool showBottomNote = lcdConstraints.maxHeight >=
-                          (supplementaryVisualView != null ? 190.0 : 118.0) &&
-                      (coefficientView == null || lcdConstraints.maxHeight >= 140.0);
+                          (supplementaryVisualView != null ? 190.0 : 118.0) + headerExtra &&
+                      (coefficientView == null ||
+                          lcdConstraints.maxHeight >= 140.0 + headerExtra);
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -232,7 +234,7 @@ class CasioLcdScreen extends StatelessWidget {
                       ),
                       if (headerSelectors != null) headerSelectors!,
           // 2. Expresión de entrada original pequeña arriba a la izquierda (como en Casio reales)
-          if (hasSteps) ...[
+          if (hasSteps && lcdConstraints.maxHeight >= 100) ...[
             const SizedBox(height: 4),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -254,7 +256,7 @@ class CasioLcdScreen extends StatelessWidget {
             ),
           ],
 
-          const SizedBox(height: 4),
+          SizedBox(height: lcdConstraints.maxHeight >= 100 ? 4 : 1),
 
           // 3. Expresión principal renderizada en LaTeX, vista personalizada o Plantilla de Coeficientes
           Expanded(

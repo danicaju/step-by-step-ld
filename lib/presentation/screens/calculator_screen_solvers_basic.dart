@@ -3,13 +3,7 @@ part of 'calculator_screen.dart';
 extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
   void _solveMode1() {
       if (_rawInput.trim().isEmpty || _rawInput == '0') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Escribe una operación matemática.'),
-            backgroundColor: Color(0xFFB91C1C),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        _showLcdError('Escribe una operación matemática.');
         return;
       }
       try {
@@ -28,21 +22,11 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
           _cursorPos = finalizedInput.length;
           _activeResolution = res;
         });
-        _recordCurrentResolutionToHistory(res, 'M1: CALC & √');
+        _recordCurrentResolutionToHistory(res, 'M1: CALCULAR');
       } on FormatException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sintaxis incompleta: ${e.message}'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Sintaxis incompleta: ${e.message}');
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al evaluar: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Error al evaluar: $e');
       }
       return;
     }
@@ -52,14 +36,7 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
       final lhsTrim = _eqLeftRaw.trim();
       final rhsTrim = _eqRightRaw.trim();
       if (lhsTrim.isEmpty || rhsTrim.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Completa ambos miembros de la ecuación (ej: 2x^2 - 4x = x^2 - 3).',
-            ),
-            backgroundColor: Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Completa ambos miembros de la ecuación (ej: 2x^2 - 4x = x^2 - 3).');
         return;
       }
       try {
@@ -70,19 +47,9 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
         });
         _recordCurrentResolutionToHistory(res, 'M2: Ecuaciones');
       } on FormatException catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error en la ecuación: ${e.message}'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Error en la ecuación: ${e.message}');
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al resolver: $e'),
-            backgroundColor: const Color(0xFFB91C1C),
-          ),
-        );
+        _showLcdError('Error al resolver: $e');
       }
       return;
     }
@@ -111,19 +78,9 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
             'M3: Sist. 4x4 (${_systemMethod.displayName})',
           );
         } on FormatException catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.message),
-              backgroundColor: const Color(0xFFB91C1C),
-            ),
-          );
+          _showLcdError(e.message);
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error en Sistema 4x4: $e'),
-              backgroundColor: const Color(0xFFB91C1C),
-            ),
-          );
+          _showLcdError('Error en Sistema 4x4: $e');
         }
         return;
       }
@@ -149,19 +106,9 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
             'M3: Sist. 3x3 (${_systemMethod.displayName})',
           );
         } on FormatException catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.message),
-              backgroundColor: const Color(0xFFB91C1C),
-            ),
-          );
+          _showLcdError(e.message);
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error en Sistema 3x3: $e'),
-              backgroundColor: const Color(0xFFB91C1C),
-            ),
-          );
+          _showLcdError('Error en Sistema 3x3: $e');
         }
         return;
       }
@@ -191,14 +138,7 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
   void _solveMode4() {
       if (_polyIsNotableMode) {
         if (_rawInput.trim().isEmpty || _rawInput == '0') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Escribe una identidad notable (ej: (2x + 3)^2 o (x - 4)^2).',
-              ),
-              backgroundColor: Color(0xFFB91C1C),
-            ),
-          );
+          _showLcdError('Escribe una identidad notable (ej: (2x + 3)^2 o (x - 4)^2).');
           return;
         }
         try {
@@ -208,19 +148,9 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
           });
           _recordCurrentResolutionToHistory(res, 'M4: Identidades Notables');
         } on FormatException catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error en la identidad: ${e.message}'),
-              backgroundColor: const Color(0xFFB91C1C),
-            ),
-          );
+          _showLcdError('Error en la identidad: ${e.message}');
         } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al resolver: $e'),
-              backgroundColor: const Color(0xFFB91C1C),
-            ),
-          );
+          _showLcdError('Error al resolver: $e');
         }
         return;
       }

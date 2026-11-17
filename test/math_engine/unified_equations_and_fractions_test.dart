@@ -103,7 +103,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('a/b'));
+      await tester.tap(find.byKey(const Key('fraction_key_icon')));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('3'));

@@ -70,8 +70,8 @@ class LcdStatusBar extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
             decoration: BoxDecoration(
               color: isRadMode
-                  ? const Color(0xFF7C3AED)
-                  : (isOledDark ? const Color(0xFF1E2925) : const Color(0xFF334155)),
+                  ? const Color(0xFFE5A93C)
+                  : (isOledDark ? const Color(0xFF1E2925) : const Color(0xFF1A2530)),
               borderRadius: BorderRadius.circular(3),
             ),
             child: Text(
@@ -92,7 +92,7 @@ class LcdStatusBar extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F766E),
+                color: const Color(0xFF1A2530),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: FittedBox(
@@ -171,8 +171,8 @@ class LcdStatusBar extends StatelessWidget {
                 color: isSoundMuted
                     ? const Color(0xFF94A3B8)
                     : (isOledDark
-                        ? const Color(0xFF2DD4BF)
-                        : const Color(0xFF0F766E)),
+                        ? const Color(0xFFC8D6CD)
+                        : const Color(0xFF1A2530)),
               ),
             ),
           ),

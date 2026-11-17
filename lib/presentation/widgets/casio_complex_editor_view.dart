@@ -13,6 +13,9 @@ class CasioComplexEditorView extends StatelessWidget {
   final ValueChanged<int>? onCellTap;
   final ValueChanged<ComplexOperation>? onSelectOperation;
 
+  /// `true` si la operación se elige en el desplegable de la cabecera LCD.
+  final bool operationsInHeader;
+
   const CasioComplexEditorView({
     super.key,
     required this.selectedOperation,
@@ -21,6 +24,7 @@ class CasioComplexEditorView extends StatelessWidget {
     this.isOledDark = false,
     this.onCellTap,
     this.onSelectOperation,
+    this.operationsInHeader = false,
   });
 
   @override
@@ -88,6 +92,7 @@ class CasioComplexEditorView extends StatelessWidget {
         const SizedBox(height: 4),
 
         // Barra inferior de acciones rápidas (100% visible en móvil/desktop)
+        if (!operationsInHeader)
         SizedBox(
           height: 24,
           child: Row(

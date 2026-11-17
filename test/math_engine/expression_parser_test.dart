@@ -108,10 +108,10 @@ void main() {
       expect(resParen.$2, 5);
     });
 
-    test('Llamadas a funciones sin cerrar no inyectan prematuramente parentesis de cierre', () {
+    test('Llamadas a funciones sin cerrar se cierran visualmente en su propio bloque', () {
       final liveSin = ExpressionParser.rawToLiveLatex('sin(30');
-      expect(liveSin, contains(r'\sin(30'));
-      expect(liveSin, isNot(contains(r'\right)')));
+      expect(liveSin, contains(r'\sin\left(30\right)'));
+      expect(liveSin, isNot(contains(r'\\')));
     });
   });
 }

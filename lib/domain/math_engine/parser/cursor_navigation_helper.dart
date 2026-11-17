@@ -72,11 +72,19 @@ class CursorNavigationHelper {
     String token, {
     bool keepLeadingZero = false,
   }) {
-    if (raw == '0' && currentPos == 1 && !keepLeadingZero) {
+    // Una potencia nunca queda huérfana: sin operando previo se usa `0` como base.
+    if (token.startsWith('^') && raw.isEmpty) {
+      return ('0$token', 1 + token.length);
+    }
+    if (raw == '0' && currentPos == 1 && !keepLeadingZero && !token.startsWith('^')) {
       return (token, token.length);
     }
     final safe = snapCursorOutsideKeywords(raw, currentPos);
-    if (token == ')' && safe < raw.length && raw[safe] == ')') {
+    if (token.startsWith('^') && (safe == 0 || '+-*/(,;=<>≤≥:'.contains(raw[safe - 1]))) {
+      final withBase = '${raw.substring(0, safe)}0$token${raw.substring(safe)}';
+      return (withBase, safe + 1 + token.length);
+    }
+    if (token == ')'&& safe < raw.length && raw[safe] == ')') {
       return (raw, safe + 1);
     }
     final updated = raw.substring(0, safe) + token + raw.substring(safe);

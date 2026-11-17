@@ -396,7 +396,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Ejecutar CALC STAT -> muestra paso 1/4 con tabla de frecuencias
-      await tester.tap(find.byKey(const Key('stat_calc_btn')));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();
       expect(find.textContaining('PASO 1/4'), findsOneWidget);
       expect(find.byType(Math), findsWidgets);
@@ -452,7 +452,7 @@ void main() {
       expect(tester.takeException(), isNull);
 
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '5'));
-      await tester.tap(find.byKey(const Key('stat_calc_btn')));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });

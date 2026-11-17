@@ -56,7 +56,7 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
     final Color effectiveTextColor = showShiftFace
         ? const Color(0xFFE5A93C)
         : (showAlphaFace
-            ? const Color(0xFFE05252)
+            ? const Color(0xFFE05D5D)
             : (widget.textColor ?? Colors.white));
 
     return Expanded(
@@ -95,7 +95,7 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
                         widget.alphaLabel ?? '',
                         maxLines: 1,
                         style: const TextStyle(
-                          color: Color(0xFFE05252),
+                          color: Color(0xFFE05D5D),
                           fontSize: 8.5,
                           fontWeight: FontWeight.w700,
                         ),

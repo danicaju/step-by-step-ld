@@ -219,7 +219,7 @@ void main() {
       // Teclear '6', '/', '2' en la primera celda
       await tester.tap(find.text('6'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('a/b'));
+      await tester.tap(find.byKey(const Key('fraction_key_icon')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('2'));
       await tester.pumpAndSettle();

@@ -127,13 +127,6 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                         selected: false,
                         onTap: _openStatOptionsModal,
                       ),
-                      const SizedBox(width: 4),
-                      _buildMethodTab(
-                        key: const Key('stat_calc_btn'),
-                        label: 'CALC STAT',
-                        selected: true,
-                        onTap: _solveCurrentMode,
-                      ),
                     ],
                   ),
                 ] else if (_calculatorMode == 9) ...[
@@ -159,8 +152,7 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      if (_activeResolution != null)
-                        _buildMethodTab(
+                      _buildMethodTab(
                           key: const Key('vector_edit_btn'),
                           label: 'Editar',
                           selected: false,
@@ -171,36 +163,13 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                             });
                           },
                         )
-                      else ...[
-                        _buildMethodTab(
-                          key: const Key('vector_dim_2'),
-                          label: '2D',
-                          selected: _vectorDim == 2,
-                          onTap: () => _setVectorDim(2),
-                        ),
-                        const SizedBox(width: 4),
-                        _buildMethodTab(
-                          key: const Key('vector_dim_3'),
-                          label: '3D',
-                          selected: _vectorDim == 3,
-                          onTap: () => _setVectorDim(3),
-                        ),
-                      ],
-                      const SizedBox(width: 4),
-                      _buildMethodTab(
-                        key: const Key('vector_solve_btn'),
-                        label: 'Calcular (${_vectorOp.shortLabel})',
-                        selected: true,
-                        onTap: _solveCurrentMode,
-                      ),
                     ],
                   ),
                 ] else if (_calculatorMode == 11) ...[
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      if (_activeResolution != null)
-                        _buildMethodTab(
+                      _buildMethodTab(
                           key: const Key('complex_edit_btn'),
                           label: 'Editar',
                           selected: false,

@@ -210,7 +210,7 @@ class _CasioStatTableViewState extends State<CasioStatTableView> {
     required VoidCallback onTap,
   }) {
     final activeBg = widget.isOledDark
-        ? const Color(0xFF172554)
+        ? const Color(0xFF1A2530)
         : const Color(0xFF141A17);
     final activeText = widget.isOledDark
         ? const Color(0xFFF8FAFC)
@@ -225,7 +225,7 @@ class _CasioStatTableViewState extends State<CasioStatTableView> {
         ? const Color(0xFF64748B)
         : const Color(0xFF64748B);
     final activeBorder = widget.isOledDark
-        ? const Color(0xFF2E86DE)
+        ? const Color(0xFFE5A93C)
         : const Color(0xFFE5A93C);
 
     final bool hasValue = value.isNotEmpty;

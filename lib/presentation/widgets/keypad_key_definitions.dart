@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'casio_physical_key.dart';
+import 'fraction_key_icon.dart';
 
 /// Filas científicas 1 y 2 del teclado Casio ClassWiz.
 class KeypadScientificRows extends StatelessWidget {
@@ -27,6 +28,7 @@ class KeypadScientificRows extends StatelessWidget {
             children: [
               CasioPhysicalKey(
                 label: 'a/b',
+                customLabelWidget: const FractionKeyIcon(),
                 shiftLabel: 'c a/b',
                 backgroundColor: const Color(0xFF253042),
                 minHeight: sciMinH,
@@ -224,7 +226,7 @@ class KeypadNumericRows extends StatelessWidget {
               CasioPhysicalKey(
                 label: 'DEL',
                 shiftLabel: 'INS',
-                backgroundColor: const Color(0xFF2E86DE),
+                backgroundColor: const Color(0xFF4A4F5C),
                 minHeight: numMinH,
                 isShiftActive: isShiftActive,
                 isAlphaActive: isAlphaActive,
@@ -233,7 +235,7 @@ class KeypadNumericRows extends StatelessWidget {
               CasioPhysicalKey(
                 label: 'AC',
                 shiftLabel: 'OFF',
-                backgroundColor: const Color(0xFF2E86DE),
+                backgroundColor: const Color(0xFF4A4F5C),
                 minHeight: numMinH,
                 isShiftActive: isShiftActive,
                 isAlphaActive: isAlphaActive,
@@ -393,7 +395,7 @@ class KeypadNumericRows extends StatelessWidget {
               CasioPhysicalKey(
                 label: '=',
                 shiftLabel: '≈',
-                backgroundColor: const Color(0xFF2E86DE),
+                backgroundColor: const Color(0xFF4A4F5C),
                 minHeight: numMinH,
                 isShiftActive: isShiftActive,
                 isAlphaActive: isAlphaActive,

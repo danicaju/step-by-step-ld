@@ -31,7 +31,7 @@ class CasioCoefficientView extends StatelessWidget {
     final String val = index < cellValues.length ? cellValues[index] : '';
     final String label = index < cellLabels.length ? cellLabels[index] : '';
 
-    final Color activeBg = isOledDark ? const Color(0xFF172554) : const Color(0xFF141A17);
+    final Color activeBg = isOledDark ? const Color(0xFF1A2530) : const Color(0xFF141A17);
     final Color activeText = isOledDark ? const Color(0xFFF8FAFC) : const Color(0xFFFFFBEB);
     final Color inactiveBg = isOledDark ? const Color(0xFF1E2824) : const Color(0xFFC7D3C9);
     final Color inactiveText = isOledDark
@@ -40,7 +40,7 @@ class CasioCoefficientView extends StatelessWidget {
     final Color inactiveBorderColor =
         isOledDark ? const Color(0xFF3B4D46) : const Color(0xFF88998E);
     final Color activeBorderColor =
-        isOledDark ? const Color(0xFF2E86DE) : const Color(0xFFE5A93C);
+        isOledDark ? const Color(0xFFE5A93C) : const Color(0xFFE5A93C);
 
     final box = AnimatedContainer(
       key: Key('coeff_cell_$index'),
@@ -64,7 +64,7 @@ class CasioCoefficientView extends StatelessWidget {
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: const Color(0xFF2E86DE).withValues(alpha: 0.45),
+                  color: const Color(0xFFE5A93C).withValues(alpha: 0.45),
                   blurRadius: 6.0,
                   spreadRadius: 0.5,
                 ),

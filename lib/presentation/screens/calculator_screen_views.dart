@@ -3,7 +3,16 @@ part of 'calculator_screen.dart';
 extension _CalculatorScreenViews on _CalculatorScreenState {
   String? get _lcdIdleHint {
     if (_calculatorMode == 2) {
-      return 'Escribe a cada lado del = fijo (usa ◀ ▶ o ⇄ Miembro (=)) y pulsa =';
+      const hints = [
+        'Ej: 3x - 5 = 7 - x',
+        'Ej: 2x^2 - 4x = x^2 - 3',
+        'Ej: x^4 - 5x^2 + 4 = 0',
+        'Ej: (x+1)/(x-2) = 3',
+        'Ej: √(x + 3) = x - 3',
+        'Ej: 2^(x+1) = 8',
+        'Ej: log_(2, x+1) = 3',
+      ];
+      return '${hints[_eqKind.clamp(0, hints.length - 1)]}  (◀ ▶ cambia de miembro, = resuelve)';
     }
     if (_calculatorMode == 3 && _systemDim == 3) {
       return 'Introduce x, y, z, d con = o D-Pad (vacío=0) y elige Gauss / Cramer';
@@ -95,7 +104,7 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
       return 'COMPLEJOS (${_complexOp.shortLabel})';
     }
     if (_calculatorMode == 12) {
-      return 'CÁLCULO (${_calculusOp.shortLabel})';
+      return 'DERIV. E INT. (${_calculusOp.shortLabel})';
     }
     return null;
   }

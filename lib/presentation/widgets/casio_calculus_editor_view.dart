@@ -19,6 +19,9 @@ class CasioCalculusEditorView extends StatelessWidget {
   final ValueChanged<int>? onSelectField;
   final ValueChanged<CalculusOperation>? onSelectOperation;
 
+  /// `true` si la operación se elige en el desplegable de la cabecera LCD.
+  final bool operationsInHeader;
+
   const CasioCalculusEditorView({
     super.key,
     required this.selectedOperation,
@@ -31,6 +34,7 @@ class CasioCalculusEditorView extends StatelessWidget {
     this.isOledDark = false,
     this.onSelectField,
     this.onSelectOperation,
+    this.operationsInHeader = false,
   });
 
   @override
@@ -67,6 +71,7 @@ class CasioCalculusEditorView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Barra superior de acción de Cálculo en la LCD (siempre 100% visible en móvil/desktop)
+        if (!operationsInHeader)
         SizedBox(
           height: 24,
           child: Row(

@@ -3,6 +3,7 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_math_fork/tex.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/header_select.dart';
 import 'package:casio_tutor_calc/domain/math_engine/core/rational.dart';
 import 'package:casio_tutor_calc/domain/math_engine/models/step_resolution.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/calculus_solver.dart';
@@ -284,7 +285,7 @@ void main() {
       expect(find.byKey(const Key('vector_v_cell_2')), findsOneWidget);
 
       // Seleccionamos Producto Vectorial y rellenamos u=(1,2,3), v=(4,5,6)
-      await tester.tap(find.byKey(const Key('vector_op_crossAndArea')));
+      await pickHeader(tester, 'hdr_vector_op', 'vector_op_crossAndArea');
       await tester.pumpAndSettle();
 
       for (final digit in ['1', '2', '3', '4', '5', '6']) {
@@ -312,7 +313,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(CasioComplexEditorView), findsOneWidget);
-      await tester.tap(find.byKey(const Key('complex_op_divide')));
+      await pickHeader(tester, 'hdr_complex_op', 'complex_op_divide');
       await tester.pumpAndSettle();
 
       // z1: a=2, b=1; z2: c=1, d=-1
@@ -357,7 +358,7 @@ void main() {
       expect(find.byType(CasioCalculusEditorView), findsOneWidget);
 
       // Seleccionamos integral definida ∫_a^b
-      await tester.tap(find.byKey(const Key('calculus_op_definiteIntegral')));
+      await pickHeader(tester, 'hdr_calculus_op', 'calculus_op_definiteIntegral');
       await tester.pumpAndSettle();
 
       // Escribimos 3x² en f(x) usando teclado físico + ALPHA ')' -> x y tecla x²

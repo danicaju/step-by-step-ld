@@ -29,6 +29,7 @@ import '../widgets/casio_complex_editor_view.dart';
 import '../widgets/casio_graph_canvas.dart';
 import '../widgets/casio_lcd_screen.dart';
 import '../widgets/lcd/lcd_dropdown_selector.dart';
+import '../widgets/lcd/lcd_error_screen.dart';
 import '../widgets/casio_matrix_editor_view.dart';
 import '../widgets/casio_stat_table_view.dart';
 import '../widgets/casio_vector_editor_view.dart';
@@ -44,6 +45,9 @@ import '../widgets/modes/ruffini_degree_selector_view.dart';
 import '../widgets/modes/inequality_system_editor_view.dart';
 
 part 'calculator_screen_optn.dart';
+part 'calculator_screen_lcd_error.dart';
+part 'calculator_screen_op_handlers.dart';
+part 'calculator_screen_header_specs.dart';
 part 'calculator_screen_header_selectors.dart';
 part 'calculator_screen_toolbars_basic.dart';
 part 'calculator_screen_toolbars_advanced.dart';
@@ -81,6 +85,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   bool _isOledDark = false;
   bool _isSoundMuted = KeyClickSound.isMuted;
   bool _isMenuOpen = false;
+  int _eqKind = 0; // tipo de ecuación elegido en la cabecera LCD (M2)
+  LcdErrorKind? _lcdErrorKind;
+  String _lcdErrorMessage = '';
   bool _isSetupOpen = false;
   AngleUnit _angleUnit = AngleUnit.deg;
   bool _isCalcPromptActive = false;
@@ -278,7 +285,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
 
     final modeLabels = {
-      1: 'M1: CALC & √',
+      1: 'M1: CALCULAR',
       2: 'M2: ECUACIONES',
       3: _systemDim == 3 ? 'M3: SIST 3×3' : 'M3: SIST 2×2',
       4: _polyIsNotableMode
@@ -297,9 +304,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       9: 'M9: MATRICES ($_matrixRowsA×$_matrixColsA)',
       10: 'M10: VECTORES ${_vectorDim}D',
       11: 'M11: COMPLEJOS',
-      12: 'M12: CÁLCULO',
+      12: 'M12: DERIV. E INT.',
     };
-    final modeLabel = modeLabels[_calculatorMode] ?? 'M1: CALC & √';
+    final modeLabel = modeLabels[_calculatorMode] ?? 'M1: CALCULAR';
 
     return Scaffold(
       backgroundColor: const Color(0xFF121418),

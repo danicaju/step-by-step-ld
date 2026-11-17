@@ -311,7 +311,8 @@ void main() {
       expect(find.byType(CasioMatrixEditorView), findsOneWidget);
       expect(find.byKey(const Key('matrix_A_cell_2_2')), findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('matrix_size_2')));
+      await pickHeader(tester, 'hdr_matrix_rows', 'matrix_r_2');
+      await pickHeader(tester, 'hdr_matrix_cols', 'matrix_c_2');
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('matrix_A_cell_2_2')), findsNothing);
       expect(find.byKey(const Key('matrix_A_cell_0_0')), findsOneWidget);
@@ -343,11 +344,12 @@ void main() {
       // Volvemos a editar, pasamos a 3x3 y probamos Sarrus y A·B mostrando pestaña MatB
       await tester.tap(find.byKey(const Key('matrix_edit_btn')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('matrix_size_3')));
+      await pickHeader(tester, 'hdr_matrix_rows', 'matrix_r_3');
+      await pickHeader(tester, 'hdr_matrix_cols', 'matrix_c_3');
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('matrix_A_cell_2_2')), findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('matrix_op_determinant')));
+      await pickHeader(tester, 'hdr_matrix_op', 'matrix_op_determinant');
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();
@@ -355,10 +357,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('matrix_edit_btn')));
       await tester.pumpAndSettle();
-      final mulFinder = find.byKey(const Key('matrix_op_multiply'));
-      await tester.ensureVisible(mulFinder);
-      await tester.tap(mulFinder);
-      await tester.pumpAndSettle();
+      await pickHeader(tester, 'hdr_matrix_op', 'matrix_op_multiply');
       expect(find.byKey(const Key('matrix_tab_B')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -429,7 +428,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('menu_mode_9')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('matrix_size_3')));
+      await pickHeader(tester, 'hdr_matrix_rows', 'matrix_r_3');
+      await pickHeader(tester, 'hdr_matrix_cols', 'matrix_c_3');
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('matrix_A_cell_2_2')), findsOneWidget);
       expect(tester.takeException(), isNull);

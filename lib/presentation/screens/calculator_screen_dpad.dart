@@ -3,6 +3,7 @@ part of 'calculator_screen.dart';
 extension _CalculatorScreenDpad on _CalculatorScreenState {
   void _handleDpadLeft() {
     updateState(() {
+      if (_lcdErrorDpadGuard(dismiss: true)) return;
       if (_isMenuOpen) {
         final count = CasioLcdScreen.menuItemCount;
         _menuCursorIndex = (_menuCursorIndex - 1 + count) % count;
@@ -110,6 +111,7 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
 
   void _handleDpadRight() {
     updateState(() {
+      if (_lcdErrorDpadGuard(dismiss: true)) return;
       if (_isMenuOpen) {
         final count = CasioLcdScreen.menuItemCount;
         _menuCursorIndex = (_menuCursorIndex + 1) % count;
@@ -283,6 +285,7 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
 
   void _handleDpadUp() {
     updateState(() {
+      if (_lcdErrorDpadGuard(dismiss: false)) return;
       if (_isMenuOpen) {
         final count = CasioLcdScreen.menuItemCount;
         _menuCursorIndex = (_menuCursorIndex - 2 + count) % count;
@@ -389,6 +392,7 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
 
   void _handleDpadDown() {
     updateState(() {
+      if (_lcdErrorDpadGuard(dismiss: false)) return;
       if (_isMenuOpen) {
         final count = CasioLcdScreen.menuItemCount;
         _menuCursorIndex = (_menuCursorIndex + 2) % count;

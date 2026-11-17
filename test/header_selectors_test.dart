@@ -30,7 +30,7 @@ void main() {
     expect(find.byKey(const Key('hdr_sys_method')), findsOneWidget);
     expect(find.byKey(const Key('sys3_solve_btn')), findsNothing);
     await pickHeader(tester, 'hdr_sys_size', 'sys_dim_3');
-    expect(find.text('3 Ec.'), findsWidgets);
+    expect(find.text('3 Ecuaciones'), findsWidgets);
   });
 
   testWidgets('M3: D-Pad sube a la cabecera y cambia el tamano con la flecha derecha', (tester) async {
@@ -40,7 +40,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.arrow_right_rounded).first);
     await tester.pumpAndSettle();
-    expect(find.text('3 Ec.'), findsWidgets);
+    expect(find.text('3 Ecuaciones'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 

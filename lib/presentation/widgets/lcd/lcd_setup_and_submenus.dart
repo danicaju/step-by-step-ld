@@ -176,7 +176,7 @@ class LcdCalcPrompt extends StatelessWidget {
       children: [
         LcdSubmenuHeaderRow(
           badgeText: 'CALC: EVALUAR EN x',
-          badgeColor: const Color(0xFF2563EB),
+          badgeColor: const Color(0xFF1A2530),
           hintText: 'Introduce valor y [=]',
           hintColor: stepTitleColor,
         ),

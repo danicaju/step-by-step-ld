@@ -22,8 +22,8 @@ class IneqSysUnknownsSelectorView extends StatelessWidget {
         isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD);
     final unselectedBorder =
         isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
-    final selectedBg = const Color(0xFF181E29);
-    const selectedBorder = Color(0xFF2B3445);
+    final selectedBg = const Color(0xFF1A2530);
+    const selectedBorder = Color(0xFF1A2530);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -175,8 +175,8 @@ class InequalitySystemEditorView extends StatelessWidget {
   final int ineqSysActiveRow;
   final List<String> ineqSysRowInputs;
   final List<int> ineqSysRowCursors;
-  final VoidCallback onToggleUnknowns;
-  final ValueChanged<int> onChangeRows;
+  final VoidCallback? onToggleUnknowns;
+  final ValueChanged<int>? onChangeRows;
   final ValueChanged<int> onSelectRow;
 
   const InequalitySystemEditorView({
@@ -187,8 +187,8 @@ class InequalitySystemEditorView extends StatelessWidget {
     required this.ineqSysActiveRow,
     required this.ineqSysRowInputs,
     required this.ineqSysRowCursors,
-    required this.onToggleUnknowns,
-    required this.onChangeRows,
+    this.onToggleUnknowns,
+    this.onChangeRows,
     required this.onSelectRow,
   });
 
@@ -201,14 +201,9 @@ class InequalitySystemEditorView extends StatelessWidget {
     final activeRowBg =
         isOledDark ? const Color(0xFF0F172A) : const Color(0xFFD4E2D9);
     final activeBorder =
-        isOledDark ? const Color(0xFF2B3445) : const Color(0xFF1E3A5F);
+        isOledDark ? const Color(0xFF1A2530) : const Color(0xFF1A2530);
     final inactiveBorder =
         isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
-    final unselectedBg =
-        isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD);
-    final unselectedBorder =
-        isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
-    const selectedBg = Color(0xFF181E29);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -224,71 +219,6 @@ class InequalitySystemEditorView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Barra superior interna del LCD con selector 1D/2D y número de inecuaciones
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                // FittedBox: en LCD estrecha (360 px) el encabezado se reduce en vez de desbordar.
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    GestureDetector(
-                      key: const Key('ineq_sys_header_toggle_unk'),
-                      onTap: onToggleUnknowns,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: unselectedBg,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: unselectedBorder),
-                        ),
-                        child: Text(
-                          ineqSysUnknowns == 1 ? '◀ Modo 1D (x) ▶' : '◀ Modo 2D (x, y) ▶',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (final r in [2, 3, 4]) ...[
-                          GestureDetector(
-                            key: Key('ineq_sys_header_rows_$r'),
-                            onTap: () => onChangeRows(r),
-                            child: Container(
-                              margin: const EdgeInsets.only(left: 3),
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: ineqSysRows == r ? selectedBg : unselectedBg,
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: ineqSysRows == r ? const Color(0xFF2B3445) : unselectedBorder,
-                                ),
-                              ),
-                              child: Text(
-                                '$r Inec.',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: ineqSysRows == r ? Colors.white : textColor,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                  ),
-                ),
-              ),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [

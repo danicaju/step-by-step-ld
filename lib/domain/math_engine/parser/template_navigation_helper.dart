@@ -377,6 +377,19 @@ class TemplateNavigationHelper {
     return null;
   }
 
+  /// Índice del paréntesis abierto más interno sin cerrar, o -1.
+  static int _innermostOpenParen(String raw) {
+    final stack = <int>[];
+    for (var i = 0; i < raw.length; i++) {
+      if (raw[i] == '(') {
+        stack.add(i);
+      } else if (raw[i] == ')' && stack.isNotEmpty) {
+        stack.removeLast();
+      }
+    }
+    return stack.isEmpty ? -1 : stack.last;
+  }
+
   /// Gestiona la salida de una potencia con la flecha derecha `▶`:
   /// si el cursor está al final de un exponente sin espacio posterior,
   /// inserta un espacio `' '` o cierra el bloque para situar el cursor en la línea base.
@@ -391,7 +404,8 @@ class TemplateNavigationHelper {
 
     final lastPowOpen = raw.lastIndexOf('^(');
     if (lastPowOpen != -1) {
-      if (BalancedScan.findClose(raw, lastPowOpen + 1) == null) {
+      if (BalancedScan.findClose(raw, lastPowOpen + 1) == null &&
+          _innermostOpenParen(raw) == lastPowOpen + 1) {
         // Cierra limpiamente el exponente con ')' y sitúa el cursor al nivel base
         return ('$raw)', safe + 1);
       }
