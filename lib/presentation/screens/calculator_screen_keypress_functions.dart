@@ -2,6 +2,7 @@ part of 'calculator_screen.dart';
 
 extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
   bool _handleKeyPressFunctions(String key) {
+      if (key == 'M-') return _memMinus();
       if (key == 'ANS') {
         _isShiftActive = false;
         _isAlphaActive = false;

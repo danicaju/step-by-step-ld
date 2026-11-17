@@ -83,6 +83,7 @@ part 'calculator_screen_keypress_ans.dart';
 part 'calculator_screen_replay.dart';
 part 'calculator_screen_classwiz.dart';
 part 'calculator_screen_calc.dart';
+part 'calculator_screen_memkeys.dart';
 part 'calculator_screen_multistmt.dart';
 part 'calculator_screen_keypress.dart';
 part 'calculator_screen_chassis.dart';

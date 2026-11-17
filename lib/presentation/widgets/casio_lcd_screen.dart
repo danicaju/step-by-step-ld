@@ -28,6 +28,7 @@ class CasioLcdScreen extends StatelessWidget {
   final bool isMemoryActive;
   final bool showDisp;
   final bool showSto;
+  final bool showIns;
   final LcdEdgeFlags? edgeFlags;
   final String? resultOverrideLatex;
   final String calcVarLabel;
@@ -69,6 +70,7 @@ class CasioLcdScreen extends StatelessWidget {
     this.isMemoryActive = false,
     this.showDisp = false,
     this.showSto = false,
+    this.showIns = false,
     this.edgeFlags,
     this.resultOverrideLatex,
     this.calcVarLabel = 'x',
@@ -245,6 +247,7 @@ class CasioLcdScreen extends StatelessWidget {
                         isMemoryActive: isMemoryActive,
                         showDisp: showDisp,
                         showSto: showSto,
+                        showIns: showIns,
                         isRadMode: isRadMode,
                         angleLabel: angleLabel,
                         onToggleAngleUnit: onToggleAngleUnit,

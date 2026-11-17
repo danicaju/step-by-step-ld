@@ -9,6 +9,7 @@ class LcdStatusBar extends StatelessWidget {
   final bool isMemoryActive;
   final bool showDisp;
   final bool showSto;
+  final bool showIns;
   final bool isRadMode;
   final String? angleLabel;
   final VoidCallback? onToggleAngleUnit;
@@ -30,6 +31,7 @@ class LcdStatusBar extends StatelessWidget {
     required this.isMemoryActive,
     this.showDisp = false,
     this.showSto = false,
+    this.showIns = false,
     required this.isRadMode,
     this.angleLabel,
     this.onToggleAngleUnit,
@@ -74,6 +76,16 @@ class LcdStatusBar extends StatelessWidget {
           const SizedBox(width: 4),
           StatusBadge(
             label: CalculatorSettings.numberFormat == NumberFormatMode.fix ? 'FIX' : 'SCI',
+            active: true,
+            activeColor: const Color(0xFF1A2530),
+            inverted: true,
+            isOledDark: isOledDark,
+          ),
+        ],
+        if (showIns) ...[
+          const SizedBox(width: 4),
+          StatusBadge(
+            label: 'INS',
             active: true,
             activeColor: const Color(0xFF1A2530),
             inverted: true,

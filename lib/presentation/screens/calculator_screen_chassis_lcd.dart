@@ -74,6 +74,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                         isMemoryActive: _memory.hasActiveM,
                         showDisp: _showDisp,
                         showSto: _cw.stoPending,
+                        showIns: !_isInsertMode,
                         edgeFlags: _edgeFlags(),
                         resultOverrideLatex: _resultOverride,
                         calcVarLabel: _calcPromptVar,
