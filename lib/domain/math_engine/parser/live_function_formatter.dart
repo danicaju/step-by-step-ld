@@ -29,6 +29,7 @@ class LiveFunctionFormatter {
     ('tanh(', r'\tanh'),
     ('RanInt#(', r'\mathrm{RanInt}\#'),
     ('Pol(', r'\mathrm{Pol}'),
+    ('Per(', r'\mathrm{Per}'),
     ('Rec(', r'\mathrm{Rec}'),
   ];
 

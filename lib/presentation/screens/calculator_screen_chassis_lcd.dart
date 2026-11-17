@@ -7,6 +7,9 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
     if (_isMemViewOpen) return _buildMemoryViewer();
     if (_cw.resetOpen) return _buildResetView();
     if (_cw.list != null) return _buildListMenu();
+    if (_cw.prop != null) {
+      return _lcdErrorKind != null ? _buildLcdErrorScreen()! : _buildPropWidget();
+    }
     return (_lcdErrorKind != null && !_isMenuOpen && !_isSetupOpen)
         ? _buildLcdErrorScreen()!
         : _isMenuOpen || _isSetupOpen

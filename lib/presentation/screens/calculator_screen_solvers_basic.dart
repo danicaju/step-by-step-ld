@@ -23,6 +23,14 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
         return;
       }
       try {
+        final iberia = CasioIberiaArsenal.routeInput(_rawInput);
+        if (iberia != null) {
+          updateState(() {
+            _activeResolution = iberia;
+          });
+          _recordCurrentResolutionToHistory(iberia, 'M1: ARSENAL');
+          return;
+        }
         final finalizedInput = ExpressionParser.finalizeForEvaluation(_rawInput);
         final polRec = _tryPolRec(finalizedInput);
         if (polRec != null) {
@@ -59,6 +67,8 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
           _activeResolution = res;
         });
         _recordCurrentResolutionToHistory(res, 'M1: CALCULAR');
+      } on ArsenalException catch (e) {
+        _showLcdError(e.message);
       } on ExMathError {
         _showLcdError('Math ERROR: operación no definida.');
       } on FormatException catch (e) {

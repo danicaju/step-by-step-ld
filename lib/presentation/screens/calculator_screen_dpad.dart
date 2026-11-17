@@ -13,6 +13,10 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         _listDpad('left');
         return;
       }
+      if (_cw.prop != null) {
+        _propDpad('left');
+        return;
+      }
       if (_cw.resetOpen) {
         _resetDpad('left');
         return;
@@ -136,6 +140,10 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
       }
       if (_cw.list != null) {
         _listDpad('right');
+        return;
+      }
+      if (_cw.prop != null) {
+        _propDpad('right');
         return;
       }
       if (_cw.resetOpen) {

@@ -41,6 +41,8 @@ class ExpressionTokenizer {
     'RanInt#(',
     'Ran#',
     'Pol(',
+    'Per(',
+    '÷R',
     'Rec(',
     'mcm(',
     'mcd(',

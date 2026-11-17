@@ -65,6 +65,7 @@ extension _CalculatorScreenClassWiz on _CalculatorScreenState {
     _cw.note = null;
     if (_cw.resetOpen) return _handleResetKey(key);
     if (_cw.list != null) return _handleListKey(key);
+    if (_cw.prop != null) return _handlePropKey(key);
     if (_cw.stoPending) return _handleStoKey(key);
     if (!_isShiftActive || !_hwFreeEditing) return false;
     switch (key) {
@@ -241,6 +242,7 @@ extension _CalculatorScreenListMenu on _CalculatorScreenState {
             LcdListItem('ang', 'Unidades Angulares'),
             LcdListItem('oth', 'Otras funciones'),
             LcdListItem('exp', 'Exportar / Copiar'),
+            LcdListItem('ibr', 'Arsenal Iberia'),
           ]);
         }
     }
@@ -302,6 +304,10 @@ extension _CalculatorScreenListMenu on _CalculatorScreenState {
   }
 
   void _insertListToken(String token) {
+    if (token.startsWith('prop:')) {
+      _openProportion(int.parse(token.substring(5)));
+      return;
+    }
     if (_activeResolution != null) _clearActiveResolutionCursor();
     _applyRawInsertion(token);
   }
@@ -315,6 +321,8 @@ extension _CalculatorScreenListMenu on _CalculatorScreenState {
         _setList('sub', 'Sufijos', _sufItems, parent: l);
       case 'ang':
         _setList('sub', 'Unidades angulares', _angItems, parent: l);
+      case 'ibr':
+        _setList('sub', 'Arsenal Iberia', _ibrItems, parent: l);
       case 'oth':
         _setList('sub', 'Otras funciones', _othItems, parent: l);
       case 'exp':

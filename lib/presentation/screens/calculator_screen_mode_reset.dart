@@ -23,6 +23,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
 
   void _resetFieldsForMode(int mode) {
     _calculatorMode = mode;
+    _cw.prop = null;
     _activeStepIndex = 0;
     _showDecimalApprox = false;
     _isShiftActive = false;

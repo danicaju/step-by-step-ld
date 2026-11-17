@@ -13,6 +13,10 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
         _listDpad('up');
         return;
       }
+      if (_cw.prop != null) {
+        _propDpad('up');
+        return;
+      }
       if (_cw.resetOpen) {
         _resetDpad('up');
         return;
@@ -134,6 +138,10 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
       }
       if (_cw.list != null) {
         _listDpad('down');
+        return;
+      }
+      if (_cw.prop != null) {
+        _propDpad('down');
         return;
       }
       if (_cw.resetOpen) {
