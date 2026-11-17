@@ -1,221 +1,306 @@
 import 'dart:math' as math;
+
 import '../../core/rational.dart';
 import '../../models/step_resolution.dart';
-import 'super_equation_helpers.dart';
+import '../exact/exact_number.dart';
+import '../exact/ext_evaluator.dart';
+import '../exact/ext_expr.dart';
+import '../exact/ext_math.dart';
+import '../trig_and_angles_solver.dart';
+import 'eq_context.dart';
+import 'eq_poly.dart';
 
+/// Termino exponencial `k * base^(m x + n)`; base racional o `e` (base == null).
+class _ExpTerm {
+  final Rational k;
+  final Rational? base;
+  final Rational m;
+  final Rational n;
+  const _ExpTerm(this.k, this.base, this.m, this.n);
+}
+
+/// Ecuaciones exponenciales: igualacion de bases, cambio de variable t = a^x
+/// y toma de logaritmos.
 class ExponentialEquationSolver {
-  static bool isExponentialPattern(String s) {
-    if (!s.contains('^')) return false;
-    return RegExp(
-      r'\^\{[^}]*x[^}]*\}|\^\([^)]*x[^)]*\)|\^[0-9]*x[0-9]*',
-    ).hasMatch(s);
+  const ExponentialEquationSolver._();
+
+  static bool matches(EqCtx c) => _inExponent(c.left) || _inExponent(c.right);
+
+  static bool _inExponent(XNode n) => switch (n) {
+        XPow(:final base, :final exp) =>
+          PolyOps.containsX(exp) || _inExponent(base) || _inExponent(exp),
+        XNeg(:final a) => _inExponent(a),
+        XBin(:final l, :final r) => _inExponent(l) || _inExponent(r),
+        _ => false,
+      };
+
+  static void _terms(XNode n, int sign, List<(int, XNode)> out) {
+    if (n is XBin && (n.op == '+' || n.op == '-')) {
+      _terms(n.l, sign, out);
+      _terms(n.r, n.op == '+' ? sign : -sign, out);
+    } else if (n is XNeg) {
+      _terms(n.a, -sign, out);
+    } else {
+      out.add((sign, n));
+    }
   }
 
-  static StepByStepResolution solve(String clean, String originalRaw) {
-    final originalLatex = originalRaw.trim();
-    final steps = <MathStep>[];
+  static Rational? _const(XNode n) {
+    if (PolyOps.containsX(n)) return null;
+    try {
+      return ExtEvaluator(angle: AngleUnit.deg).eval(n).asRational;
+    } on FormatException {
+      return null;
+    }
+  }
 
-    final sides = clean.split('=');
-    if (sides.length != 2) throw const FormatException('Ecuacion exponencial invalida.');
-    final lhs = sides[0].trim();
-    final rhs = sides[1].trim();
-
-    // Comprobar si el miembro izquierdo es un término exponencial simple: base^{f(x)}
-    final singleExpMatch = RegExp(r'^(\d+)\^(?:\{([^}]+)\}|\(?([^)]+)\)?|(\w+))$').firstMatch(lhs);
-
-    if (singleExpMatch != null) {
-      final base = int.parse(singleExpMatch.group(1)!);
-      final expPart = (singleExpMatch.group(2) ?? singleExpMatch.group(3) ?? singleExpMatch.group(4))!.trim();
-
-      // Evaluar valor numérico de RHS (soporta enteros como 8 y fracciones como 1/27)
-      double? rhsVal;
-      if (rhs.contains('/')) {
-        final fracParts = rhs.split('/');
-        final num = double.tryParse(fracParts[0].trim());
-        final den = double.tryParse(fracParts[1].trim());
-        if (num != null && den != null && den != 0) {
-          rhsVal = num / den;
-        }
-      } else {
-        rhsVal = double.tryParse(rhs);
-      }
-
-      if (rhsVal != null && rhsVal > 0) {
-        // Calcular exponente k tal que base^k = rhsVal
-        final logVal = math.log(rhsVal) / math.log(base);
-        final isExactPow = (logVal - logVal.round()).abs() < 1e-5;
-
-        if (isExactPow) {
-          // Caso 1: Igualación de bases común
-          final k = logVal.round();
-          steps.add(
-            MathStep(
-              index: 1,
-              shortTitle: 'Igualacion de bases: a^f(x) = a^k',
-              latexExpression: '$base^{$expPart} = $base^{$k}',
-              pedagogicalNote:
-                  'Descomponemos el segundo miembro en potencias de la base comun ($base) para igualar directamente los exponentes.',
-            ),
-          );
-
-          steps.add(
-            MathStep(
-              index: 2,
-              shortTitle: 'Igualar exponentes: f(x) = k',
-              latexExpression: '$expPart = $k',
-              pedagogicalNote:
-                  'Al tener la misma base en ambos miembros, los exponentes deben ser necesariamente iguales.',
-            ),
-          );
-
-          final expLin = LinearExpression.parse(expPart, varName: 'x');
-          Rational sol;
-          if (expLin.m.abs() > 1e-9) {
-            sol = Rational.fromDouble((k - expLin.n) / expLin.m, 1000);
-          } else {
-            sol = Rational(k);
+  static _ExpTerm? _expTerm(XNode t) {
+    switch (t) {
+      case XPow(:final base, :final exp):
+        final e = PolyOps.polyOf(exp);
+        if (e == null || PolyOps.degree(e) != 1) return null;
+        final m = PolyOps.coeff(e, 1);
+        final n = PolyOps.coeff(e, 0);
+        if (base is XConst && base.kind == 'e') return _ExpTerm(Rational(1), null, m, n);
+        final b = _const(base);
+        if (b == null || !b.isPositive || b == Rational(1)) return null;
+        return _ExpTerm(Rational(1), b, m, n);
+      case XNeg(:final a):
+        final r = _expTerm(a);
+        return r == null ? null : _ExpTerm(-r.k, r.base, r.m, r.n);
+      case XBin(:final l, :final op, :final r):
+        if (op == '*') {
+          final kl = _const(l);
+          final er = _expTerm(r);
+          if (kl != null && er != null) return _ExpTerm(kl * er.k, er.base, er.m, er.n);
+          final kr = _const(r);
+          final el = _expTerm(l);
+          if (kr != null && el != null) return _ExpTerm(kr * el.k, el.base, el.m, el.n);
+        } else if (op == '/') {
+          final kr = _const(r);
+          final el = _expTerm(l);
+          if (kr != null && !kr.isZero && el != null) {
+            return _ExpTerm(el.k / kr, el.base, el.m, el.n);
           }
-
-          steps.add(
-            MathStep(
-              index: 3,
-              shortTitle: 'Solucion final',
-              latexExpression: 'x = ${sol.toLatex()}',
-              pedagogicalNote: 'Despejamos la incognita de la ecuacion lineal obtenida.',
-            ),
-          );
-
-          return StepByStepResolution(
-            originalInputLatex: originalLatex,
-            steps: steps,
-            exactResultLatex: 'x = ${sol.toLatex()}',
-            decimalApproxLatex: 'x = ${sol.toDecimalLatex()}',
-          );
-        } else {
-          // Caso 3: Bases distintas tomando logaritmos (ej: 5^x = 7)
-          steps.add(
-            MathStep(
-              index: 1,
-              shortTitle: 'Tomar logaritmos en ambos miembros',
-              latexExpression: '\\ln($lhs) = \\ln($rhs) \\implies x \\cdot \\ln($base) = \\ln($rhs)',
-              pedagogicalNote:
-                  'Cuando las bases no coinciden ni pueden descomponerse en una base comun, tomamos logaritmo neperiano en ambos lados para bajar el exponente.',
-            ),
-          );
-
-          final exactX = '\\frac{\\ln($rhs)}{\\ln($base)}';
-          final approxVal = math.log(rhsVal) / math.log(base);
-
-          steps.add(
-            MathStep(
-              index: 2,
-              shortTitle: 'Despejar x',
-              latexExpression: 'x = $exactX \\approx ${approxVal.toStringAsFixed(4)}',
-              pedagogicalNote:
-                  'Dividimos entre el logaritmo de la base original para obtener la solucion exacta y su valor decimal.',
-            ),
-          );
-
-          return StepByStepResolution(
-            originalInputLatex: originalLatex,
-            steps: steps,
-            exactResultLatex: 'x = $exactX',
-            decimalApproxLatex: 'x \\approx ${approxVal.toStringAsFixed(4)}',
-          );
         }
+        return null;
+      default:
+        return null;
+    }
+  }
+
+  static Map<int, int> _exps(Rational r) {
+    final m = <int, int>{};
+    Rational.primeFactorsMap(r.numerator.abs()).forEach((p, k) => m[p] = k);
+    Rational.primeFactorsMap(r.denominator).forEach((p, k) => m[p] = (m[p] ?? 0) - k);
+    m.removeWhere((_, v) => v == 0);
+    return m;
+  }
+
+  /// Base comun `b0` con cada base = b0^k_i (k_i entero); `null` si no existe.
+  static (Rational, List<int>)? _commonBase(List<Rational> bases) {
+    final vecs = bases.map(_exps).toList();
+    final first = vecs.first;
+    if (first.isEmpty) return null;
+    var g = 0;
+    for (final v in first.values) {
+      g = Rational.gcd(g, v.abs());
+    }
+    final u = {for (final e in first.entries) e.key: e.value ~/ g};
+    final sgn = u[u.keys.reduce(math.min)]! > 0 ? 1 : -1;
+    final unit = {for (final e in u.entries) e.key: e.value * sgn};
+    final ks = <int>[];
+    for (final v in vecs) {
+      if (v.keys.toSet().difference(unit.keys.toSet()).isNotEmpty) return null;
+      int? k;
+      for (final e in unit.entries) {
+        final num = v[e.key] ?? 0;
+        if (num % e.value != 0) return null;
+        final kk = num ~/ e.value;
+        if (k != null && k != kk) return null;
+        k = kk;
       }
+      if (k == null || k == 0) return null;
+      ks.add(k);
     }
+    var b0 = Rational(1);
+    unit.forEach((p, e) => b0 = b0 * Rational(p).pow(e));
+    return (b0, ks);
+  }
 
-    // Caso 2: Cambio de variable t = a^x (ej: 4^x - 5·2^x + 4 = 0)
-    int base = 2;
-    final bMatch = RegExp(r'(\d+)\^[{(]?([^})]+)[})]').firstMatch(clean);
-    if (bMatch != null) {
-      base = int.tryParse(bMatch.group(1)!) ?? 2;
-    }
+  static String _pow(String base, String exp) => '$base^{$exp}';
+  static String _lin(Rational m, Rational n) {
+    final p = <int, Rational>{1: m, 0: n};
+    return PolyOps.latex(p);
+  }
 
-    steps.add(
-      MathStep(
-        index: 1,
-        shortTitle: 'Cambio de variable t = $base^x',
-        latexExpression:
-            '\\text{Haciendo } t = $base^x \\implies $base^{2x} = t^2, \\quad $base^{x+k} = $base^k \\cdot t',
-        pedagogicalNote:
-            'Aplicamos las propiedades de las potencias para descomponer los exponentes suma (a^{x+k} = a^k · a^x) y sustituimos t = a^x para obtener una ecuacion polinomica.',
-        warningTrick:
-            'Recuerda: la funcion exponencial a^x es SIEMPRE positiva (> 0) para cualquier x real. Si al resolver en t obtenemos valores t <= 0, se descartan obligatoriamente.',
-      ),
-    );
+  static String _logRatio(ExNum t, Rational? base) {
+    final num = t.isExact && t.isRational ? '\\ln(${t.toLatex()})' : '\\ln\\left(${t.toLatex()}\\right)';
+    return base == null ? num : '\\frac{$num}{\\ln(${base.toLatex()})}';
+  }
 
-    // Parsear cuadrática en t para 4^x - 5·2^x + 4 = 0
-    double aT = 1, bT = -5, cT = 4;
-    final tMatch = RegExp(r'([+-]?\d*)\*?' + RegExp.escape('$base') + r'\^x').firstMatch(clean);
-    if (tMatch != null) {
-      final cStr = tMatch.group(1)?.replaceAll(' ', '') ?? '-5';
-      bT = double.tryParse(cStr) ?? -5;
-    }
-    final cConstMatch = RegExp(r'\+\s*(\d+)\s*=\s*0').firstMatch(clean);
-    if (cConstMatch != null) {
-      cT = double.tryParse(cConstMatch.group(1)!) ?? 4;
-    }
-
-    final List<double> tSolutions = [];
-    final disc = bT * bT - 4 * aT * cT;
-    if (disc >= 0) {
-      tSolutions.add((-bT + math.sqrt(disc)) / (2 * aT));
-      if (disc > 0) tSolutions.add((-bT - math.sqrt(disc)) / (2 * aT));
-    }
-
-    steps.add(
-      MathStep(
-        index: 2,
-        shortTitle: 'Resolucion en la variable auxiliar t',
-        latexExpression:
-            't^2 ${bT >= 0 ? "+ $bT" : "- ${bT.abs()}"}t ${cT >= 0 ? "+ $cT" : "- ${cT.abs()}"} = 0 '
-            '\\implies ${tSolutions.map((t) => "t = ${Rational.fromDouble(t, 1000).toLatex()}").join(", \\quad ")}',
-        pedagogicalNote: 'Resolvemos la ecuacion de segundo grado en t.',
-      ),
-    );
-
-    final List<String> finalSolutions = [];
-    final List<String> descarteNotes = [];
-
-    for (final tVal in tSolutions) {
-      final tRat = Rational.fromDouble(tVal, 1000);
-      if (tVal <= 0) {
-        descarteNotes.add('t = ${tRat.toLatex()} \\le 0 \\implies \\text{Descartada } ($base^x > 0)');
+  static ExNum _xFromT(ExNum t, Rational? base) {
+    final lt = t.approx;
+    final value = base == null ? math.log(lt) : math.log(lt) / math.log(base.toDouble());
+    final tr = t.asRational;
+    if (tr != null) {
+      if (base == null) {
+        if (tr == Rational(1)) return ExNum.integer(0);
       } else {
-        final xVal = math.log(tVal) / math.log(base);
-        final isIntX = (xVal - xVal.round()).abs() < 1e-6;
-        if (isIntX) {
-          final xInt = xVal.round();
-          finalSolutions.add('$xInt');
-        } else {
-          finalSolutions.add('\\frac{\\ln(${tRat.toLatex()})}{\\ln($base)}');
-        }
+        final k = ExtMath.logExact(base, tr);
+        if (k != null) return k;
       }
     }
+    if (base == null && t.isExact && t.terms.length == 1) {
+      final e = t.terms.entries.first;
+      if (e.key.$1 == 1 && e.key.$2 == 0 && e.value == Rational(1)) {
+        return ExNum.integer(e.key.$3);
+      }
+    }
+    return ExNum.opaque(_logRatio(t, base), value);
+  }
 
-    steps.add(
-      MathStep(
-        index: 3,
-        shortTitle: 'Deshacer el cambio t = a^x',
-        latexExpression:
-            '${finalSolutions.map((s) => "$base^x = \\dots \\implies x = $s").join(", \\quad ")} '
-            '${descarteNotes.isNotEmpty ? "\\quad [${descarteNotes.join(', ')}]" : ""}',
-        pedagogicalNote:
-            'Deshacemos el cambio de variable calculando el logaritmo en base $base para cada valor valido de t.',
-      ),
+  static StepByStepResolution? solve(EqCtx c) {
+    final items = <(int, XNode)>[];
+    _terms(c.left, 1, items);
+    _terms(c.right, -1, items);
+    final exps = <_ExpTerm>[];
+    var constant = Rational(0);
+    for (final (s, t) in items) {
+      final e = PolyOps.containsX(t) ? _expTerm(t) : null;
+      if (e != null) {
+        exps.add(_ExpTerm(e.k * Rational(s), e.base, e.m, e.n));
+      } else if (!PolyOps.containsX(t)) {
+        final v = _const(t);
+        if (v == null) return null;
+        constant = constant + v * Rational(s);
+      } else {
+        return null;
+      }
+    }
+    if (exps.isEmpty) return null;
+
+    // Base comun
+    final hasE = exps.any((e) => e.base == null);
+    final hasR = exps.any((e) => e.base != null);
+    if (hasE && hasR) return null;
+    Rational? b0;
+    var ks = List<int>.filled(exps.length, 1);
+    if (hasR) {
+      final cb = _commonBase(exps.map((e) => e.base!).toList());
+      if (cb == null) return null;
+      b0 = cb.$1;
+      ks = cb.$2;
+    }
+    final bLatex = b0 == null ? 'e' : b0.toLatex();
+
+    if (exps.length == 1) return _single(c, exps.first, constant, b0, ks.first, bLatex);
+
+    // Cambio de variable t = b0^x: terminos k * b0^(ki*n) * t^(ki*m)
+    final terms = <int, Rational>{};
+    for (var i = 0; i < exps.length; i++) {
+      final e = exps[i];
+      final km = e.m * Rational(ks[i]);
+      final kn = e.n * Rational(ks[i]);
+      if (!km.isInteger || !kn.isInteger) return null;
+      final baseVal = b0 ?? Rational(1);
+      if (b0 == null && !kn.isZero) return null;
+      final coef = e.k * baseVal.pow(kn.numerator);
+      terms[km.numerator] = (terms[km.numerator] ?? Rational(0)) + coef;
+    }
+    terms[0] = (terms[0] ?? Rational(0)) + constant;
+    final shift = -terms.keys.reduce(math.min);
+    final poly = PolyOps.clean({
+      for (final e in terms.entries) e.key + (shift > 0 ? shift : 0): e.value,
+    });
+    c.add(
+      'Cambio de variable t = $bLatex^x',
+      't = ${_pow(bLatex, 'x')},\\; t > 0 \\implies ${PolyOps.latex(poly, v: 't')} = 0',
+      'Escribimos todas las potencias con la misma base usando a^(m+n) = a^m · a^n y (a^x)^k = a^(kx); después llamamos t = $bLatex^x (siempre positivo).',
+      warn: 'Como t = $bLatex^x es positivo, las soluciones t ≤ 0 se descartan.',
     );
 
-    final finalStr = finalSolutions.isEmpty
-        ? r'\text{Sin solucion real}'
-        : finalSolutions.map((s) => 'x = $s').join(', \\quad ');
-
-    return StepByStepResolution(
-      originalInputLatex: originalLatex,
-      steps: steps,
-      exactResultLatex: finalStr,
-      decimalApproxLatex: finalStr,
+    final tRoots = PolyRoots.real(poly);
+    c.addPolynomialSolveStep(poly, tRoots,
+        title: 'Resolucion en la variable auxiliar t');
+    final back = <String>[];
+    final cands = <ExNum>[];
+    for (final t in tRoots) {
+      if (t.approx <= 1e-12) {
+        back.add('t = ${t.toLatex()} \\le 0 \\implies \\text{Descartada}');
+      } else {
+        final x = _xFromT(t, b0);
+        cands.add(x);
+        back.add('${_pow(bLatex, 'x')} = ${t.toLatex()} \\implies x = ${x.toLatex()}');
+      }
+    }
+    c.add(
+      'Deshacer el cambio t = a^x',
+      back.isEmpty ? '\\text{Sin solucion real}' : back.join(' \\\\ '),
+      'Deshacemos el cambio: igualamos bases o tomamos logaritmos para despejar x.',
     );
+    final v = c.verify(cands);
+    if (v.latex.isNotEmpty) {
+      c.add('Comprobacion en la ecuacion original', v.latex,
+          'Sustituimos cada solución en la ecuación de partida para confirmar que es válida.');
+    }
+    return c.finish(v.valid);
+  }
+
+  static StepByStepResolution? _single(
+    EqCtx c,
+    _ExpTerm e,
+    Rational constant,
+    Rational? b0,
+    int k,
+    String bLatex,
+  ) {
+    // e.k * base^(m x + n) + constant = 0  =>  base^(mx+n) = -constant / e.k
+    final rhs = -constant / e.k;
+    final f = _lin(e.m, e.n);
+    c.add(
+      'Aislar la potencia',
+      '${_pow(e.base?.toLatex() ?? 'e', f)} = ${rhs.toLatex()}',
+      'Dejamos la potencia sola en un miembro dividiendo entre su coeficiente.',
+    );
+    if (!rhs.isPositive) {
+      c.add('Solucion final', '${rhs.toLatex()} \\le 0 \\implies \\text{Sin solucion real}',
+          'Una potencia de base positiva siempre es positiva: no puede valer 0 ni un número negativo.');
+      return c.finish(const []);
+    }
+    final base = e.base;
+    final exact = base == null ? null : ExtMath.logExact(base, rhs);
+    ExNum target;
+    if (exact != null) {
+      final kk = exact.asRational!;
+      c.add(
+        'Igualacion de bases: a^f(x) = a^k',
+        '${_pow(bLatex, f)} = ${_pow(bLatex, kk.toLatex())}',
+        'Escribimos el segundo miembro como potencia de la misma base ($bLatex).',
+      );
+      c.add(
+        'Igualar exponentes: f(x) = k',
+        '$f = ${kk.toLatex()}',
+        'Si dos potencias de la misma base (distinta de 0 y 1) son iguales, sus exponentes son iguales.',
+      );
+      target = exact;
+    } else {
+      target = _xFromT(ExNum.rational(rhs), base);
+      c.add(
+        'Tomar logaritmos en ambos miembros',
+        '$f = ${target.toLatex()}',
+        'Las bases no se pueden igualar: tomamos logaritmos y usamos log(a^b) = b · log(a).',
+      );
+    }
+    // m x + n = target  =>  x = (target - n) / m
+    var x = target;
+    if (!e.n.isZero) x = x - ExNum.rational(e.n);
+    if (e.m != Rational(1)) x = x / ExNum.rational(e.m);
+    c.add('Despejar x', 'x = ${x.toLatex()}',
+        'Resolvemos la ecuación de primer grado en x.');
+    final v = c.verify([x]);
+    c.add('Solucion final', v.latex,
+        'Comprobamos la solución en la ecuación original.');
+    return c.finish(v.valid);
   }
 }

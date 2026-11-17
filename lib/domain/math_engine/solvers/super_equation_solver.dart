@@ -2,10 +2,14 @@ import '../models/step_resolution.dart';
 import 'polynomial_equation_solver.dart';
 import 'equations/super_equation_helpers.dart';
 import 'equations/biquadratic_equation_solver.dart';
+import 'equations/eq_context.dart';
+import 'equations/exponential_equation_solver.dart';
 import 'equations/irrational_equation_solver.dart';
 import 'equations/logarithmic_equation_solver.dart';
-import 'equations/exponential_equation_solver.dart';
 import 'equations/rational_equation_solver.dart';
+import 'equations/trigonometric_equation_solver.dart';
+import 'exact/ext_expr.dart';
+import 'trig_and_angles_solver.dart';
 
 export 'equations/super_equation_helpers.dart';
 export 'equations/biquadratic_equation_solver.dart';
@@ -13,62 +17,50 @@ export 'equations/irrational_equation_solver.dart';
 export 'equations/logarithmic_equation_solver.dart';
 export 'equations/exponential_equation_solver.dart';
 export 'equations/rational_equation_solver.dart';
+export 'equations/trigonometric_equation_solver.dart';
 
-/// Súper-Solver integral para ESO y Bachillerato:
-/// Resuelve ecuaciones Exponenciales, Logarítmicas, Irracionales (con radicales),
-/// Racionales (x en denominador), Bicuadradas y Polinómicas con comprobación
-/// obligatoria de soluciones válidas vs extrañas.
+/// Super-Solver de M2 para ESO y Bachillerato. Clasifica la ecuacion sobre su AST
+/// y la resuelve con el solver especializado (con comprobacion de soluciones):
+/// bicuadradas, trigonometricas, logaritmicas, exponenciales, irracionales,
+/// racionales y, por defecto, polinomicas (1.º, 2.º y grado >= 3 por Ruffini).
 class SuperEquationSolver {
-  /// Analiza y resuelve cualquier ecuación en cadena de texto o LaTeX.
-  static StepByStepResolution solve(String rawEquation) {
+  static StepByStepResolution solve(
+    String rawEquation, {
+    AngleUnit angle = AngleUnit.deg,
+  }) {
     final clean = SuperEquationHelpers.preClean(rawEquation);
 
-    // 1. Detección de Bicuadrada pura (ax^4 + bx^2 + c = 0)
+    // 1. Bicuadrada pura (ax^4 + bx^2 + c = 0): cambio t = x^2
     if (BiquadraticEquationSolver.isBicuadraticPattern(clean)) {
       try {
         return BiquadraticEquationSolver.solve(clean, rawEquation);
       } catch (_) {
-        // Fallback
+        // continua con el resto de solvers
       }
     }
 
-    // 2. Detección de Ecuaciones Irracionales (con raíces \sqrt o sqrt)
-    if (clean.contains(r'\sqrt') || clean.contains('sqrt')) {
+    // 2. Solvers por tipo sobre el AST (cada intento con un contexto limpio).
+    final attempts = <(bool Function(EqCtx), StepByStepResolution? Function(EqCtx))>[
+      (TrigonometricEquationSolver.matches, TrigonometricEquationSolver.solve),
+      (LogarithmicEquationSolver.matches, LogarithmicEquationSolver.solve),
+      (ExponentialEquationSolver.matches, ExponentialEquationSolver.solve),
+      (IrrationalEquationSolver.matches, IrrationalEquationSolver.solve),
+      (RationalEquationSolver.matches, RationalEquationSolver.solve),
+    ];
+    for (final (matches, solve) in attempts) {
       try {
-        return IrrationalEquationSolver.solve(clean, rawEquation);
-      } catch (_) {
-        // Fallback
+        final probe = EqCtx.parse(clean, angle: angle);
+        if (!matches(probe)) continue;
+        final res = solve(EqCtx.parse(clean, angle: angle));
+        if (res != null) return res;
+      } on ExtUnsupported {
+        break;
+      } on FormatException {
+        continue;
       }
     }
 
-    // 3. Detección de Ecuaciones Logarítmicas (\log, \ln, log, ln)
-    if (LogarithmicEquationSolver.isLogarithmicPattern(clean)) {
-      try {
-        return LogarithmicEquationSolver.solve(clean, rawEquation);
-      } catch (_) {
-        // Fallback
-      }
-    }
-
-    // 4. Detección de Ecuaciones Exponenciales (2^x, a^{x}, etc.)
-    if (ExponentialEquationSolver.isExponentialPattern(clean)) {
-      try {
-        return ExponentialEquationSolver.solve(clean, rawEquation);
-      } catch (_) {
-        // Fallback
-      }
-    }
-
-    // 5. Detección de Ecuaciones Racionales (fracciones con x en denominador)
-    if (RationalEquationSolver.isRationalPattern(clean)) {
-      try {
-        return RationalEquationSolver.solve(clean, rawEquation);
-      } catch (_) {
-        // Fallback
-      }
-    }
-
-    // 6. Por defecto: Ecuaciones Polinómicas (lineales, cuadráticas, grado > 2)
+    // 3. Por defecto: polinomicas (lineales, cuadraticas, grado >= 3).
     return PolynomialEquationSolver.solvePolynomialDirect(rawEquation);
   }
 }

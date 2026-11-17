@@ -1,190 +1,231 @@
 import 'dart:math' as math;
+
 import '../../core/rational.dart';
 import '../../models/step_resolution.dart';
-import 'super_equation_helpers.dart';
+import '../exact/exact_number.dart';
+import '../exact/ext_evaluator.dart';
+import '../exact/ext_expr.dart';
+import '../trig_and_angles_solver.dart';
+import 'eq_context.dart';
+import 'eq_poly.dart';
 
+/// Ecuaciones logaritmicas: propiedades (suma, resta, potencia), definicion de
+/// logaritmo e inyectividad, con descarte obligatorio de argumentos <= 0.
 class LogarithmicEquationSolver {
-  static bool isLogarithmicPattern(String s) {
-    return s.contains(r'\log') || s.contains(r'\ln') || s.contains('log(') || s.contains('ln(');
+  const LogarithmicEquationSolver._();
+
+  static bool matches(EqCtx c) => _hasLog(c.left) || _hasLog(c.right);
+
+  static bool _hasLog(XNode n) => switch (n) {
+        XFn(:final name, :final arg) =>
+          (name == 'log' || name == 'ln') && PolyOps.containsX(arg),
+        XNeg(:final a) => _hasLog(a),
+        XBin(:final l, :final r) => _hasLog(l) || _hasLog(r),
+        _ => false,
+      };
+
+  static void _terms(XNode n, int sign, List<(int, XNode)> out) {
+    if (n is XBin && (n.op == '+' || n.op == '-')) {
+      _terms(n.l, sign, out);
+      _terms(n.r, n.op == '+' ? sign : -sign, out);
+    } else if (n is XNeg) {
+      _terms(n.a, -sign, out);
+    } else {
+      out.add((sign, n));
+    }
   }
 
-  static StepByStepResolution solve(String clean, String originalRaw) {
-    final originalLatex = originalRaw.trim();
-    final steps = <MathStep>[];
-
-    final bool isLn = clean.contains(r'\ln') || clean.contains('ln(');
-
-    steps.add(
-      MathStep(
-        index: 1,
-        shortTitle: 'Propiedades de los logaritmos',
-        latexExpression: isLn
-            ? r'\ln(A) + \ln(B) = \ln(A \cdot B), \quad \ln(A) - \ln(B) = \ln\left(\frac{A}{B}\right), \quad k\ln(A) = \ln(A^k)'
-            : r'\log(A) + \log(B) = \log(A \cdot B), \quad \log(A) - \log(B) = \log\left(\frac{A}{B}\right), \quad k\log(A) = \log(A^k)',
-        pedagogicalNote:
-            'Agrupamos todos los terminos logaritmicos en un unico miembro utilizando las propiedades de la suma, resta y potencia de logaritmos.',
-      ),
-    );
-
-    final sides = clean.split('=');
-    final lhs = sides[0].trim();
-    final rhs = sides.length > 1 ? sides[1].trim() : '0';
-
-    final logArgs = <String>[];
-    final reg = RegExp(r'(?:\\log|\\ln|log|ln)(?:_\{?\w+\}?)?\(([^)]+)\)');
-    for (final m in reg.allMatches(clean)) {
-      logArgs.add(m.group(1)!.trim());
+  static Rational? _const(XNode n) {
+    if (PolyOps.containsX(n)) return null;
+    try {
+      return ExtEvaluator(angle: AngleUnit.deg).eval(n).asRational;
+    } on FormatException {
+      return null;
     }
+  }
 
-    final candidateRoots = <double>[];
+  /// `c * log_b(A)` -> (c, base|null=e, A).
+  static (Rational, Rational?, Poly)? _logTerm(XNode t) {
+    switch (t) {
+      case XFn(:final name, :final arg, :final base):
+        if (name != 'log' && name != 'ln') return null;
+        final a = PolyOps.polyOf(arg);
+        if (a == null) return null;
+        if (name == 'ln') return (Rational(1), null, a);
+        final b = base == null ? Rational(10) : _const(base);
+        if (b == null || !b.isPositive || b == Rational(1)) return null;
+        return (Rational(1), b, a);
+      case XNeg(:final a):
+        final r = _logTerm(a);
+        return r == null ? null : (-r.$1, r.$2, r.$3);
+      case XBin(:final l, :final op, :final r):
+        if (op == '*') {
+          final k = _const(l);
+          final rr = _logTerm(r);
+          if (k != null && rr != null) return (k * rr.$1, rr.$2, rr.$3);
+          final k2 = _const(r);
+          final ll = _logTerm(l);
+          if (k2 != null && ll != null) return (k2 * ll.$1, ll.$2, ll.$3);
+        } else if (op == '/') {
+          final k = _const(r);
+          final ll = _logTerm(l);
+          if (k != null && !k.isZero && ll != null) return (ll.$1 / k, ll.$2, ll.$3);
+        }
+        return null;
+      default:
+        return null;
+    }
+  }
 
-    // Caso A: Inyectividad pura: ln(A) = ln(B) o log(A) = log(B)
-    final lhsIsPureLog = RegExp(r'^(?:\\log|\\ln|log|ln)\(([^)]+)\)$').hasMatch(lhs);
-    final rhsIsPureLog = RegExp(r'^(?:\\log|\\ln|log|ln)\(([^)]+)\)$').hasMatch(rhs);
+  static String _name(Rational? b) => b == null
+      ? '\\ln'
+      : (b == Rational(10) ? '\\log' : '\\log_{${b.toLatex()}}');
 
-    if (lhsIsPureLog && rhsIsPureLog && logArgs.length == 2) {
-      final aArg = logArgs[0];
-      final bArg = logArgs[1];
-      final aLin = LinearExpression.parse(aArg, varName: 'x');
-      final bLin = LinearExpression.parse(bArg, varName: 'x');
+  static String _wrap(Poly p) => '\\left(${PolyOps.latex(p)}\\right)';
 
-      steps.add(
-        MathStep(
-          index: 2,
-          shortTitle: 'Aplicar inyectividad: log(A) = log(B) => A = B',
-          latexExpression: '$aArg = $bArg',
-          pedagogicalNote:
-              'Al tener un unico logaritmo con la misma base en ambos miembros, igualamos directamente los argumentos gracias a la inyectividad de la funcion logaritmica.',
-        ),
-      );
-
-      final diffM = aLin.m - bLin.m;
-      final diffN = aLin.n - bLin.n;
-      if (diffM.abs() > 1e-9) {
-        candidateRoots.add(-diffN / diffM);
-      }
-    } else if (logArgs.length >= 2 && lhs.contains('+')) {
-      // Caso B: Suma de logaritmos: log(A) + log(B) = k
-      final aArg = logArgs[0];
-      final bArg = logArgs[1];
-      final aLin = LinearExpression.parse(aArg, varName: 'x');
-      final bLin = LinearExpression.parse(bArg, varName: 'x');
-
-      final k = double.tryParse(rhs) ?? 1.0;
-      final baseVal = isLn ? math.e : 10.0;
-      final basePow = math.pow(baseVal, k).toDouble();
-
-      steps.add(
-        MathStep(
-          index: 2,
-          shortTitle: 'Definicion de logaritmo: log_b(M) = k => M = b^k',
-          latexExpression:
-              '${isLn ? "\\ln" : "\\log"}\\left(($aArg) \\cdot ($bArg)\\right) = $rhs \\implies ($aArg) \\cdot ($bArg) = ${basePow.round()}',
-          pedagogicalNote:
-              'Convertimos la suma en el logaritmo del producto y aplicamos la definicion fundamental: la base elevada al resultado es igual al argumento.',
-        ),
-      );
-
-      final aQ = aLin.m * bLin.m;
-      final bQ = aLin.m * bLin.n + aLin.n * bLin.m;
-      final cQ = aLin.n * bLin.n - basePow;
-
-      if (aQ.abs() < 1e-9) {
-        if (bQ.abs() > 1e-9) candidateRoots.add(-cQ / bQ);
+  static StepByStepResolution? solve(EqCtx c) {
+    final items = <(int, XNode)>[];
+    _terms(c.left, 1, items);
+    _terms(c.right, -1, items);
+    final logs = <(Rational, Poly)>[];
+    Rational? base;
+    var baseSet = false;
+    var constant = Rational(0);
+    for (final (s, t) in items) {
+      final lt = _logTerm(t);
+      if (lt != null) {
+        if (baseSet && lt.$2 != base) return null;
+        base = lt.$2;
+        baseSet = true;
+        logs.add((lt.$1 * Rational(s), lt.$3));
       } else {
-        final disc = bQ * bQ - 4 * aQ * cQ;
-        if (disc >= 0) {
-          candidateRoots.add((-bQ + math.sqrt(disc)) / (2 * aQ));
-          if (disc > 0) candidateRoots.add((-bQ - math.sqrt(disc)) / (2 * aQ));
-        }
+        final p = PolyOps.polyOf(t);
+        if (p == null || PolyOps.degree(p) > 0) return null;
+        constant = constant + PolyOps.coeff(p, 0) * Rational(s);
       }
-    } else if (logArgs.isNotEmpty) {
-      // Caso C: log(A) = k
-      final aArg = logArgs[0];
-      final aLin = LinearExpression.parse(aArg, varName: 'x');
-      final k = double.tryParse(rhs) ?? 1.0;
-      final baseVal = isLn ? math.e : 10.0;
-      final basePow = math.pow(baseVal, k).toDouble();
+    }
+    if (logs.isEmpty || logs.any((l) => !l.$1.isInteger)) return null;
+    final name = _name(base);
+    final v = -constant; // sum c_i log(A_i) = v
 
-      steps.add(
-        MathStep(
-          index: 2,
-          shortTitle: 'Aplicar definicion de logaritmo',
-          latexExpression: '$aArg = ${basePow.round()}',
-          pedagogicalNote:
-              'Despejamos el argumento igualandolo a la base elevada al termino independiente.',
-        ),
+    // 1. Propiedades: N / D
+    var num = PolyOps.constant(Rational(1));
+    var den = PolyOps.constant(Rational(1));
+    final shown = <String>[];
+    for (final (cI, a) in logs) {
+      final k = cI.numerator;
+      if (k > 0) {
+        num = PolyOps.mul(num, PolyOps.pow(a, k));
+      } else {
+        den = PolyOps.mul(den, PolyOps.pow(a, -k));
+      }
+      shown.add(k == 1 || k == -1 ? _wrap(a) : '${_wrap(a)}^{${k.abs()}}');
+    }
+    final numShown = logs.where((l) => l.$1.numerator > 0).map((l) {
+      final k = l.$1.numerator;
+      return k == 1 ? _wrap(l.$2) : '${_wrap(l.$2)}^{$k}';
+    }).join(' \\cdot ');
+    final denShown = logs.where((l) => l.$1.numerator < 0).map((l) {
+      final k = -l.$1.numerator;
+      return k == 1 ? _wrap(l.$2) : '${_wrap(l.$2)}^{$k}';
+    }).join(' \\cdot ');
+    final combined = denShown.isEmpty
+        ? (numShown.isEmpty ? '1' : numShown)
+        : '\\frac{${numShown.isEmpty ? '1' : numShown}}{$denShown}';
+    c.add(
+      'Propiedades de los logaritmos',
+      '$name\\left($combined\\right) = ${v.toLatex()}',
+      'Usamos n·log(A) = log(A^n), log(A) + log(B) = log(A·B) y log(A) - log(B) = log(A/B) para dejar un único logaritmo.',
+    );
+
+    // 2. Definicion de logaritmo: N/D = b^v
+    final bv = base ?? Rational(1);
+    ExNum? kappa;
+    if (base == null) {
+      kappa = v.isZero ? ExNum.integer(1) : ExNum.euler().powInt(v.isInteger ? v.numerator : 0);
+      if (!v.isInteger && !v.isZero) return null;
+    } else {
+      final r = ExNum.rational(bv).powInt(v.isInteger ? v.numerator : 0);
+      kappa = r;
+      if (!v.isInteger) return null;
+    }
+    final kRat = kappa.asRational;
+    final PolyEquationHolder holder;
+    if (kRat != null) {
+      holder = PolyEquationHolder(PolyOps.sub(num, PolyOps.scale(den, kRat)), null);
+      c.add(
+        'Definicion de logaritmo: log_b(M) = k => M = b^k',
+        '${PolyOps.latex(num)} = ${kappa.toLatex()}\\cdot${_wrap(den)} \\implies ${EqCtx.polyEq(holder.poly)}',
+        'Por definición, log_b(M) = k equivale a M = b^k. Pasamos a una ecuación sin logaritmos.',
       );
-
-      if (aLin.m.abs() > 1e-9) {
-        candidateRoots.add((basePow - aLin.n) / aLin.m);
-      }
+    } else {
+      // base e con k != 0: solo si N es lineal y D = 1.
+      if (PolyOps.degree(num) != 1 || PolyOps.degree(den) != 0) return null;
+      holder = PolyEquationHolder({}, kappa);
+      c.add(
+        'Definicion de logaritmo: log_b(M) = k => M = b^k',
+        '${PolyOps.latex(num)} = ${kappa.toLatex()}',
+        'Por definición, ln(M) = k equivale a M = e^k.',
+      );
     }
 
-    steps.add(
-      MathStep(
-        index: 3,
-        shortTitle: 'Soluciones algebraicas preliminares',
-        latexExpression: candidateRoots.isEmpty
-            ? r'\text{Sin soluciones}'
-            : candidateRoots
-                .map((r) => 'x = ${Rational.fromDouble(r, 1000).toLatex()}')
-                .join(', \\quad '),
-        pedagogicalNote:
-            'Resolvemos la ecuacion algebraica resultante de eliminar los operadores logaritmicos.',
-      ),
-    );
-
-    // Comprobación estricta de dominio (Argumentos > 0)
-    final List<String> validSolutions = [];
-    final List<String> checkLines = [];
-
-    for (final root in candidateRoots) {
-      final rat = Rational.fromDouble(root, 1000);
-      final rLatex = rat.toLatex();
-      bool allPositive = true;
-
-      for (final arg in logArgs) {
-        final lin = LinearExpression.parse(arg, varName: 'x');
-        final val = lin.m * root + lin.n;
-        if (val <= 1e-6) {
-          allPositive = false;
-          checkLines.add(
-              '\\text{Para } x = $rLatex: \\text{argumento } ($arg) = ${val.toStringAsFixed(2)} \\le 0 \\implies \\text{Descartada}');
-          break;
-        }
+    List<ExNum> roots;
+    if (holder.irrational != null) {
+      final m = PolyOps.coeff(num, 1);
+      final n = PolyOps.coeff(num, 0);
+      roots = [
+        (holder.irrational! - ExNum.rational(n)) / ExNum.rational(m),
+      ];
+      c.add('Despejar x', 'x = ${roots.first.toLatex()}',
+          'Resolvemos la ecuación de primer grado en x.');
+    } else {
+      if (PolyOps.degree(holder.poly) < 0) {
+        c.add('Ecuación resultante', '0 = 0',
+            'Se cumple siempre que los argumentos sean positivos.');
+        return c.finish(const [],
+            exactOverride: '\\text{Infinitas soluciones en el dominio}',
+            decimalOverride: '\\text{Infinitas soluciones en el dominio}');
       }
-
-      if (allPositive) {
-        validSolutions.add(rLatex);
-        checkLines.add(
-            '\\text{Para } x = $rLatex: \\text{todos los argumentos } > 0 \\implies \\text{Valida } (\\checkmark)');
-      }
+      roots = PolyRoots.real(holder.poly);
+      c.addPolynomialSolveStep(holder.poly, roots, title: 'Soluciones algebraicas preliminares');
     }
 
-    steps.add(
-      MathStep(
-        index: 4,
-        shortTitle: 'Comprobacion de existencia del logaritmo (Argumentos > 0)',
-        latexExpression: checkLines.isEmpty
-            ? r'\text{No hay candidatos}'
-            : checkLines.join(' \\\\\n'),
-        pedagogicalNote:
-            'En el conjunto de los numeros reales, el logaritmo solo esta definido para valores estrictamente positivos (> 0). Cualquier solucion que anule o haga negativo el argumento queda descartada.',
-        warningTrick:
-            '¡Ojo en examenes! No basta con que x sea positivo; lo que debe ser estrictamente positivo es TODO el argumento dentro del logaritmo.',
-      ),
+    // 3. Argumentos > 0
+    final lines = <String>[];
+    final valid = <ExNum>[];
+    for (final r in roots) {
+      var allPos = true;
+      final parts = <String>[];
+      for (final (_, a) in logs) {
+        final val = _evalPoly(a, r);
+        if (val <= 1e-12) allPos = false;
+        parts.add('${PolyOps.latex(a)} = ${NumLatex.decimal(val)}');
+      }
+      final ok = allPos && c.check(r).ok;
+      if (ok) valid.add(r);
+      lines.add(
+        'x = ${r.toLatex()}: \\; ${parts.join(', \\; ')} \\implies ${ok ? '\\text{Valida } (\\checkmark)' : '\\text{Descartada}'}',
+      );
+    }
+    c.add(
+      'Comprobacion de existencia del logaritmo (Argumentos > 0)',
+      lines.isEmpty ? '\\text{Ninguna candidata}' : lines.join(' \\\\ '),
+      'El argumento de un logaritmo debe ser estrictamente positivo. Descartamos cualquier solución que haga un argumento menor o igual que 0.',
+      warn: 'Una solución algebraica puede no existir en la ecuación logarítmica original.',
     );
-
-    final finalLatex = validSolutions.isEmpty
-        ? r'\text{Sin solucion real}'
-        : validSolutions.map((s) => 'x = $s').join(', \\quad ');
-
-    return StepByStepResolution(
-      originalInputLatex: originalLatex,
-      steps: steps,
-      exactResultLatex: finalLatex,
-      decimalApproxLatex: finalLatex,
-    );
+    return c.finish(valid);
   }
+
+  static double _evalPoly(Poly p, ExNum x) {
+    var acc = 0.0;
+    p.forEach((k, v) => acc += v.toDouble() * math.pow(x.approx, k));
+    return acc;
+  }
+}
+
+/// Resultado intermedio: polinomio racional o constante irracional (e^k).
+class PolyEquationHolder {
+  final Poly poly;
+  final ExNum? irrational;
+  const PolyEquationHolder(this.poly, this.irrational);
 }

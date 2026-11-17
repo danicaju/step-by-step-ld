@@ -5,6 +5,7 @@ import '../parser/expression_parser.dart';
 import 'quadratic_solver.dart';
 import 'ruffini_solver.dart';
 import 'super_equation_solver.dart';
+import 'trig_and_angles_solver.dart';
 import 'polynomials/polynomial_models_and_ast.dart';
 import 'polynomials/linear_from_coeffs_helper.dart';
 
@@ -18,26 +19,11 @@ export 'polynomials/polynomial_models_and_ast.dart';
 /// ambos miembros (`2x^2 - 4x = x^2 - 3`, `5x = 2x^2`).
 class PolynomialEquationSolver {
   /// Resuelve cualquier ecuación de 1.º, 2.º grado, irracional, exponencial, logarítmica o bicuadrada.
-  static StepByStepResolution solveEquationString(String rawEquation) {
-    final clean = rawEquation.replaceAll('\r', '').replaceAll(' ', '');
-    final hasExpX = RegExp(
-      r'\^\{[^}]*x[^}]*\}|\^\([^)]*x[^)]*\)|\^[0-9]*x[0-9]*',
-    ).hasMatch(clean);
-    final isAdvanced = clean.contains(r'\sqrt') ||
-        clean.contains('sqrt') ||
-        clean.contains(r'\log') ||
-        clean.contains(r'\ln') ||
-        clean.contains('log(') ||
-        clean.contains('ln(') ||
-        clean.contains('x^4') ||
-        clean.contains('x^{4}') ||
-        clean.contains('x⁴') ||
-        hasExpX;
-    if (isAdvanced) {
-      return SuperEquationSolver.solve(rawEquation);
-    }
-    return solvePolynomialDirect(rawEquation);
-  }
+  static StepByStepResolution solveEquationString(
+    String rawEquation, {
+    AngleUnit angle = AngleUnit.deg,
+  }) =>
+      SuperEquationSolver.solve(rawEquation, angle: angle);
 
   /// Resuelve ecuaciones estrictamente polinómicas (lineales, cuadráticas, cúbicas...)
   static StepByStepResolution solvePolynomialDirect(String rawEquation) {

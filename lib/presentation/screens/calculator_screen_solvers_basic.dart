@@ -18,6 +18,16 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
           _recordCurrentResolutionToHistory(polRec, 'M1: CALCULAR');
           return;
         }
+        final extended = _tryExtendedMode1(finalizedInput);
+        if (extended != null) {
+          updateState(() {
+            _rawInput = finalizedInput;
+            _cursorPos = finalizedInput.length;
+            _activeResolution = extended;
+          });
+          _recordCurrentResolutionToHistory(extended, 'M1: CALCULAR');
+          return;
+        }
         final ast = _parser.parse(finalizedInput);
         final res = _evaluator.evaluate(
           ast,
@@ -33,13 +43,52 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
           _activeResolution = res;
         });
         _recordCurrentResolutionToHistory(res, 'M1: CALCULAR');
+      } on ExMathError {
+        _showLcdError('Math ERROR: operación no definida.');
       } on FormatException catch (e) {
-        _showLcdError('Sintaxis incompleta: ${e.message}');
+        // El motor clasico no entiende la expresion: se reintenta con el extendido.
+        final fin = ExpressionParser.finalizeForEvaluation(_rawInput);
+        try {
+          final (res, ans) = ExtendedCalcSolver.solveWithAns(
+            fin,
+            angle: _angleUnit,
+            memory: _memory.getAllVariablesWithAns(),
+          );
+          _memory.setAns(ans);
+          updateState(() {
+            _rawInput = fin;
+            _cursorPos = fin.length;
+            _activeResolution = res;
+          });
+          _recordCurrentResolutionToHistory(res, 'M1: CALCULAR');
+        } on ExMathError {
+          _showLcdError('Math ERROR: operación no definida.');
+        } on FormatException {
+          _showLcdError('Sintaxis incompleta: ${e.message}');
+        } on ExtUnsupported {
+          _showLcdError('Sintaxis incompleta: ${e.message}');
+        }
       } catch (e) {
         _showLcdError('Error al evaluar: $e');
       }
       return;
     }
+
+  /// Motor exacto extendido de M1; `null` si debe resolverlo el motor clasico.
+  StepByStepResolution? _tryExtendedMode1(String input) {
+    if (!ExtendedCalcSolver.needsExtended(input)) return null;
+    try {
+      final (res, ans) = ExtendedCalcSolver.solveWithAns(
+        input,
+        angle: _angleUnit,
+        memory: _memory.getAllVariablesWithAns(),
+      );
+      _memory.setAns(ans);
+      return res;
+    } on ExtUnsupported {
+      return null;
+    }
+  }
 
 
   void _solveMode2() {
@@ -51,7 +100,10 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
       }
       try {
         final fullEq = '$lhsTrim = $rhsTrim';
-        final res = PolynomialEquationSolver.solveEquationString(fullEq);
+        final res = PolynomialEquationSolver.solveEquationString(
+          fullEq,
+          angle: _angleUnit,
+        );
         updateState(() {
           _activeResolution = res;
         });

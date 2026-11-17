@@ -1,112 +1,129 @@
 import '../../core/rational.dart';
 import '../../models/step_resolution.dart';
-import 'super_equation_helpers.dart';
+import '../exact/exact_number.dart';
+import '../exact/ext_expr.dart';
+import 'eq_context.dart';
+import 'eq_poly.dart';
 
+/// Ecuaciones racionales P(x)/Q(x) = R(x)/S(x): dominio, m.c.m., reduccion a
+/// polinomica y descarte explicito de raices prohibidas.
 class RationalEquationSolver {
-  static bool isRationalPattern(String s) {
-    if (!s.contains('/') && !s.contains(r'\frac')) return false;
-    return RegExp(r'\/[^=]*x').hasMatch(s) || RegExp(r'\\frac\{[^}]*\}\{[^}]*x[^}]*\}').hasMatch(s);
+  const RationalEquationSolver._();
+
+  static bool matches(EqCtx c) {
+    final dens = <XNode>[];
+    PolyOps.collectDenominators(c.left, dens);
+    PolyOps.collectDenominators(c.right, dens);
+    return dens.isNotEmpty;
   }
 
-  static StepByStepResolution solve(String clean, String originalRaw) {
-    final originalLatex = originalRaw.trim();
-    final steps = <MathStep>[];
+  /// Factoriza (raices racionales + resto irreducible): [(factor monico, multiplicidad)].
+  static List<(Poly, int)> _factors(Poly input) {
+    var p = PolyOps.clean(input);
+    final lead = PolyOps.coeff(p, PolyOps.degree(p));
+    p = PolyOps.scale(p, Rational(1) / lead);
+    final out = <(Poly, int)>[];
+    var guard = 0;
+    while (PolyOps.degree(p) >= 1 && guard++ < 12) {
+      final r = PolyRoots.rationalRoot(PolyOps.toIntegers(p));
+      if (r == null) break;
+      var m = 0;
+      while (PolyOps.degree(p) >= 1 && PolyOps.eval(p, r).isZero) {
+        p = PolyOps.deflate(p, r);
+        m++;
+      }
+      out.add(({1: Rational(1), 0: -r}, m));
+    }
+    if (PolyOps.degree(p) >= 1) out.add((p, 1));
+    return out;
+  }
 
-    // Extraer numerador, denominador y RHS: \frac{num}{den} = rhs
-    String numStr = 'x';
-    String denStr = 'x - 1';
-    String rhsStr = '3';
+  static String _fac(Poly f, int m) {
+    final base = PolyOps.degree(f) == 1 && PolyOps.coeff(f, 0).isZero
+        ? 'x'
+        : '\\left(${PolyOps.latex(f)}\\right)';
+    return m == 1 ? base : '$base^{$m}';
+  }
 
-    final fracMatch = RegExp(r'\\frac\{([^}]+)\}\{([^}]+)\}\s*=\s*(.+)').firstMatch(clean);
-    if (fracMatch != null) {
-      numStr = fracMatch.group(1)!.trim();
-      denStr = fracMatch.group(2)!.trim();
-      rhsStr = fracMatch.group(3)!.trim();
-    } else {
-      final slashMatch = RegExp(r'([^\/=]+)\/([^=]+)\s*=\s*(.+)').firstMatch(clean);
-      if (slashMatch != null) {
-        numStr = slashMatch.group(1)!.trim().replaceAll('(', '').replaceAll(')', '');
-        denStr = slashMatch.group(2)!.trim().replaceAll('(', '').replaceAll(')', '');
-        rhsStr = slashMatch.group(3)!.trim();
+  static String _mcm(List<Poly> dens) {
+    final best = <String, (Poly, int)>{};
+    for (final d in dens) {
+      for (final (f, m) in _factors(d)) {
+        final key = PolyOps.latex(f);
+        if (!best.containsKey(key) || best[key]!.$2 < m) best[key] = (f, m);
       }
     }
+    if (best.isEmpty) return '1';
+    return best.values.map((e) => _fac(e.$1, e.$2)).join(' \\cdot ');
+  }
 
-    final denLin = LinearExpression.parse(denStr, varName: 'x');
-    double? forbiddenVal;
-    if (denLin.m.abs() > 1e-9) {
-      forbiddenVal = -denLin.n / denLin.m;
+  static StepByStepResolution? solve(EqCtx c) {
+    final fl = PolyOps.rationalOf(c.left);
+    final fr = PolyOps.rationalOf(c.right);
+    if (fl == null || fr == null) return null;
+    final denNodes = <XNode>[];
+    PolyOps.collectDenominators(c.left, denNodes);
+    PolyOps.collectDenominators(c.right, denNodes);
+    final dens = <Poly>[];
+    final seen = <String>{};
+    for (final n in denNodes) {
+      final p = PolyOps.polyOf(n);
+      if (p == null) return null;
+      if (PolyOps.degree(p) < 1) continue;
+      if (seen.add(PolyOps.latex(p))) dens.add(p);
     }
+    if (dens.isEmpty) return null;
 
-    final forbiddenLatex = forbiddenVal != null
-        ? Rational.fromDouble(forbiddenVal, 1000).toLatex()
-        : '0';
-
-    steps.add(
-      MathStep(
-        index: 1,
-        shortTitle: 'Identificar valores prohibidos (Denominador nulo)',
-        latexExpression: '$denStr = 0 \\implies x \\neq $forbiddenLatex',
-        pedagogicalNote:
-            'En una ecuacion racional, los denominadores jamas pueden anularse. Cualquier valor de x que haga 0 un denominador queda prohibido del dominio de la ecuacion.',
-        warningTrick:
-            '¡Atencion! Si una de las soluciones obtenidas coincide con un valor prohibido, debe tacharse inmediatamente.',
-      ),
-    );
-
-    steps.add(
-      MathStep(
-        index: 2,
-        shortTitle: 'Multiplicar por el m.c.m. de los denominadores',
-        latexExpression: '($denStr) \\cdot \\left(\\frac{$numStr}{$denStr}\\right) = ($denStr) \\cdot ($rhsStr) \\implies $numStr = ($rhsStr) \\cdot ($denStr)',
-        pedagogicalNote:
-            'Calculamos el minimo comun multiplo de todas las expresiones en los denominadores y multiplicamos ambos miembros para eliminarlas.',
-      ),
-    );
-
-    // Resolver numStr = rhsVal * denStr
-    final rhsNum = double.tryParse(rhsStr) ?? 3.0;
-    final numLin = LinearExpression.parse(numStr, varName: 'x');
-
-    final resSlope = numLin.m - rhsNum * denLin.m;
-    final resIntercept = numLin.n - rhsNum * denLin.n;
-
-    final candidateRoots = <double>[];
-    if (resSlope.abs() > 1e-9) {
-      candidateRoots.add(-resIntercept / resSlope);
-    }
-
-    final List<String> validSolutions = [];
-    final List<String> checkLines = [];
-
-    for (final r in candidateRoots) {
-      final rat = Rational.fromDouble(r, 1000);
-      final rLatex = rat.toLatex();
-      if (forbiddenVal != null && (r - forbiddenVal).abs() < 1e-5) {
-        checkLines.add('\\text{Para } x = $rLatex: \\text{coincide con valor prohibido } \\implies \\text{Descartada}');
-      } else {
-        validSolutions.add(rLatex);
-        checkLines.add('\\text{Para } x = $rLatex: \\text{denominador } \\neq 0 \\implies \\text{Valida } (\\checkmark)');
+    // 1. Dominio
+    final forbidden = <ExNum>[];
+    final lines = <String>[];
+    for (final d in dens) {
+      final roots = PolyRoots.real(d);
+      for (final r in roots) {
+        if (!forbidden.any((f) => (f.approx - r.approx).abs() < 1e-9)) forbidden.add(r);
       }
+      lines.add(
+        '${PolyOps.latex(d)} = 0 \\implies ${roots.isEmpty ? '\\text{sin restriccion real}' : roots.map((r) => 'x \\neq ${r.toLatex()}').join(', \\; ')}',
+      );
     }
-
-    steps.add(
-      MathStep(
-        index: 3,
-        shortTitle: 'Soluciones algebraicas obtenidas',
-        latexExpression: checkLines.join(' \\\\\n'),
-        pedagogicalNote: 'Resolvemos la ecuacion entera resultante y comprobamos los valores prohibidos.',
-      ),
+    c.add(
+      'Identificar valores prohibidos (Denominador nulo)',
+      lines.join(' \\\\ '),
+      'En una ecuación racional los denominadores nunca pueden valer 0. Cada valor de x que anule un denominador queda fuera del dominio.',
+      warn: 'Si una solución coincide con un valor prohibido hay que descartarla.',
     );
 
-    final finalLatex = validSolutions.isEmpty
-        ? r'\text{Sin solucion real}'
-        : validSolutions.map((s) => 'x = $s').join(', \\quad ');
-
-    return StepByStepResolution(
-      originalInputLatex: originalLatex,
-      steps: steps,
-      exactResultLatex: finalLatex,
-      decimalApproxLatex: finalLatex,
+    // 2. m.c.m. y eliminacion de denominadores
+    c.add(
+      'Reducir a comun denominador (m.c.m.)',
+      '\\text{m.c.m.} = ${_mcm(dens)}',
+      'Factorizamos cada denominador y tomamos los factores comunes y no comunes con su mayor exponente: ese es el m.c.m. por el que multiplicamos los dos miembros.',
     );
+    final lhs = PolyOps.mul(fl.$1, fr.$2);
+    final rhs = PolyOps.mul(fr.$1, fl.$2);
+    c.add(
+      'Eliminar denominadores',
+      '${PolyOps.latex(lhs)} = ${PolyOps.latex(rhs)}',
+      'Multiplicamos en cruz (equivale a multiplicar ambos miembros por el producto de los denominadores) y desarrollamos los productos.',
+    );
+
+    final eq = PolyOps.sub(lhs, rhs);
+    if (PolyOps.degree(eq) < 0) {
+      c.add('Ecuación resultante', '0 = 0',
+          'La igualdad se cumple para todos los valores del dominio.');
+      return c.finish(const [],
+          exactOverride: '\\text{Todo } x \\text{ del dominio}',
+          decimalOverride: '\\text{Todo } x \\text{ del dominio}');
+    }
+    final roots = PolyRoots.real(eq);
+    c.addPolynomialSolveStep(eq, roots);
+
+    final v = c.verify(roots);
+    c.add(
+      'Comprobacion de soluciones y valores prohibidos',
+      v.latex.isEmpty ? '\\text{Ninguna candidata}' : v.latex,
+      'Sustituimos cada candidata: si anula algún denominador es un valor prohibido y se descarta; si no, se comprueba la igualdad.',
+    );
+    return c.finish(v.valid);
   }
 }

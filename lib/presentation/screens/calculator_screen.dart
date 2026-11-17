@@ -9,6 +9,7 @@ import '../../domain/math_engine/parser/expression_parser.dart';
 import '../../domain/math_engine/solvers/calc_solver.dart';
 import '../../domain/math_engine/solvers/calculus_solver.dart';
 import '../../domain/math_engine/solvers/complex_solver.dart';
+import '../../domain/math_engine/solvers/exact/extended_calc_solver.dart';
 import '../../domain/math_engine/solvers/function_graph_solver.dart';
 import '../../domain/math_engine/solvers/inequality_solver.dart';
 import '../../domain/math_engine/solvers/linear_system_solver.dart';
