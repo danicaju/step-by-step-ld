@@ -65,17 +65,24 @@ class ExNum {
   /// Solo radicales (sin pi ni e).
   bool get isAlgebraic => isExact && terms.keys.every((k) => k.$2 == 0 && k.$3 == 0);
 
-  ExNum _opaque2(ExNum o, String sym, double v) => ExNum.opaque(
-        '${_wrap(this)} $sym ${_wrap(o)}',
-        v,
-      );
-
   static String _wrap(ExNum n) => (n.isExact && n.terms.length > 1)
       ? '\\left(${n.toLatex()}\\right)'
       : n.toLatex();
 
+  static String _join(ExNum a, ExNum b, bool plus) {
+    var bl = b.toLatex();
+    final neg = bl.startsWith('-');
+    if (neg) bl = bl.substring(1);
+    final minus = plus == neg; // + con negativo, o - con positivo
+    final compound = bl.contains(' + ') || bl.contains(' - ');
+    final shown = minus && compound ? '\\left($bl\\right)' : bl;
+    return '${a.toLatex()} ${minus ? '-' : '+'} $shown';
+  }
+
   ExNum operator +(ExNum o) {
-    if (!isExact || !o.isExact) return _opaque2(o, '+', approx + o.approx);
+    if (isExact && isZero) return o;
+    if (o.isExact && o.isZero) return this;
+    if (!isExact || !o.isExact) return ExNum.opaque(_join(this, o, true), approx + o.approx);
     final m = Map<ExKey, Rational>.of(terms);
     o.terms.forEach((k, v) => m[k] = (m[k] ?? Rational(0)) + v);
     return ExNum.fromTerms(m);
@@ -83,10 +90,15 @@ class ExNum {
 
   ExNum operator -() => isExact
       ? ExNum.fromTerms({for (final e in terms.entries) e.key: -e.value})
-      : ExNum.opaque('-${_wrap(this)}', -approx);
+      : ExNum.opaque(
+          opaqueLatex!.startsWith('-') ? opaqueLatex!.substring(1) : '-${_wrap(this)}',
+          -approx,
+        );
 
   ExNum operator -(ExNum o) {
-    if (!isExact || !o.isExact) return _opaque2(o, '-', approx - o.approx);
+    if (o.isExact && o.isZero) return this;
+    if (isExact && isZero) return -o;
+    if (!isExact || !o.isExact) return ExNum.opaque(_join(this, o, false), approx - o.approx);
     return this + (-o);
   }
 
@@ -103,6 +115,9 @@ class ExNum {
   }
 
   ExNum operator *(ExNum o) {
+    if (isExact && (isZero || (o.isExact && o.isZero))) return ExNum.integer(0);
+    if (o.asRational == Rational(1)) return this;
+    if (asRational == Rational(1)) return o;
     if (!isExact || !o.isExact) {
       return ExNum.opaque('${_wrap(this)} \\cdot ${_wrap(o)}', approx * o.approx);
     }

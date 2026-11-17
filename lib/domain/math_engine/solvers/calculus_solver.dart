@@ -1,6 +1,8 @@
 import '../core/rational.dart';
 import '../models/calculus_models.dart';
 import '../models/step_resolution.dart';
+import 'symbolic_derivative_solver.dart';
+import 'symbolic_integral_solver.dart';
 
 export '../models/calculus_models.dart';
 
@@ -27,7 +29,34 @@ class CalculusSolver {
     Rational? integralLowerA,
     Rational? integralUpperB,
   }) {
-    final poly = RationalPolynomial.parseExpression(expressionRaw);
+    RationalPolynomial? poly;
+    try {
+      poly = RationalPolynomial.parseExpression(expressionRaw);
+    } catch (_) {
+      poly = null;
+    }
+    // Potencias altas de un parentesis: mejor sustitucion/cadena que expandir.
+    final isIntegral = operation == CalculusOperation.indefiniteIntegral ||
+        operation == CalculusOperation.definiteIntegral;
+    if (isIntegral && RegExp(r'\)\^\{?([3-9]|\d\d)').hasMatch(expressionRaw)) {
+      poly = null;
+    }
+    if (poly == null) {
+      // No es un polinomio: calculo simbolico sobre el AST completo.
+      return switch (operation) {
+        CalculusOperation.derivative =>
+          SymbolicDerivativeSolver.derivative(expressionRaw),
+        CalculusOperation.tangentLine =>
+          SymbolicDerivativeSolver.tangentLine(expressionRaw, tangentX0 ?? Rational(0)),
+        CalculusOperation.indefiniteIntegral =>
+          SymbolicIntegralSolver.indefinite(expressionRaw),
+        CalculusOperation.definiteIntegral => SymbolicIntegralSolver.definite(
+            expressionRaw,
+            integralLowerA ?? Rational(0),
+            integralUpperB ?? Rational(1),
+          ),
+      };
+    }
     return switch (operation) {
       CalculusOperation.derivative => derivative(poly),
       CalculusOperation.tangentLine =>

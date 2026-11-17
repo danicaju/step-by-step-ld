@@ -305,6 +305,8 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
         );
       } on FormatException catch (e) {
         _showLcdError(e.message);
+      } on ExtUnsupported catch (e) {
+        _showLcdError(e.message);
       } catch (e) {
         _showLcdError('Error en Cálculo: $e');
       }

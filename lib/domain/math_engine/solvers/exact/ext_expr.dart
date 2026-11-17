@@ -28,9 +28,12 @@ class XNum extends XNode {
   @override
   int get prec => value.isNegative ? 3 : 5;
   @override
-  String latex() => raw != null && raw!.contains('.')
-      ? raw!.replaceAll('.', '{,}')
-      : '${value.numerator}';
+  String latex() {
+    if (raw != null && raw!.contains('.')) return raw!.replaceAll('.', '{,}');
+    if (value.denominator == 1) return '${value.numerator}';
+    final sign = value.isNegative ? '-' : '';
+    return '$sign\\frac{${value.numerator.abs()}}{${value.denominator}}';
+  }
 }
 
 class XConst extends XNode {
@@ -44,7 +47,12 @@ class XVar extends XNode {
   final String name;
   const XVar(this.name);
   @override
-  String latex() => name == 'ANS' ? '\\text{Ans}' : name;
+  String latex() => switch (name) {
+        'ANS' => '\\text{Ans}',
+        'X' => 'x',
+        'Y' => 'y',
+        _ => name,
+      };
 }
 
 class XNeg extends XNode {

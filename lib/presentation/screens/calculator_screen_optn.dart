@@ -44,6 +44,35 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
     _showOptnBottomSheet(
       title: 'OPTN · Opciones Rápidas (STEP-BY-STEP LD)',
       itemsBuilder: (ctx) => [
+        if (_calculatorMode == 1 || _calculatorMode == 12)
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              for (final (label, token) in const [
+                ('|x|', 'Abs('),
+                ('n!', '!'),
+                ('nCr', 'nCr'),
+                ('nPr', 'nPr'),
+                ('ℯ', 'ℯ'),
+              ])
+                OutlinedButton(
+                  key: Key('optn_insert_$token'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFE5A93C),
+                    side: const BorderSide(color: Color(0xFFE5A93C)),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    updateState(() {
+                      if (_activeResolution != null) _clearActiveResolutionCursor();
+                      _applyRawInsertion(token);
+                    });
+                  },
+                  child: Text(label),
+                ),
+            ],
+          ),
         if (_calculatorMode == 1)
           ListTile(
             leading: const Icon(Icons.functions_rounded, color: Color(0xFFFBBF24)),

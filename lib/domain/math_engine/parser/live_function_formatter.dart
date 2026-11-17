@@ -23,6 +23,7 @@ class LiveFunctionFormatter {
     ('tan(', r'\tan'),
     ('log(', r'\log'),
     ('ln(', r'\ln'),
+    ('Abs(', r'\mathrm{Abs}'),
     ('Pol(', r'\mathrm{Pol}'),
     ('Rec(', r'\mathrm{Rec}'),
   ];
