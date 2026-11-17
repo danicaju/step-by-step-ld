@@ -24,6 +24,7 @@ class LiveFunctionFormatter {
     ('log(', r'\log'),
     ('ln(', r'\ln'),
     ('Abs(', r'\mathrm{Abs}'),
+    ('RanInt#(', r'\mathrm{RanInt}\#'),
     ('Pol(', r'\mathrm{Pol}'),
     ('Rec(', r'\mathrm{Rec}'),
   ];

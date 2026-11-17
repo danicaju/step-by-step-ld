@@ -409,7 +409,7 @@ void main() {
 
       await tester.tap(find.text('CALC'));
       await tester.pumpAndSettle();
-      expect(find.text('CALC: EVALUAR EN x'), findsOneWidget);
+      expect(find.text('x? '), findsOneWidget);
 
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '-'));
       await tester.pumpAndSettle();
@@ -418,7 +418,7 @@ void main() {
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Sustitución de X'), findsOneWidget);
+      expect(find.textContaining('Valor numérico final'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

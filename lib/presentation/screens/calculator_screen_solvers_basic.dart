@@ -2,6 +2,10 @@ part of 'calculator_screen.dart';
 
 extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
   void _solveMode1() {
+      if (_rawInput.contains('Ran')) {
+        _rawInput = ClassWizKeyActions.substituteRandoms(_rawInput, _cw.random);
+        _cursorPos = _rawInput.length;
+      }
       if ((_rawInput.contains('∶') || _rawInput.contains('=')) &&
           _solveMultiStatement()) {
         return;

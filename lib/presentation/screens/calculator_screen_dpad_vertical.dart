@@ -9,6 +9,10 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
         _setupDpad('up');
         return;
       }
+      if (_cw.resetOpen) {
+        _resetDpad('up');
+        return;
+      }
       if (_isMemViewOpen) {
         _memViewDpad('up');
         return;
@@ -122,6 +126,10 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
       if (_lcdErrorDpadGuard(dismiss: false)) return;
       if (_isSetupOpen) {
         _setupDpad('down');
+        return;
+      }
+      if (_cw.resetOpen) {
+        _resetDpad('down');
         return;
       }
       if (_isMemViewOpen) {

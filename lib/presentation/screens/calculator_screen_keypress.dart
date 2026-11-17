@@ -145,6 +145,7 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
           return;
         }
 
+        if (_reaskCalc()) return;
         // Multi-sentencia (Disp): = avanza a la siguiente sentencia.
         if (_advanceMultiStatement()) return;
 

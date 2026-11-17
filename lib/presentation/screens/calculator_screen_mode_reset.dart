@@ -138,6 +138,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
       _isAlphaActive = false;
     });
 
+    if (_cwSetView(CwView.factor)) return;
     int? n = int.tryParse(_rawInput.trim());
     if (n == null && _activeResolution != null) {
       n = int.tryParse(_activeResolution!.exactResultLatex.trim());
@@ -277,75 +278,8 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
     });
   }
 
-  void _enterCalcPromptSync() {
-    if (_calculatorMode != 1) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('La tecla CALC evalúa expresiones con x en el Modo 1 (Cálculo).'),
-          backgroundColor: Color(0xFFD97706),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-    final candidate = ExpressionParser.finalizeForEvaluation(_rawInput);
-    if (candidate == '0' || !RegExp(r'[A-Za-z]').hasMatch(candidate)) {
-      _openMemoryViewer();
-      return;
-    }
-    _activeResolution = null;
-    _activeStepIndex = 0;
-    _showDecimalApprox = false;
-    _isShiftActive = false;
-    _isAlphaActive = false;
-    _calcExpressionRaw = candidate;
-    _calcValueRaw = '';
-    _isCalcPromptActive = true;
-  }
-
-  void _submitCalcEvalSync() {
-    final valRaw = _calcValueRaw.trim().isEmpty ? '0' : _calcValueRaw.trim();
-    Rational? parsedX;
-    try {
-      if (valRaw.contains('/')) {
-        final parts = valRaw.split('/');
-        if (parts.length == 2) {
-          parsedX = Rational(int.parse(parts[0]), int.parse(parts[1]));
-        }
-      } else if (valRaw.contains('.')) {
-        parsedX = Rational.fromDecimalString(valRaw);
-      } else {
-        parsedX = Rational(int.parse(valRaw));
-      }
-    } catch (_) {
-      parsedX = null;
-    }
-    if (parsedX == null) {
-      _showLcdError('Introduce un número válido para x (ej: -3 o 1/2).');
-      return;
-    }
-
-    try {
-      final ast = _parser.parse(_calcExpressionRaw);
-      final res = CalcSolver.evaluateCalc(
-        expr: ast,
-        xValue: parsedX,
-        memoryVars: _memory.getAllVariablesWithAns(),
-      );
-      _memory.setAns(parsedX);
-      _isCalcPromptActive = false;
-      _rawInput = _calcExpressionRaw;
-      _cursorPos = _rawInput.length;
-      _activeResolution = res;
-      _activeStepIndex = 0;
-      _showDecimalApprox = false;
-      _recordCurrentResolutionToHistory(res, 'M1: CALC');
-    } catch (e) {
-      _showLcdError('No se pudo evaluar la expresión: $e');
-    }
-  }
-
   void _insertDmsSymbolSync() {
+    if (_cwSetView(CwView.dms)) return;
     if (_activeResolution != null && _evaluator.lastEvaluatedRational != null && !_isCoefficientMode) {
       final decVal = _evaluator.lastEvaluatedRational!.toDouble();
       final res = TrigAndAnglesSolver.solveDecimalToDms(

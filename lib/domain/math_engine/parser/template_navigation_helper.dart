@@ -176,7 +176,7 @@ class TemplateNavigationHelper {
     final safe = CursorNavigationHelper.snapCursorOutsideKeywords(raw, cursorPos).clamp(0, raw.length);
     // Plantilla envolvente más interna que contiene al cursor (por profundidad).
     final candidates = <int>[];
-    for (final fnPrefix in ['log_(', 'root(', 'Pol(', 'Rec(']) {
+    for (final fnPrefix in ['log_(', 'root(', 'Pol(', 'Rec(', 'RanInt#(']) {
       var from = 0;
       while (true) {
         final s = raw.indexOf(fnPrefix, from);
@@ -245,7 +245,7 @@ class TemplateNavigationHelper {
   ) {
     if (raw.isEmpty) return null;
     final safe = CursorNavigationHelper.snapCursorOutsideKeywords(raw, cursorPos, preferLeft: true).clamp(0, raw.length);
-    for (final fnPrefix in ['log_(', 'root(', 'Pol(', 'Rec(']) {
+    for (final fnPrefix in ['log_(', 'root(', 'Pol(', 'Rec(', 'RanInt#(']) {
       int searchFrom = 0;
       while (true) {
         final start = raw.indexOf(fnPrefix, searchFrom);

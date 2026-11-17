@@ -6,6 +6,7 @@ class LcdStatusBar extends StatelessWidget {
   final bool isAlphaActive;
   final bool isMemoryActive;
   final bool showDisp;
+  final bool showSto;
   final bool isRadMode;
   final String? angleLabel;
   final VoidCallback? onToggleAngleUnit;
@@ -26,6 +27,7 @@ class LcdStatusBar extends StatelessWidget {
     required this.isAlphaActive,
     required this.isMemoryActive,
     this.showDisp = false,
+    this.showSto = false,
     required this.isRadMode,
     this.angleLabel,
     this.onToggleAngleUnit,
@@ -65,6 +67,15 @@ class LcdStatusBar extends StatelessWidget {
           activeColor: const Color(0xFF10B981),
           isOledDark: isOledDark,
         ),
+        if (showSto) ...[
+          const SizedBox(width: 4),
+          StatusBadge(
+            label: 'STO',
+            active: true,
+            activeColor: const Color(0xFFE5A93C),
+            isOledDark: isOledDark,
+          ),
+        ],
         if (showDisp) ...[
           const SizedBox(width: 4),
           StatusBadge(

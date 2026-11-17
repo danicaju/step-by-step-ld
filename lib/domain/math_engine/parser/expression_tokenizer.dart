@@ -16,6 +16,8 @@ class ExpressionTokenizer {
     'Abs(',
     'nCr',
     'nPr',
+    'RanInt#(',
+    'Ran#',
     'Pol(',
     'Rec(',
     'mcm(',

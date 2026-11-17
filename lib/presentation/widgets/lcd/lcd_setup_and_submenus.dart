@@ -156,6 +156,7 @@ class LcdSetupMenu extends StatelessWidget {
 
 class LcdCalcPrompt extends StatelessWidget {
   final String calcValueRaw;
+  final String varLabel;
   final String? calcExpressionLatex;
   final Color formulaColor;
   final Color stepTitleColor;
@@ -163,6 +164,7 @@ class LcdCalcPrompt extends StatelessWidget {
   const LcdCalcPrompt({
     super.key,
     required this.calcValueRaw,
+    this.varLabel = 'x',
     this.calcExpressionLatex,
     required this.formulaColor,
     required this.stepTitleColor,
@@ -175,7 +177,7 @@ class LcdCalcPrompt extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         LcdSubmenuHeaderRow(
-          badgeText: 'CALC: EVALUAR EN x',
+          badgeText: 'CALC',
           badgeColor: const Color(0xFF1A2530),
           hintText: 'Introduce valor y [=]',
           hintColor: stepTitleColor,
@@ -196,9 +198,9 @@ class LcdCalcPrompt extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const Text(
-              'x = ',
-              style: TextStyle(
+            Text(
+              '$varLabel? ',
+              style: const TextStyle(
                 fontFamily: 'serif',
                 fontStyle: FontStyle.italic,
                 fontSize: 22,

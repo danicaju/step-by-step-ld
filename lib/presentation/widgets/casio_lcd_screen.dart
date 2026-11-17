@@ -24,6 +24,9 @@ class CasioLcdScreen extends StatelessWidget {
   final bool isAlphaActive;
   final bool isMemoryActive;
   final bool showDisp;
+  final bool showSto;
+  final String? resultOverrideLatex;
+  final String calcVarLabel;
   final bool isOledDark;
   final LcdTheme? lcdTheme;
   final bool isSoundMuted;
@@ -61,6 +64,9 @@ class CasioLcdScreen extends StatelessWidget {
     required this.isAlphaActive,
     this.isMemoryActive = false,
     this.showDisp = false,
+    this.showSto = false,
+    this.resultOverrideLatex,
+    this.calcVarLabel = 'x',
     this.isOledDark = false,
     this.lcdTheme,
     this.isSoundMuted = false,
@@ -124,7 +130,9 @@ class CasioLcdScreen extends StatelessWidget {
     String displayLatex;
     if (hasSteps) {
       final isLastStep = activeStepIndex == currentResolution!.steps.length - 1;
-      displayLatex = (isLastStep && showDecimalApprox)
+      displayLatex = (isLastStep && resultOverrideLatex != null)
+          ? resultOverrideLatex!
+          : (isLastStep && showDecimalApprox)
           ? '${currentResolution!.exactResultLatex} \\approx ${currentResolution!.decimalApproxLatex}'
           : currentResolution!.steps[activeStepIndex].latexExpression;
     } else {
@@ -203,6 +211,7 @@ class CasioLcdScreen extends StatelessWidget {
               )
             : isCalcPromptActive
             ? LcdCalcPrompt(
+                varLabel: calcVarLabel,
                 calcValueRaw: calcValueRaw,
                 calcExpressionLatex: calcExpressionLatex,
                 formulaColor: formulaColor,
@@ -226,6 +235,7 @@ class CasioLcdScreen extends StatelessWidget {
                         isAlphaActive: isAlphaActive,
                         isMemoryActive: isMemoryActive,
                         showDisp: showDisp,
+                        showSto: showSto,
                         isRadMode: isRadMode,
                         angleLabel: angleLabel,
                         onToggleAngleUnit: onToggleAngleUnit,

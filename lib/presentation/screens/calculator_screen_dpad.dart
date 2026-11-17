@@ -9,6 +9,11 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         _setupDpad('left');
         return;
       }
+      if (_cw.resetOpen) {
+        _resetDpad('left');
+        return;
+      }
+      if (_cwEngBack()) return;
       if (_isMemViewOpen) {
         _memViewDpad('left');
         return;
@@ -123,6 +128,10 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
       if (_lcdErrorDpadGuard(dismiss: true)) return;
       if (_isSetupOpen) {
         _setupDpad('right');
+        return;
+      }
+      if (_cw.resetOpen) {
+        _resetDpad('right');
         return;
       }
       if (_isMemViewOpen) {

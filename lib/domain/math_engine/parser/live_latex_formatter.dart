@@ -212,6 +212,7 @@ class LiveLatexFormatter {
     out = out.replaceAllMapped(RegExp(r'\bpi\b'), (_) => r'\pi ');
 
     // 6. Memoria ANS y variables
+    out = out.replaceAll('Ran#', r'\mathrm{Ran}\#');
     out = out.replaceAll('ANS', r'\text{Ans}');
     out = out.replaceAll('ans', r'\text{Ans}');
 

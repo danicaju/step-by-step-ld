@@ -55,6 +55,8 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
                 ('nCr', 'nCr'),
                 ('nPr', 'nPr'),
                 ('ℯ', 'ℯ'),
+                ('Ran#', 'Ran#'),
+                ('RanInt#', 'RanInt#('),
               ])
                 OutlinedButton(
                   key: Key('optn_insert_$token'),

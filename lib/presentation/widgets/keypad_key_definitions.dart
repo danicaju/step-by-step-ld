@@ -107,6 +107,7 @@ class KeypadScientificRows extends StatelessWidget {
               ),
               CasioPhysicalKey(
                 label: 'S⬄D',
+                shiftLabel: 'a b/c',
                 backgroundColor: const Color(0xFF343842),
                 minHeight: sciMinH,
                 isShiftActive: isShiftActive,
@@ -124,6 +125,7 @@ class KeypadScientificRows extends StatelessWidget {
             children: [
               CasioPhysicalKey(
                 label: '(',
+                shiftLabel: 'STO',
                 alphaLabel: 'y',
                 backgroundColor: const Color(0xFF253042),
                 minHeight: sciMinH,
@@ -217,6 +219,7 @@ class KeypadNumericRows extends StatelessWidget {
               ),
               CasioPhysicalKey(
                 label: '9',
+                shiftLabel: 'RESET',
                 alphaLabel: 'C',
                 minHeight: numMinH,
                 isShiftActive: isShiftActive,
@@ -318,6 +321,7 @@ class KeypadNumericRows extends StatelessWidget {
               ),
               CasioPhysicalKey(
                 label: '3',
+                shiftLabel: 'ENG',
                 minHeight: numMinH,
                 isShiftActive: isShiftActive,
                 isAlphaActive: isAlphaActive,

@@ -54,6 +54,7 @@ import '../widgets/calculator_bezel_widgets.dart';
 import '../widgets/calculator_keypad_view.dart';
 import '../widgets/modes/calculator_method_tab.dart';
 import '../widgets/modes/inequality_system_editor_view.dart';
+import 'classwiz_state.dart';
 
 part 'calculator_screen_optn.dart';
 part 'calculator_screen_lcd_error.dart';
@@ -79,6 +80,8 @@ part 'calculator_screen_keypress_control.dart';
 part 'calculator_screen_keypress_functions.dart';
 part 'calculator_screen_keypress_ans.dart';
 part 'calculator_screen_replay.dart';
+part 'calculator_screen_classwiz.dart';
+part 'calculator_screen_calc.dart';
 part 'calculator_screen_multistmt.dart';
 part 'calculator_screen_keypress.dart';
 part 'calculator_screen_chassis.dart';
@@ -105,6 +108,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   bool _showDecimalApprox = false;
   List<StepByStepResolution> _multiStmtResults = const [];
   int _multiStmtIndex = 0;
+  final ClassWizState _cw = ClassWizState();
   bool _historySuppressed = false;
   bool get _showDisp => _multiStmtResults.length > 1 && _activeResolution != null && _multiStmtIndex < _multiStmtResults.length - 1;
   LcdTheme _lcdTheme = LcdTheme.classic;

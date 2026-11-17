@@ -5,6 +5,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
       {required String liveLatex, required String modeLabel}) {
     if (_isPoweredOff) return const LcdPoweredOff();
     if (_isMemViewOpen) return _buildMemoryViewer();
+    if (_cw.resetOpen) return _buildResetView();
     return (_lcdErrorKind != null && !_isMenuOpen && !_isSetupOpen)
         ? _buildLcdErrorScreen()!
         : _isMenuOpen || _isSetupOpen
@@ -71,6 +72,9 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                         isAlphaActive: _isAlphaActive,
                         isMemoryActive: _memory.hasActiveM,
                         showDisp: _showDisp,
+                        showSto: _cw.stoPending,
+                        resultOverrideLatex: _resultOverride,
+                        calcVarLabel: _calcPromptVar,
                         lcdTheme: _lcdTheme,
                         isOledDark: _isOledDark,
                         showDecimalApprox: _showDecimalApprox,

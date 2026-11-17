@@ -3,7 +3,7 @@ part of 'calculator_screen.dart';
 /// Funciones SHIFT impresas en el teclado: `≈`, `OFF`, `Pol(`, `Rec(` e `INS`.
 extension _CalculatorScreenKeypressHw on _CalculatorScreenState {
   bool get _hwFreeEditing =>
-      !_isMenuOpen && !_isSetupOpen && !_isCalcPromptActive && _isMemViewOpen == false;
+      !_isMenuOpen && !_isSetupOpen && !_isCalcPromptActive && _isMemViewOpen == false && !_cw.resetOpen;
 
   /// Devuelve `true` si la pulsación fue consumida por el hardware (apagado o SHIFT+tecla).
   bool _handleKeyPressHw(String key) {
@@ -11,6 +11,7 @@ extension _CalculatorScreenKeypressHw on _CalculatorScreenState {
       if (key == 'AC') _powerOn();
       return true;
     }
+    if (_handleClassWizHw(key)) return true;
     if (_isMemViewOpen) return _handleMemViewKey(key);
     if (!_isShiftActive || !_hwFreeEditing) return false;
     switch (key) {
