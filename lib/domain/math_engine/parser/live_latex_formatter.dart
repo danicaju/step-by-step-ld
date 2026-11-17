@@ -48,7 +48,7 @@ class LiveLatexFormatter {
   /// Convierte la entrada en vivo del teclado en LaTeX estilo Casio Natural Display
   /// incluso cuando el alumno aún no ha terminado de escribir la operación.
   /// Si [cursorPos] no es nulo, inyecta un cursor visual compatible con `flutter_math_fork`.
-  static String rawToLiveLatex(String raw, {int? cursorPos}) {
+  static String rawToLiveLatex(String raw, {int? cursorPos, bool overwrite = false}) {
     if (raw.isEmpty) {
       return cursorPos != null ? _cursorBoxLatex : '0';
     }
@@ -232,7 +232,7 @@ class LiveLatexFormatter {
         .replaceAll('=', ' = ');
 
     // 8. Reemplazar el centinela de cursor por marcador visual azul eléctrico
-    out = out.replaceAll(c, _cursorMidLatex);
+    out = out.replaceAll(c, overwrite ? _cursorBoxLatex : _cursorMidLatex);
 
     return out;
   }

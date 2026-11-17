@@ -13,6 +13,8 @@ class ExpressionTokenizer {
     'acos(',
     'atan(',
     'log_(',
+    'Pol(',
+    'Rec(',
     'mcm(',
     'mcd(',
     'sin(',

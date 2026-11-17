@@ -6,6 +6,7 @@ class LcdStatusBar extends StatelessWidget {
   final bool isAlphaActive;
   final bool isMemoryActive;
   final bool isRadMode;
+  final String? angleLabel;
   final VoidCallback? onToggleAngleUnit;
   final String? modeLabel;
   final bool hasSteps;
@@ -24,6 +25,7 @@ class LcdStatusBar extends StatelessWidget {
     required this.isAlphaActive,
     required this.isMemoryActive,
     required this.isRadMode,
+    this.angleLabel,
     this.onToggleAngleUnit,
     this.modeLabel,
     required this.hasSteps,
@@ -69,13 +71,13 @@ class LcdStatusBar extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
             decoration: BoxDecoration(
-              color: isRadMode
+              color: (angleLabel != null ? angleLabel != 'DEG' : isRadMode)
                   ? const Color(0xFFE5A93C)
                   : (isOledDark ? const Color(0xFF1E2925) : const Color(0xFF1A2530)),
               borderRadius: BorderRadius.circular(3),
             ),
             child: Text(
-              isRadMode ? 'RAD' : 'DEG',
+              angleLabel ?? (isRadMode ? 'RAD' : 'DEG'),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 9,

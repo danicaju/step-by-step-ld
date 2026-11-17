@@ -7,7 +7,7 @@ import 'trigonometry/exact_trig_solver.dart';
 export 'trigonometry/dms_solver.dart';
 export 'trigonometry/exact_trig_solver.dart';
 
-enum AngleUnit { deg, rad }
+enum AngleUnit { deg, rad, grad }
 
 class TrigAndAnglesSolver {
   /// Resuelve razones trigonométricas directas e inversas con valores exactos notables de ESO/Bachillerato.

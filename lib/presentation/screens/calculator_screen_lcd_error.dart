@@ -25,6 +25,7 @@ extension _CalculatorScreenLcdError on _CalculatorScreenState {
 
   /// Guardia del D-Pad: con error activo ◀ ▶ lo cierran y ▲ ▼ se ignoran.
   bool _lcdErrorDpadGuard({required bool dismiss}) {
+    if (_isPoweredOff) return true;
     if (_lcdErrorKind == null) return false;
     if (dismiss) _dismissLcdErrorForEdit();
     return true;

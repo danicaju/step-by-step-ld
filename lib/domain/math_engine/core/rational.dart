@@ -1,3 +1,5 @@
+import 'number_formatter.dart';
+
 class Rational {
   final int numerator;
   final int denominator;
@@ -188,26 +190,12 @@ class Rational {
     }
   }
 
-  /// Formato LaTeX exacto para Natural Textbook Display
-  String toLatex() {
-    if (denominator == 1) return '$numerator';
-    if (numerator < 0) {
-      return '-\\frac{${numerator.abs()}}{$denominator}';
-    }
-    return '\\frac{$numerator}{$denominator}';
-  }
+  /// Formato LaTeX exacto para Natural Textbook Display (impropia o mixta según SETUP).
+  String toLatex() => NumberFormatter.fraction(numerator, denominator);
 
-  /// Formato decimal para la tecla S<=>D
-  String toDecimalLatex({int maxDecimals = 6}) {
-    final value = numerator / denominator;
-    if (value == value.roundToDouble()) {
-      return value.toInt().toString();
-    }
-    String formatted = value.toStringAsFixed(maxDecimals);
-    formatted = formatted.replaceFirst(RegExp(r'0+$'), '');
-    formatted = formatted.replaceFirst(RegExp(r'\.$'), '');
-    return formatted.replaceAll('.', ','); // Coma decimal española
-  }
+  /// Formato decimal para la tecla S<=>D (Norm / Fix / Sci y separador según SETUP).
+  String toDecimalLatex({int maxDecimals = 6}) =>
+      NumberFormatter.decimal(numerator / denominator, maxDecimals: maxDecimals);
 
   @override
   bool operator ==(Object other) =>

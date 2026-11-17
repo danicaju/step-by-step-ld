@@ -297,7 +297,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('MODE'));
       await tester.pumpAndSettle();
-      expect(find.text('CONFIG / SETUP'), findsOneWidget);
+      expect(find.byKey(const Key('lcd_setup_menu')), findsOneWidget);
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '1'));
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '2'));
       await tester.pumpAndSettle();
       expect(
@@ -308,6 +310,8 @@ void main() {
         findsOneWidget,
       );
 
+      await tester.tap(find.byKey(const Key('lcd_angle_badge')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('lcd_angle_badge')));
       await tester.pumpAndSettle();
       expect(

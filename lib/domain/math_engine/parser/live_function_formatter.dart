@@ -23,6 +23,8 @@ class LiveFunctionFormatter {
     ('tan(', r'\tan'),
     ('log(', r'\log'),
     ('ln(', r'\ln'),
+    ('Pol(', r'\mathrm{Pol}'),
+    ('Rec(', r'\mathrm{Rec}'),
   ];
 
   static final RegExp _trigPower = RegExp(r'(sin|cos|tan)\^([0-9]+|\([0-9]+\))\(');

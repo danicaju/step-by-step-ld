@@ -366,8 +366,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('MODE'));
       await tester.pumpAndSettle();
-      expect(find.text('CONFIG / SETUP'), findsOneWidget);
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, '3'));
+      expect(find.byKey(const Key('lcd_setup_menu')), findsOneWidget);
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '5'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '1'));
       await tester.pumpAndSettle();
       expect(
         tester.widget<CasioLcdScreen>(find.byType(CasioLcdScreen)).isOledDark,

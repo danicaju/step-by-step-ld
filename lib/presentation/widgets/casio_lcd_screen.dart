@@ -7,6 +7,7 @@ import 'lcd/lcd_status_bar.dart';
 import 'lcd/lcd_mode_menu.dart';
 import 'lcd/lcd_setup_and_submenus.dart';
 import 'lcd/lcd_pedagogical_box.dart';
+import 'lcd/lcd_palette.dart';
 
 export 'lcd/lcd_math_sanitizer.dart';
 export 'lcd/lcd_status_bar.dart';
@@ -23,6 +24,7 @@ class CasioLcdScreen extends StatelessWidget {
   final bool isAlphaActive;
   final bool isMemoryActive;
   final bool isOledDark;
+  final LcdTheme? lcdTheme;
   final bool isSoundMuted;
   final bool showDecimalApprox;
   final String? modeLabel;
@@ -37,6 +39,8 @@ class CasioLcdScreen extends StatelessWidget {
   final ValueChanged<int>? onSelectMenuMode;
   final ValueChanged<int>? onMenuCursorChanged;
   final bool isRadMode;
+  final String? angleLabel;
+  final Widget? setupView;
   final VoidCallback? onToggleAngleUnit;
   final bool isSetupOpen;
   final ValueChanged<int>? onSelectSetupOption;
@@ -56,6 +60,7 @@ class CasioLcdScreen extends StatelessWidget {
     required this.isAlphaActive,
     this.isMemoryActive = false,
     this.isOledDark = false,
+    this.lcdTheme,
     this.isSoundMuted = false,
     required this.showDecimalApprox,
     this.modeLabel,
@@ -70,6 +75,8 @@ class CasioLcdScreen extends StatelessWidget {
     this.onSelectMenuMode,
     this.onMenuCursorChanged,
     this.isRadMode = false,
+    this.angleLabel,
+    this.setupView,
     this.onToggleAngleUnit,
     this.isSetupOpen = false,
     this.onSelectSetupOption,
@@ -140,18 +147,15 @@ class CasioLcdScreen extends StatelessWidget {
         displayLatex.contains(r'\begin{matrix}');
     final double latexFontSize = isMultiLineLatex ? 18.0 : 25.0;
 
-    final Color backgroundColor =
-        isOledDark ? const Color(0xFF111615) : const Color(0xFFDDE6DF);
-    final Color insetTopColor =
-        isOledDark ? const Color(0xFF0A0D0C) : const Color(0xFFC2CFC6);
-    final Color borderColor =
-        isOledDark ? const Color(0xFF27322E) : const Color(0xFF5D6B62);
-    final Color formulaColor =
-        isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF0F172A);
-    final Color originalFormulaColor =
-        isOledDark ? const Color(0xFF94A3B8) : const Color(0xFF475569);
-    final Color stepTitleColor =
-        isOledDark ? const Color(0xFF94A3B8) : const Color(0xFF334155);
+    final LcdPalette palette = LcdPalette.of(
+      lcdTheme ?? (isOledDark ? LcdTheme.night : LcdTheme.classic),
+    );
+    final Color backgroundColor = palette.background;
+    final Color insetTopColor = palette.inset;
+    final Color borderColor = palette.border;
+    final Color formulaColor = palette.formula;
+    final Color originalFormulaColor = palette.original;
+    final Color stepTitleColor = palette.title;
 
     return Container(
       width: double.infinity,
@@ -188,7 +192,7 @@ class CasioLcdScreen extends StatelessWidget {
                 stepTitleColor: stepTitleColor,
               )
             : isSetupOpen
-            ? LcdSetupMenu(
+            ? setupView ?? LcdSetupMenu(
                 isOledDark: isOledDark,
                 isRadMode: isRadMode,
                 onSelectSetupOption: onSelectSetupOption,
@@ -220,6 +224,7 @@ class CasioLcdScreen extends StatelessWidget {
                         isAlphaActive: isAlphaActive,
                         isMemoryActive: isMemoryActive,
                         isRadMode: isRadMode,
+                        angleLabel: angleLabel,
                         onToggleAngleUnit: onToggleAngleUnit,
                         modeLabel: modeLabel,
                         hasSteps: hasSteps,

@@ -19,7 +19,11 @@ extension _CalculatorScreenKeypressControl on _CalculatorScreenState {
         if (_isShiftActive) {
           _isShiftActive = false;
           _isMenuOpen = false;
-          _isSetupOpen = !_isSetupOpen;
+          if (_isSetupOpen) {
+            _closeSetup();
+          } else {
+            _openSetup();
+          }
           return true;
         }
         if (_isSetupOpen) {
@@ -42,26 +46,8 @@ extension _CalculatorScreenKeypressControl on _CalculatorScreenState {
         return true;
       }
 
-      // Si el menú SETUP (SHIFT + MODE) está abierto en la LCD
-      if (_isSetupOpen) {
-        if (key == 'AC') {
-          _isSetupOpen = false;
-          return true;
-        }
-        final opt = int.tryParse(key);
-        if (opt != null && opt >= 1 && opt <= 3) {
-          _isSetupOpen = false;
-          if (opt == 1) {
-            _angleUnit = AngleUnit.deg;
-          } else if (opt == 2) {
-            _angleUnit = AngleUnit.rad;
-          } else if (opt == 3) {
-            _isOledDark = !_isOledDark;
-          }
-          return true;
-        }
-        return true;
-      }
+      // Menú SETUP (SHIFT + MODE) abierto: gestor propio
+      if (_isSetupOpen) return _handleSetupKey(key);
 
       // Si el prompt interactivo CALC (x = ?) está activo
       if (_isCalcPromptActive) {
@@ -100,62 +86,8 @@ extension _CalculatorScreenKeypressControl on _CalculatorScreenState {
         return true;
       }
 
-      // Si el Menú ClassWiz está abierto en la LCD, las teclas numéricas y = / AC navegan y seleccionan
-      if (_isMenuOpen) {
-        if (key == 'AC') {
-          _isMenuOpen = false;
-          _isAlphaActive = false;
-          _isShiftActive = false;
-          return true;
-        }
-        if (key == '=') {
-          final targetMode = CasioLcdScreen.menuModeIdAt(_menuCursorIndex);
-          _isMenuOpen = false;
-          _isAlphaActive = false;
-          _isShiftActive = false;
-          _resetFieldsForMode(targetMode);
-          return true;
-        }
-        final parsedMode = int.tryParse(key);
-        if (parsedMode != null) {
-          // Si pulsa 2..9, salta directamente a ese modo
-          if (parsedMode >= 2 && parsedMode <= 9) {
-            _isMenuOpen = false;
-            _isAlphaActive = false;
-            _isShiftActive = false;
-            _resetFieldsForMode(parsedMode);
-            return true;
-          }
-          // Si pulsa 1: sitúa el cursor en el modo 1. Si vuelve a pulsar 0, 1 o 2, entra a 10, 11 o 12.
-          if (parsedMode == 1) {
-            if (_menuCursorIndex == CasioLcdScreen.menuIndexForMode(1)) {
-              // Ya estaba en 1 y volvió a pulsar 1 -> Modo 11
-              _isMenuOpen = false;
-              _isAlphaActive = false;
-              _isShiftActive = false;
-              _resetFieldsForMode(11);
-              return true;
-            }
-            _menuCursorIndex = CasioLcdScreen.menuIndexForMode(1);
-            return true;
-          }
-          if (parsedMode == 0 && _menuCursorIndex == CasioLcdScreen.menuIndexForMode(1)) {
-            _isMenuOpen = false;
-            _isAlphaActive = false;
-            _isShiftActive = false;
-            _resetFieldsForMode(10);
-            return true;
-          }
-          if (parsedMode == 2 && _menuCursorIndex == CasioLcdScreen.menuIndexForMode(1)) {
-            _isMenuOpen = false;
-            _isAlphaActive = false;
-            _isShiftActive = false;
-            _resetFieldsForMode(12);
-            return true;
-          }
-        }
-        return true;
-      }
+      // Menú ClassWiz abierto: AC / = / dígitos 1-9 (gestor propio)
+      if (_isMenuOpen) return _handleMenuKey(key);
 
       // Selector previo de grado de polinomio en Modo 4 (Ruffini grado 2..6)
       if (_calculatorMode == 4 && !_polyIsNotableMode && _isChoosingRuffiniDegree) {

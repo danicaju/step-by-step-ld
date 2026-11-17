@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../domain/math_engine/core/calculator_memory.dart';
@@ -30,6 +32,14 @@ import '../widgets/casio_graph_canvas.dart';
 import '../widgets/casio_lcd_screen.dart';
 import '../widgets/lcd/lcd_dropdown_selector.dart';
 import '../widgets/lcd/lcd_error_screen.dart';
+import '../widgets/lcd/lcd_palette.dart';
+import '../widgets/lcd/lcd_powered_off.dart';
+import '../widgets/lcd/lcd_memory_viewer.dart';
+import '../widgets/lcd/lcd_menu_navigation.dart';
+import '../../domain/math_engine/parser/balanced_scan.dart';
+import '../../domain/math_engine/solvers/complex/pol_rec_solver.dart';
+import '../widgets/lcd/lcd_setup_menu.dart';
+import '../../domain/math_engine/core/calculator_settings.dart';
 import '../widgets/casio_matrix_editor_view.dart';
 import '../widgets/casio_stat_table_view.dart';
 import '../widgets/casio_vector_editor_view.dart';
@@ -46,6 +56,11 @@ import '../widgets/modes/inequality_system_editor_view.dart';
 
 part 'calculator_screen_optn.dart';
 part 'calculator_screen_lcd_error.dart';
+part 'calculator_screen_setup.dart';
+part 'calculator_screen_labels.dart';
+part 'calculator_screen_menu_keys.dart';
+part 'calculator_screen_memory_view.dart';
+part 'calculator_screen_keypress_hw.dart';
 part 'calculator_screen_op_handlers.dart';
 part 'calculator_screen_header_specs.dart';
 part 'calculator_screen_header_selectors.dart';
@@ -55,6 +70,7 @@ part 'calculator_screen_solvers_basic.dart';
 part 'calculator_screen_solvers_advanced.dart';
 part 'calculator_screen_mode_cells.dart';
 part 'calculator_screen_dpad.dart';
+part 'calculator_screen_dpad_vertical.dart';
 part 'calculator_screen_history.dart';
 part 'calculator_screen_mode_reset.dart';
 part 'calculator_screen_keypress_helpers.dart';
@@ -62,6 +78,7 @@ part 'calculator_screen_keypress_control.dart';
 part 'calculator_screen_keypress_functions.dart';
 part 'calculator_screen_keypress.dart';
 part 'calculator_screen_chassis.dart';
+part 'calculator_screen_chassis_lcd.dart';
 part 'calculator_screen_views.dart';
 
 class CalculatorScreen extends StatefulWidget {
@@ -82,9 +99,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   bool _isShiftActive = false;
   bool _isAlphaActive = false;
   bool _showDecimalApprox = false;
-  bool _isOledDark = false;
+  LcdTheme _lcdTheme = LcdTheme.classic;
+  bool get _isOledDark => _lcdTheme == LcdTheme.night;
   bool _isSoundMuted = KeyClickSound.isMuted;
   bool _isMenuOpen = false;
+  bool _isPoweredOff = false;
+  bool _isInsertMode = true;
+  bool _isMemViewOpen = false;
+  bool _menuPendingOne = false;
+  Timer? _menuOneTimer;
+  int _memCursor = 0;
+  int _setupRow = 0;
+  int _setupSubCursor = -1;
+  NumberFormatMode? _setupDigitsFor;
   int _eqKind = 0; // tipo de ecuación elegido en la cabecera LCD (M2)
   LcdErrorKind? _lcdErrorKind;
   String _lcdErrorMessage = '';
@@ -245,6 +272,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   @override
+  void dispose() {
+    _menuOneTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bool showLiveCursor =
         !_isMenuOpen &&
@@ -279,34 +312,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       liveLatex = ExpressionParser.rawToLiveLatex(
         _rawInput,
         cursorPos: showLiveCursor ? _cursorPos : null,
+        overwrite: !_isInsertMode,
       );
     } else {
       liveLatex = _rawInput;
     }
 
-    final modeLabels = {
-      1: 'M1: CALCULAR',
-      2: 'M2: ECUACIONES',
-      3: _systemDim == 3 ? 'M3: SIST 3×3' : 'M3: SIST 2×2',
-      4: _polyIsNotableMode
-          ? 'M4: NOTABLES'
-          : (_isChoosingRuffiniDegree
-              ? 'M4: RUFFINI'
-              : 'M4: RUFFINI ($_ruffiniDegree.º)'),
-      5: 'M5: PARÁBOLAS',
-      6: switch (_ineqDegree) {
-        1 => 'M6: INEC. 1°',
-        2 => 'M6: INEC. 2°',
-        _ => 'M6: |x| / RAC.',
-      },
-      7: _ineqSysUnknowns == 1 ? 'M7: SIST. INEC 1D' : 'M7: REGIÓN 2D',
-      8: 'M8: ESTADÍST.',
-      9: 'M9: MATRICES ($_matrixRowsA×$_matrixColsA)',
-      10: 'M10: VECTORES ${_vectorDim}D',
-      11: 'M11: COMPLEJOS',
-      12: 'M12: DERIV. E INT.',
-    };
-    final modeLabel = modeLabels[_calculatorMode] ?? 'M1: CALCULAR';
+    final modeLabel = _modeLabelText();
 
     return Scaffold(
       backgroundColor: const Color(0xFF121418),

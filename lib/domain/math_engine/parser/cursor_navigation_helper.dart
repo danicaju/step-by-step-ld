@@ -71,7 +71,21 @@ class CursorNavigationHelper {
     int currentPos,
     String token, {
     bool keepLeadingZero = false,
+    bool overwrite = false,
   }) {
+    // Modo sobrescritura (SHIFT + DEL / INS): sustituye el token que hay tras el cursor.
+    if (overwrite && currentPos < raw.length && !(raw == '0' && currentPos == 1)) {
+      final from = snapCursorOutsideKeywords(raw, currentPos);
+      if (from < raw.length) {
+        final end = stepCursorRight(raw, from);
+        return insertAtCursor(
+          raw.substring(0, from) + raw.substring(end),
+          from,
+          token,
+          keepLeadingZero: keepLeadingZero,
+        );
+      }
+    }
     // Una potencia nunca queda huérfana: sin operando previo se usa `0` como base.
     if (token.startsWith('^') && raw.isEmpty) {
       return ('0$token', 1 + token.length);

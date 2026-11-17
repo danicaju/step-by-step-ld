@@ -183,6 +183,7 @@ extension _CalculatorScreenKeypressHelpers on _CalculatorScreenState {
       _cursorPos,
       token,
       keepLeadingZero: keepLeadingZero,
+      overwrite: !_isInsertMode,
     );
     _rawInput = nextRaw;
     _cursorPos = nextPos;

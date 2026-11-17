@@ -383,7 +383,7 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('M+ : ${targetVal.toLatex()} sumado a M. (M = ${updated.toLatex()})'),
-            backgroundColor: const Color(0xFF0F766E),
+            backgroundColor: const Color(0xFF1A2530),
             duration: const Duration(seconds: 2),
           ),
         );

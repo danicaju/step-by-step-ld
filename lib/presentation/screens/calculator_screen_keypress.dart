@@ -3,6 +3,7 @@ part of 'calculator_screen.dart';
 extension _CalculatorScreenKeypress on _CalculatorScreenState {
   void _handleKeyPress(String key) {
     updateState(() {
+      if (_handleKeyPressHw(key)) return;
       if (_lcdErrorKind != null) {
         if (key != 'AC') return;
         _dismissLcdErrorForEdit();

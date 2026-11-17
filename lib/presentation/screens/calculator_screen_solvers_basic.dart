@@ -8,6 +8,16 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
       }
       try {
         final finalizedInput = ExpressionParser.finalizeForEvaluation(_rawInput);
+        final polRec = _tryPolRec(finalizedInput);
+        if (polRec != null) {
+          updateState(() {
+            _rawInput = finalizedInput;
+            _cursorPos = finalizedInput.length;
+            _activeResolution = polRec;
+          });
+          _recordCurrentResolutionToHistory(polRec, 'M1: CALCULAR');
+          return;
+        }
         final ast = _parser.parse(finalizedInput);
         final res = _evaluator.evaluate(
           ast,

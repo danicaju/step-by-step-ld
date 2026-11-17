@@ -170,12 +170,16 @@ class EvaluatorSpecialNodesHelper {
     required void Function(Rational) setLastEvaluatedRational,
   }) {
     final piMult = EvaluatorQuickEval.extractPiMultiple(node.arg);
-    final ratArg = piMult == null ? EvaluatorQuickEval.evalToRationalQuick(node.arg) : null;
-    final numArg = EvaluatorQuickEval.evalToDoubleQuick(node.arg, angleUnit: angleUnit);
+    // GRA: 1 gradián = 0,9° -> se resuelve como grados con el argumento escalado.
+    final isGrad = angleUnit == AngleUnit.grad;
+    final rawRat = piMult == null ? EvaluatorQuickEval.evalToRationalQuick(node.arg) : null;
+    final ratArg = (isGrad && rawRat != null) ? rawRat * Rational(9, 10) : rawRat;
+    final rawNum = EvaluatorQuickEval.evalToDoubleQuick(node.arg, angleUnit: angleUnit);
+    final numArg = (isGrad && rawNum != null) ? rawNum * 0.9 : rawNum;
     final res = TrigAndAnglesSolver.solveTrig(
       function: node.function,
       argNode: node.arg,
-      unit: angleUnit,
+      unit: isGrad ? AngleUnit.deg : angleUnit,
       evaluatedNumericArg: numArg,
       exactRationalArg: ratArg,
       piMultipleRational: piMult,

@@ -16,8 +16,8 @@ class ExpressionParser {
       CursorNavigationHelper.snapCursorOutsideKeywords(raw, pos, preferLeft: preferLeft);
   static int stepCursorLeft(String raw, int currentPos) => CursorNavigationHelper.stepCursorLeft(raw, currentPos);
   static int stepCursorRight(String raw, int currentPos) => CursorNavigationHelper.stepCursorRight(raw, currentPos);
-  static (String raw, int cursor) insertAtCursor(String raw, int currentPos, String token, {bool keepLeadingZero = false}) =>
-      CursorNavigationHelper.insertAtCursor(raw, currentPos, token, keepLeadingZero: keepLeadingZero);
+  static (String raw, int cursor) insertAtCursor(String raw, int currentPos, String token, {bool keepLeadingZero = false, bool overwrite = false}) =>
+      CursorNavigationHelper.insertAtCursor(raw, currentPos, token, keepLeadingZero: keepLeadingZero, overwrite: overwrite);
   static (String raw, int cursor) deleteAtCursor(String raw, int currentPos, {String emptyResult = '0', int emptyCursor = 1}) =>
       CursorNavigationHelper.deleteAtCursor(raw, currentPos, emptyResult: emptyResult, emptyCursor: emptyCursor);
   static int? jumpFractionUpDown(String raw, int currentPos, {required bool isUp}) =>
@@ -40,8 +40,8 @@ class ExpressionParser {
   static (String raw, int cursor)? handleStructuredBlockRightArrow(String raw, int cursorPos) =>
       TemplateNavigationHelper.handleStructuredBlockRightArrow(raw, cursorPos);
   static String finalizeForEvaluation(String raw) => LiveLatexFormatter.finalizeForEvaluation(raw);
-  static String rawToLiveLatex(String raw, {int? cursorPos}) =>
-      LiveLatexFormatter.rawToLiveLatex(raw, cursorPos: cursorPos);
+  static String rawToLiveLatex(String raw, {int? cursorPos, bool overwrite = false}) =>
+      LiveLatexFormatter.rawToLiveLatex(raw, cursorPos: cursorPos, overwrite: overwrite);
 
   late List<String> _tokens;
   int _pos = 0;

@@ -251,7 +251,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
 
   void _toggleAngleUnit() {
     updateState(() {
-      _angleUnit = _angleUnit == AngleUnit.deg ? AngleUnit.rad : AngleUnit.deg;
+      _angleUnit = AngleUnit.values[(_angleUnit.index + 1) % AngleUnit.values.length];
       _isShiftActive = false;
       _isAlphaActive = false;
     });
@@ -264,7 +264,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
       } else if (option == 2) {
         _angleUnit = AngleUnit.rad;
       } else if (option == 3) {
-        _isOledDark = !_isOledDark;
+        _lcdTheme = _lcdTheme == LcdTheme.night ? LcdTheme.classic : LcdTheme.night;
       }
       _isSetupOpen = false;
       _isShiftActive = false;
@@ -285,13 +285,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
     }
     final candidate = ExpressionParser.finalizeForEvaluation(_rawInput);
     if (candidate == '0' || !RegExp(r'[A-Za-z]').hasMatch(candidate)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Escribe primero una expresión con la variable x (ej: -x^2 - 2x) antes de pulsar CALC.'),
-          backgroundColor: Color(0xFFD97706),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      _openMemoryViewer();
       return;
     }
     _activeResolution = null;
@@ -390,7 +384,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
     updateState(() {
       _isShiftActive = false;
       _isAlphaActive = false;
-      _isOledDark = !_isOledDark;
+      _lcdTheme = _lcdTheme == LcdTheme.night ? LcdTheme.classic : LcdTheme.night;
     });
   }
 

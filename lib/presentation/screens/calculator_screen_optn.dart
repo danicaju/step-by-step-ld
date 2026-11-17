@@ -8,7 +8,7 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: const Color(0xFF1A2530),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -57,9 +57,9 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
             },
           ),
         ListTile(
-          leading: const Icon(Icons.rotate_right_rounded, color: Color(0xFF38BDF8)),
+          leading: const Icon(Icons.rotate_right_rounded, color: Color(0xFFE5A93C)),
           title: Text(
-            'Unidad angular: cambiar a ${_angleUnit == AngleUnit.deg ? 'RAD' : 'DEG'}',
+            'Unidad angular: $_angleLabel (cambiar)',
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
           ),
           onTap: () {
@@ -68,7 +68,7 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
           },
         ),
         ListTile(
-          leading: const Icon(Icons.image_outlined, color: Color(0xFF2DD4BF)),
+          leading: const Icon(Icons.image_outlined, color: Color(0xFFE5A93C)),
           title: const Text(
             'Exportar desarrollo a PNG transparente',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
@@ -79,7 +79,7 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
           },
         ),
         ListTile(
-          leading: const Icon(Icons.code_rounded, color: Color(0xFF818CF8)),
+          leading: const Icon(Icons.code_rounded, color: Color(0xFFE5A93C)),
           title: const Text(
             'Copiar bloque LaTeX al portapapeles',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
@@ -98,7 +98,7 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
       title: 'OPTN · Estadística 1-Var (STEP-BY-STEP LD)',
       itemsBuilder: (ctx) => [
         ListTile(
-          leading: const Icon(Icons.calculate_rounded, color: Color(0xFF38BDF8)),
+          leading: const Icon(Icons.calculate_rounded, color: Color(0xFFE5A93C)),
           title: const Text(
             '1: Cálculo de 1 variable (CALC STAT)',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
@@ -113,7 +113,7 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
           },
         ),
         ListTile(
-          leading: const Icon(Icons.sticky_note_2_rounded, color: Color(0xFF2DD4BF)),
+          leading: const Icon(Icons.sticky_note_2_rounded, color: Color(0xFFE5A93C)),
           title: const Text(
             '2: Exportar Tabla y Pasos a PNG',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
@@ -124,7 +124,7 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
           },
         ),
         ListTile(
-          leading: const Icon(Icons.code_rounded, color: Color(0xFF818CF8)),
+          leading: const Icon(Icons.code_rounded, color: Color(0xFFE5A93C)),
           title: const Text(
             '3: Copiar Bloque LaTeX al Portapapeles',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),

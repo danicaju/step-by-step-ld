@@ -117,17 +117,23 @@ class EvaluatorQuickEval {
       TrigNode(:final function, :final arg) => () {
           final a = evalToDoubleQuick(arg, angleUnit: angleUnit, memoryVariables: memoryVariables);
           if (a == null) return null;
-          final rad = angleUnit == AngleUnit.deg ? a * math.pi / 180.0 : a;
+          final rad = switch (angleUnit) {
+            AngleUnit.deg => a * math.pi / 180.0,
+            AngleUnit.grad => a * math.pi / 200.0,
+            AngleUnit.rad => a,
+          };
+          final back = switch (angleUnit) {
+            AngleUnit.deg => 180.0 / math.pi,
+            AngleUnit.grad => 200.0 / math.pi,
+            AngleUnit.rad => 1.0,
+          };
           return switch (function) {
             TrigFunction.sin => math.sin(rad),
             TrigFunction.cos => math.cos(rad),
             TrigFunction.tan => math.tan(rad),
-            TrigFunction.asin => math.asin(a.clamp(-1.0, 1.0)) *
-                (angleUnit == AngleUnit.deg ? 180.0 / math.pi : 1.0),
-            TrigFunction.acos => math.acos(a.clamp(-1.0, 1.0)) *
-                (angleUnit == AngleUnit.deg ? 180.0 / math.pi : 1.0),
-            TrigFunction.atan => math.atan(a) *
-                (angleUnit == AngleUnit.deg ? 180.0 / math.pi : 1.0),
+            TrigFunction.asin => math.asin(a.clamp(-1.0, 1.0)) * back,
+            TrigFunction.acos => math.acos(a.clamp(-1.0, 1.0)) * back,
+            TrigFunction.atan => math.atan(a) * back,
           };
         }(),
       LogNode(:final base, :final arg, :final isNaturalLn) => () {
