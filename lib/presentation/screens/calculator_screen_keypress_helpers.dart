@@ -189,17 +189,6 @@ extension _CalculatorScreenKeypressHelpers on _CalculatorScreenState {
     _cursorPos = nextPos;
   }
 
-  void _insertVariableX() {
-    updateState(() {
-      _isShiftActive = false;
-      _isAlphaActive = false;
-      if (_activeResolution != null) {
-        _clearActiveResolutionCursor();
-      }
-      _applyRawInsertion('x');
-    });
-  }
-
   void _insertEqualsInEquation() {
     if (_calculatorMode == 2) {
       updateState(() {
