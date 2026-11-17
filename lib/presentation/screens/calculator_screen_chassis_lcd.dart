@@ -63,6 +63,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                         ),
                       )
                     : CasioLcdScreen(
+                        key: _lcdBoundsKey,
                         currentInputLatex: liveLatex,
                         currentResolution: _activeResolution,
                         activeStepIndex: _activeStepIndex,

@@ -2,6 +2,8 @@ part of 'calculator_screen.dart';
 
 extension _CalculatorScreenKeypress on _CalculatorScreenState {
   void _handleKeyPress(String key) {
+    // Menu desplegable de la cabecera abierto: 1-9, = y AC le pertenecen.
+    if (LcdDropdownController.active?.handleKey(key) ?? false) return;
     updateState(() {
       if (_handleKeyPressHw(key)) return;
       if (_lcdErrorKind != null) {
@@ -9,7 +11,11 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
         _dismissLcdErrorForEdit();
       }
       if (key == '=' && _headerFocus >= 0) {
-        _headerFocus = -1;
+        // = sobre un desplegable enfocado lo abre (1-9 / D-Pad / = eligen).
+        final specs = _headerSpecs();
+        if (_headerFocus < specs.length) {
+          _hdrCtrls[specs[_headerFocus].keyName]?.open();
+        }
         return;
       }
       if (_handleKeyPressControl(key)) return;

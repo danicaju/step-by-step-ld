@@ -58,6 +58,9 @@ extension _CalculatorScreenHeaderSelectors on _CalculatorScreenState {
                 height: 22,
                 fontSize: 10.5,
                 isHighlighted: _headerFocus == i,
+                controller: _hdrCtrls.putIfAbsent(
+                    specs[i].keyName, LcdDropdownController.new),
+                boundsKey: _lcdBoundsKey,
                 onChanged: (v) => updateState(() {
                   _headerFocus = -1;
                   specs[i].onSelect(v);

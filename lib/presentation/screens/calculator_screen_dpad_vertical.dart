@@ -2,6 +2,7 @@ part of 'calculator_screen.dart';
 
 extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
   void _handleDpadUp() {
+    if (LcdDropdownController.active?.handleDpad('up') ?? false) return;
     updateState(() {
       if (_lcdErrorDpadGuard(dismiss: false)) return;
       if (_isSetupOpen) {
@@ -116,6 +117,7 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
   }
 
   void _handleDpadDown() {
+    if (LcdDropdownController.active?.handleDpad('down') ?? false) return;
     updateState(() {
       if (_lcdErrorDpadGuard(dismiss: false)) return;
       if (_isSetupOpen) {

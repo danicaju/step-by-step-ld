@@ -170,6 +170,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   // Estado Modo 4 (Polinomios: Regla de Ruffini grado 2..6 o Identidades Notables)
   bool _polyIsNotableMode = false;
+  final GlobalKey _lcdBoundsKey = GlobalKey();
+  final Map<String, LcdDropdownController> _hdrCtrls = {};
   int _headerFocus = -1; // foco D-Pad en desplegables de cabecera LCD (-1 = ninguno)
   static const List<String> _allRuffiniLabels = [
     'a',
