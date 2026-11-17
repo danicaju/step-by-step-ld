@@ -126,7 +126,7 @@ class ComplexArithmeticSolver {
 
     final numDist = distributiveExpandedLatex(ac, adMinus, bc, bdMinus);
     final step2Latex =
-        '\\frac{$numDist}{${wrapNeg(c)}^{2} - \\left(${wrapNeg(d)}i\\right)^{2}} = '
+        '\\frac{$numDist}{${wrapNeg(c)}^{2} - \\left(${d == Rational(1) ? '' : (d == Rational(-1) ? '-' : wrapNeg(d))}i\\right)^{2}} = '
         '\\frac{${numProd.toLatex()}}{${(c * c).toLatex()} + ${(d * d).toLatex()}} = '
         '\\frac{${numProd.toLatex()}}{${denomSq.toLatex()}}';
 

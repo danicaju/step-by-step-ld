@@ -13,6 +13,8 @@ class CasioPhysicalKey extends StatefulWidget {
   final VoidCallback onTap;
   final int flex;
   final double? minHeight;
+  final bool isShiftActive;
+  final bool isAlphaActive;
 
   const CasioPhysicalKey({
     super.key,
@@ -25,6 +27,8 @@ class CasioPhysicalKey extends StatefulWidget {
     required this.onTap,
     this.flex = 1,
     this.minHeight,
+    this.isShiftActive = false,
+    this.isAlphaActive = false,
   });
 
   @override
@@ -37,7 +41,23 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
   @override
   Widget build(BuildContext context) {
     final bgColor = widget.backgroundColor ?? const Color(0xFF2B2E36);
-    final txtColor = widget.textColor ?? Colors.white;
+
+    final bool showShiftFace = widget.isShiftActive &&
+        widget.shiftLabel != null &&
+        widget.shiftLabel!.trim().isNotEmpty;
+    final bool showAlphaFace = widget.isAlphaActive &&
+        widget.alphaLabel != null &&
+        widget.alphaLabel!.trim().isNotEmpty;
+
+    final String activeFaceLabel = showShiftFace
+        ? widget.shiftLabel!
+        : (showAlphaFace ? widget.alphaLabel! : widget.label);
+
+    final Color effectiveTextColor = showShiftFace
+        ? const Color(0xFFE5A93C)
+        : (showAlphaFace
+            ? const Color(0xFFE05252)
+            : (widget.textColor ?? Colors.white));
 
     return Expanded(
       flex: widget.flex,
@@ -132,16 +152,17 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
                   padding: const EdgeInsets.symmetric(horizontal: 3.0),
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: widget.customLabelWidget ??
-                        Text(
-                          widget.label,
-                          maxLines: 1,
-                          style: TextStyle(
-                            color: txtColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                    child: (!showShiftFace && !showAlphaFace && widget.customLabelWidget != null)
+                        ? widget.customLabelWidget!
+                        : Text(
+                            activeFaceLabel,
+                            maxLines: 1,
+                            style: TextStyle(
+                              color: effectiveTextColor,
+                              fontSize: (showShiftFace || showAlphaFace) ? 12.0 : 13.0,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
                   ),
                 ),
               ),

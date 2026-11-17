@@ -114,6 +114,13 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
     );
   }
 
+  void _flipIneqSysUnknowns() {
+    _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
+    _activeResolution = null;
+    _activeIneqVisualData = null;
+    _currentFeasibleRegion = null;
+  }
+
   Widget _buildInequalitySystemEditorView() {
     return InequalitySystemEditorView(
       isOledDark: _isOledDark,

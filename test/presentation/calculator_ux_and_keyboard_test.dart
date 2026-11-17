@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/header_select.dart';
 import 'package:casio_tutor_calc/domain/math_engine/parser/expression_parser.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/linear_equation_solver.dart';
 import 'package:casio_tutor_calc/presentation/screens/calculator_screen.dart';
@@ -240,7 +241,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '4'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('poly_tab_notables')));
+      await pickHeader(tester, 'hdr_poly_kind', 'poly_tab_notables');
       await tester.pumpAndSettle();
 
       expect(find.text('M4: NOTABLES'), findsOneWidget);
@@ -250,7 +251,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('ALPHA'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text(')')); // Escribe 'x'
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, 'X').first); // Escribe 'x'
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('replay_right'))); // Salta al slot b
       await tester.pumpAndSettle();
@@ -332,8 +333,7 @@ void main() {
       // 4. Confirmar con '=': entra en Modo 4
       await tester.tap(find.text('='));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('poly_tab_ruffini')), findsOneWidget);
-      expect(find.byKey(const Key('poly_tab_notables')), findsOneWidget);
+      expect(find.byKey(const Key('hdr_poly_kind')), findsOneWidget);
 
       // 5. Volver a abrir el menú y pulsar AC para cancelar
       await tester.tap(find.text('MODE'));
@@ -342,7 +342,7 @@ void main() {
       await tester.tap(find.text('AC'));
       await tester.pumpAndSettle();
       // Debe seguir en Modo 4 sin cambios
-      expect(find.byKey(const Key('poly_tab_ruffini')), findsOneWidget);
+      expect(find.byKey(const Key('hdr_poly_kind')), findsOneWidget);
     });
 
     testWidgets('Toggle OLED/LCD en la propia LCD y SHIFT + MODE conmutan tema OLED y LCD clásico', (tester) async {
@@ -662,8 +662,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('RUFFINI GRADO 5'), findsOneWidget);
-      expect(find.text('e'), findsOneWidget);
-      expect(find.text('f'), findsOneWidget);
+      // 'e' también es leyenda ALPHA de las teclas 1 y ×10ˣ: buscar solo en la LCD
+      expect(
+        find.descendant(of: find.byType(CasioLcdScreen), matching: find.text('e')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: find.byType(CasioLcdScreen), matching: find.text('f')),
+        findsOneWidget,
+      );
 
       // Introducir [1, 0, -5, 0, 4, 0] -> x⁵ - 5x³ + 4x
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '1'));
@@ -701,7 +708,7 @@ void main() {
       expect(find.textContaining('PASO 1/'), findsWidgets);
 
       // Cambiar rápidamente a grado 6 mediante la pestaña contextual
-      await tester.tap(find.byKey(const Key('ruffini_tab_6')));
+      await pickHeader(tester, 'hdr_poly_degree', 'ruffini_tab_6');
       await tester.pumpAndSettle();
       expect(find.text('RUFFINI GRADO 6'), findsOneWidget);
       expect(find.text('g'), findsOneWidget);

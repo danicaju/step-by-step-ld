@@ -3,6 +3,7 @@ import '../core/rational.dart';
 import '../models/step_resolution.dart';
 import '../parser/expression_parser.dart';
 import 'quadratic_solver.dart';
+import 'ruffini_solver.dart';
 import 'super_equation_solver.dart';
 import 'polynomials/polynomial_models_and_ast.dart';
 import 'polynomials/linear_from_coeffs_helper.dart';
@@ -149,7 +150,19 @@ class PolynomialEquationSolver {
     final int deg = diffPoly.degree;
 
     if (deg > 2) {
-      return SuperEquationSolver.solve(rawEquation);
+      // Grado >= 3: factorización por Ruffini con coeficientes enteros.
+      // (Delegar de nuevo en SuperEquationSolver provocaba recursión infinita.)
+      if (deg > 6) {
+        throw const FormatException('Solo se resuelven polinomios hasta grado 6.');
+      }
+      final lcmDen = Rational.lcmMany(
+        diffPoly.coeffs.map((c) => c.denominator).toList(),
+      );
+      final scaledPoly = diffPoly.scale(Rational(lcmDen));
+      final ruffiniCoeffs = <int>[
+        for (var k = deg; k >= 0; k--) scaledPoly.at(k).numerator,
+      ];
+      return RuffiniSolver.factorize(ruffiniCoeffs);
     }
 
     final int lcmDiffDen = Rational.lcmMany(

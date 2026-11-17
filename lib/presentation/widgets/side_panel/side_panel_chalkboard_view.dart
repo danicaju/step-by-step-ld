@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import '../../../domain/math_engine/models/step_resolution.dart';
 import '../../../domain/math_engine/solvers/function_graph_solver.dart';
+import '../../utils/latex_plain_text.dart';
 import '../casio_graph_canvas.dart';
 import '../casio_lcd_screen.dart';
 class SidePanelChalkboardView extends StatelessWidget {
@@ -333,7 +334,7 @@ class StepBoardTile extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              step.pedagogicalNote,
+              LatexPlainText.toPlain(step.pedagogicalNote),
               style: const TextStyle(
                 color: Color(0xFF94A3B8),
                 fontSize: 11.5,
@@ -363,7 +364,7 @@ class StepBoardTile extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        step.warningTrick!,
+                        LatexPlainText.toPlain(step.warningTrick!),
                         style: const TextStyle(
                           color: Color(0xFFFCA5A5),
                           fontSize: 11,

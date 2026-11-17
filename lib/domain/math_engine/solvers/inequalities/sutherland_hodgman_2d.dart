@@ -80,7 +80,8 @@ class SutherlandHodgman2D {
   }
 
   /// Determina si una región es vacía, acotada o no acotada sobre una caja de gran alcance.
-  static ({bool isEmpty, bool isBounded, List<Point2D> clippedPolygon}) analyzeFeasibleRegion(
+  static ({bool isEmpty, bool isBounded, bool isDegenerate, List<Point2D> clippedPolygon})
+      analyzeFeasibleRegion(
     List<LinearInequality2D> ineqs, {
     double boxLimit = 1000.0,
   }) {
@@ -95,7 +96,15 @@ class SutherlandHodgman2D {
     final area = computePolygonArea(clipped);
 
     if (clipped.length < 3 || area < 1e-4) {
-      return (isEmpty: true, isBounded: false, clippedPolygon: <Point2D>[]);
+      // Región sin interior: con todas las desigualdades no estrictas (<=, >=) y puntos
+      // que sobreviven al recorte, queda un segmento o punto (degenerada), no vacía.
+      final degenerate = clipped.isNotEmpty && ineqs.every((q) => !q.isStrict);
+      return (
+        isEmpty: !degenerate,
+        isBounded: degenerate,
+        isDegenerate: degenerate,
+        clippedPolygon: degenerate ? clipped : <Point2D>[],
+      );
     }
 
     final threshold = boxLimit - 10.0;
@@ -106,6 +115,7 @@ class SutherlandHodgman2D {
     return (
       isEmpty: false,
       isBounded: !touchesBorder,
+      isDegenerate: false,
       clippedPolygon: clipped,
     );
   }

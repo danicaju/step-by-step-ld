@@ -48,34 +48,34 @@ class LcdDropdownSelector<T> extends StatelessWidget {
 
     // Paleta de hardware ClassWiz (anti-slop, sin bordes azules/cian)
     final Color bgColor = isHighlighted
-        ? (isOledDark ? const Color(0xFF252D3D) : const Color(0xFF181E29))
-        : (isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD));
+        ? (isOledDark ? const Color(0xFF2B3445) : const Color(0xFF181E29))
+        : (isOledDark ? const Color(0xFF1E2A26) : const Color(0xFFC8D6CD));
 
     final Color borderColor = isHighlighted
-        ? (isOledDark ? const Color(0xFF475569) : const Color(0xFF2B3445))
-        : (isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80));
+        ? (isOledDark ? const Color(0xFF2F3E38) : const Color(0xFF2B3445))
+        : (isOledDark ? const Color(0xFF3B4A42) : const Color(0xFF7A8C80));
 
     final Color textColor = isHighlighted
         ? Colors.white
-        : (isOledDark ? const Color(0xFFE2E8F0) : const Color(0xFF101815));
+        : (isOledDark ? const Color(0xFFDDE6DF) : const Color(0xFF101815));
 
     final Color arrowColor = isHighlighted
         ? Colors.white70
-        : (isOledDark ? const Color(0xFF94A3B8) : const Color(0xFF475569));
+        : (isOledDark ? const Color(0xFF9DB0A4) : const Color(0xFF2F3E38));
 
     return Theme(
       data: Theme.of(context).copyWith(
         popupMenuTheme: PopupMenuThemeData(
-          color: isOledDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+          color: isOledDark ? const Color(0xFF1E2A26) : const Color(0xFFDDE6DF),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
             side: BorderSide(
-              color: isOledDark ? const Color(0xFF334155) : const Color(0xFF94A3B8),
+              color: isOledDark ? const Color(0xFF3B4A42) : const Color(0xFF9DB0A4),
               width: 1.2,
             ),
           ),
           textStyle: TextStyle(
-            color: isOledDark ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A),
+            color: isOledDark ? const Color(0xFFEFF3F0) : const Color(0xFF1A2530),
             fontSize: fontSize + 1,
             fontWeight: FontWeight.w600,
           ),
@@ -117,7 +117,7 @@ class LcdDropdownSelector<T> extends StatelessWidget {
                         style: TextStyle(
                           color: item.value == value
                               ? Colors.white
-                              : (isOledDark ? const Color(0xFFF1F5F9) : const Color(0xFF181E29)),
+                              : (isOledDark ? const Color(0xFFEFF3F0) : const Color(0xFF181E29)),
                           fontSize: fontSize + 1,
                           fontWeight: item.value == value ? FontWeight.bold : FontWeight.normal,
                         ),
@@ -161,10 +161,9 @@ class LcdDropdownSelector<T> extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 3),
-              Icon(
-                Icons.arrow_drop_down_rounded,
-                size: 16,
-                color: arrowColor,
+              Text(
+                '▾',
+                style: TextStyle(color: arrowColor, fontSize: fontSize + 1, fontWeight: FontWeight.bold),
               ),
             ],
           ),

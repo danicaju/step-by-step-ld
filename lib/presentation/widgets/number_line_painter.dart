@@ -32,6 +32,8 @@ class NumberLineWidget extends StatelessWidget {
             ? constraints.maxHeight
             : height;
         final hasSol = data.solutionLatex.isNotEmpty && actualH >= 65.0;
+        // En LCD muy baja (apaisado) se oculta la barra de título para no desbordar.
+        final showHeader = actualH >= 44.0;
 
         return Container(
           width: double.infinity,
@@ -50,8 +52,13 @@ class NumberLineWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Barra superior: Título didáctico y Solución en intervalo
-              Row(
+              // (altura fija: evita overflow vertical en LCD apaisada baja)
+              if (showHeader)
+              SizedBox(
+                height: 16,
+                child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     data.isSystem
@@ -83,8 +90,9 @@ class NumberLineWidget extends StatelessWidget {
                       ),
                     ),
                 ],
+                ),
               ),
-              const SizedBox(height: 2),
+              if (showHeader) const SizedBox(height: 2),
 
               // Área de dibujo CustomPaint
               Expanded(

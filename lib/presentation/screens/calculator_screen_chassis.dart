@@ -344,14 +344,7 @@ extension _CalculatorScreenChassis on _CalculatorScreenState {
                               ? ExpressionParser.rawToLiveLatex(_calcExpressionRaw)
                               : null,
                           calcValueRaw: _calcValueRaw,
-                          inequalitySignBadge: _calculatorMode == 6
-                              ? _inequalitySign.symbol
-                              : null,
-                          onCycleInequalitySign: () {
-                            updateState(() {
-                              _cycleInequalitySign();
-                            });
-                          },
+                          headerSelectors: _buildHeaderSelectors(),
                           supplementaryVisualView:
                               (_calculatorMode == 6 || _calculatorMode == 7) &&
                                       _activeIneqVisualData != null &&

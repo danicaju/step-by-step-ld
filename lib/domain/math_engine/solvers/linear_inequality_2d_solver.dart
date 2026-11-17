@@ -42,8 +42,8 @@ class LinearInequality2DSolver {
       final p2Str = pts.$2.toLatex();
 
       boundaryLinesDesc.add(
-        'r_{${i + 1}}: $lineEq \\quad (\\text{Linea $styleStr}) '
-        '\\implies P_1$p1Str, \\; P_2$p2Str',
+        'r_{${i + 1}}: \\; $lineEq \\;\\; (\\text{Linea $styleStr}) '
+        '\\;\\; P_{1}$p1Str, \\;\\; P_{2}$p2Str',
       );
     }
 
@@ -145,9 +145,9 @@ class LinearInequality2DSolver {
           if (!alreadyExists) {
             final pt = Point2D(px, py, null, isOpen);
             candidateVertices.add(pt);
-            final statusStr = isOpen ? r'\text{ (Vertice abierto } \circ)' : r'\text{ (Vertice cerrado } \bullet)';
+            final statusStr = isOpen ? r'\circ' : r'\bullet';
             vertexExplanations.add(
-              'r_{${i + 1}} \\cap r_{${j + 1}} \\implies ${pt.toLatex()} $statusStr',
+              'r_{${i + 1}} \\cap r_{${j + 1}} \\implies ${pt.toLatex()} \\;\\; $statusStr',
             );
           }
         }
@@ -158,6 +158,7 @@ class LinearInequality2DSolver {
     final regionAnalysis = SutherlandHodgman2D.analyzeFeasibleRegion(parsedList);
     final bool isEmpty = regionAnalysis.isEmpty;
     final bool isBounded = regionAnalysis.isBounded;
+    final bool isDegenerate = regionAnalysis.isDegenerate;
 
     final sortedVertices = _sortVerticesCounterClockwise(candidateVertices);
     final names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -185,6 +186,11 @@ class LinearInequality2DSolver {
       conclusionNote =
           'Los semiplanos no tienen ninguna región en común. El sistema es incompatible y no tiene solución.';
       summaryLatex = r'S_{f} = \emptyset';
+    } else if (isDegenerate) {
+      conclusionLatex = r'\text{Region degenerada (segmento o punto)}';
+      conclusionNote =
+          'Los semiplanos solo comparten una recta o un punto (todas las desigualdades son no estrictas), así que la región solución no tiene área pero tampoco está vacía.';
+      summaryLatex = 'S_{f} \\text{ degenerada: } $verticesLatex';
     } else if (isBounded) {
       conclusionLatex =
           '\\text{Region factible acotada con } ${labeledVertices.length} \\text{ vertices: } $verticesLatex';
@@ -203,11 +209,9 @@ class LinearInequality2DSolver {
     if (isEmpty) {
       step3Latex = conclusionLatex;
     } else if (vertexExplanations.isEmpty) {
-      step3Latex = '$conclusionLatex \\\\[4pt] \\text{Pulsa "Ver Plano 2D" para ver la region sombreada.}';
+      step3Latex = conclusionLatex;
     } else {
-      step3Latex =
-          '${vertexExplanations.join(r' \\ ')} \\\\[6pt] $conclusionLatex \\\\[4pt] '
-          '\\text{Pulsa "Ver Plano 2D" para ver la region sombreada.}';
+      step3Latex = '${vertexExplanations.join(r' \\ ')} \\\\[6pt] $conclusionLatex';
     }
 
     steps.add(
@@ -215,7 +219,7 @@ class LinearInequality2DSolver {
         index: 3,
         shortTitle: 'Vértices y región solución',
         latexExpression: step3Latex,
-        pedagogicalNote: conclusionNote,
+        pedagogicalNote: '$conclusionNote Pulsa "Ver Plano 2D" para ver la región sombreada.',
       ),
     );
 

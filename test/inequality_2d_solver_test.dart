@@ -95,5 +95,25 @@ void main() {
       expect(res.visualData.vertices, isEmpty);
       expect(res.resolution.exactResultLatex, contains(r'\emptyset'));
     });
+
+    test('Degenerada (segmento) no es vacia: { x + y <= 2 ; x + y >= 2 }', () {
+      final res = LinearInequality2DSolver.solveSystem2D(['x + y <= 2', 'x + y >= 2']);
+      expect(res.visualData.isEmpty, isFalse);
+      expect(res.resolution.exactResultLatex, isNot(contains(r'\emptyset')));
+    });
+
+    test('Estrictas contradictorias si son vacias: { x + y < 2 ; x + y > 2 }', () {
+      final res = LinearInequality2DSolver.solveSystem2D(['x + y < 2', 'x + y > 2']);
+      expect(res.visualData.isEmpty, isTrue);
+    });
+
+    test('Siempre 3 pasos, sin tildes en text ni texto Pulsa pegado', () {
+      final res = LinearInequality2DSolver.solveSystem2D(['x + y > 0', 'x - 2y <= 5']);
+      expect(res.resolution.steps, hasLength(3));
+      for (final s in res.resolution.steps) {
+        expect(s.latexExpression, isNot(contains('Pulsa')));
+        expect(RegExp(r'\text\{[^}]*[áéíóúñ¿¡]').hasMatch(s.latexExpression), isFalse);
+      }
+    });
   });
 }

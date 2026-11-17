@@ -8,51 +8,6 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                   Row(
                     children: [
                       _buildMethodTab(
-                        key: const Key('ineq_deg_1'),
-                        label: '1.º Grado',
-                        selected: _ineqDegree == 1,
-                        onTap: () {
-                          updateState(() {
-                            _ineqDegree = 1;
-                            _activeResolution = null;
-                            _activeStepIndex = 0;
-                            _activeIneqVisualData = null;
-                            _currentFeasibleRegion = null;
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 3),
-                      _buildMethodTab(
-                        key: const Key('ineq_deg_2'),
-                        label: '2.º Grado',
-                        selected: _ineqDegree == 2,
-                        onTap: () {
-                          updateState(() {
-                            _ineqDegree = 2;
-                            _activeResolution = null;
-                            _activeStepIndex = 0;
-                            _activeIneqVisualData = null;
-                            _currentFeasibleRegion = null;
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 3),
-                      _buildMethodTab(
-                        key: const Key('ineq_deg_3'),
-                        label: 'Valor Absoluto / Racional',
-                        selected: _ineqDegree == 3,
-                        onTap: () {
-                          updateState(() {
-                            _ineqDegree = 3;
-                            _activeResolution = null;
-                            _activeStepIndex = 0;
-                            _activeIneqVisualData = null;
-                            _currentFeasibleRegion = null;
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 3),
-                      _buildMethodTab(
                         key: const Key('ineq_var_x'),
                         label: 'x',
                         selected: false,
@@ -256,13 +211,6 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                             });
                           },
                         ),
-                      const SizedBox(width: 4),
-                      _buildMethodTab(
-                        key: const Key('complex_solve_btn'),
-                        label: 'Calcular (${_complexOp.shortLabel})',
-                        selected: true,
-                        onTap: _solveCurrentMode,
-                      ),
                     ],
                   ),
                 ] else if (_calculatorMode == 12) ...[
@@ -298,12 +246,6 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                         ),
                         const SizedBox(width: 4),
                       ],
-                      _buildMethodTab(
-                        key: const Key('calculus_solve_btn'),
-                        label: 'Calcular (${_calculusOp.shortLabel})',
-                        selected: false,
-                        onTap: _solveCurrentMode,
-                      ),
                     ],
                   ),
                 ],

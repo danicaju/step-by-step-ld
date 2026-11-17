@@ -65,6 +65,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
 
     _ineqDegree = 1;
     _inequalitySign = InequalitySign.less;
+    _headerFocus = -1;
     _activeIneqVisualData = null;
 
     _ineqSysUnknowns = 1;

@@ -6,6 +6,20 @@ export '../models/calculus_models.dart';
 
 /// Solver paso a paso de Derivadas, Recta Tangente e Integrales por Regla de Barrow (1.º y 2.º Bachillerato).
 class CalculusSolver {
+  /// `y = mx + n` en decimales, sin `1x`, `-1x` ni `+ -`.
+  static String _tangentDecimalLatex(Rational m, Rational n) {
+    final nPart = n.isZero
+        ? ''
+        : (n.isNegative ? '- ${(-n).toDecimalLatex()}' : '+ ${n.toDecimalLatex()}');
+    if (m.isZero) {
+      return n.isZero ? 'y = 0' : 'y = ${n.toDecimalLatex()}';
+    }
+    final mPart = m == Rational(1)
+        ? 'x'
+        : (m == Rational(-1) ? '-x' : '${m.toDecimalLatex()}x');
+    return 'y = $mPart $nPart'.trim();
+  }
+
   static StepByStepResolution solve({
     required CalculusOperation operation,
     required String expressionRaw,
@@ -147,8 +161,7 @@ class CalculusSolver {
         ),
       ],
       exactResultLatex: lineLatex,
-      decimalApproxLatex:
-          'y = ${m.toDecimalLatex()}x ${n.isZero ? '' : (n.isNegative ? '- ${(-n).toDecimalLatex()}' : '+ ${n.toDecimalLatex()}')}'.trim(),
+      decimalApproxLatex: _tangentDecimalLatex(m, n),
     );
 
     return CalculusAnalysisResult(

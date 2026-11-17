@@ -1,3 +1,4 @@
+import 'balanced_scan.dart';
 import 'expression_tokenizer.dart';
 import 'slash_fraction_converter.dart';
 
@@ -179,6 +180,8 @@ class CursorNavigationHelper {
     // Asegurar que no hay operadores después de la barra (el cursor está al final del denominador)
     final afterSlash = raw.substring(lastSlash + 1);
     if (afterSlash.isEmpty) return null;
+    // No interceptar si hay una plantilla (log_, ln, root...) abierta sin cerrar.
+    if (BalancedScan.openDepth(raw) > 0) return null;
 
     // Si no contiene operadores de salida, añadir espacio para salir de la fracción
     return ('$raw ', safe + 1);

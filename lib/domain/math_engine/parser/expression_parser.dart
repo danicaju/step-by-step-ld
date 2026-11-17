@@ -35,6 +35,8 @@ class ExpressionParser {
   static String finalizeMcmMcdInput(String raw) => TemplateNavigationHelper.finalizeMcmMcdInput(raw);
   static (String raw, int cursor)? handleTwoSlotRightArrow(String raw, int cursorPos) =>
       TemplateNavigationHelper.handleTwoSlotRightArrow(raw, cursorPos);
+  static (String raw, int cursor)? handleTwoSlotLeftArrow(String raw, int cursorPos) =>
+      TemplateNavigationHelper.handleTwoSlotLeftArrow(raw, cursorPos);
   static (String raw, int cursor)? handleStructuredBlockRightArrow(String raw, int cursorPos) =>
       TemplateNavigationHelper.handleStructuredBlockRightArrow(raw, cursorPos);
   static String finalizeForEvaluation(String raw) => LiveLatexFormatter.finalizeForEvaluation(raw);
@@ -44,8 +46,25 @@ class ExpressionParser {
   late List<String> _tokens;
   int _pos = 0;
 
+  /// Normaliza LaTeX básico (`\sqrt{..}`, `\sin(..)`, `{..}`) al texto plano del parser,
+  /// de modo que `\sqrt{x+1}` agrupa todo el radicando.
+  static String latexToPlain(String s) {
+    if (!s.contains(r'\') && !s.contains('{')) return s;
+    return s
+        .replaceAll(r'\left', '')
+        .replaceAll(r'\right', '')
+        .replaceAll(r'\sqrt{', '√(')
+        .replaceAllMapped(
+          RegExp(r'\\(sin|cos|tan|ln|log|arcsin|arccos|arctan)'),
+          (m) => m[1]!,
+        )
+        .replaceAll(r'\pi', 'π')
+        .replaceAll('{', '(')
+        .replaceAll('}', ')');
+  }
+
   ExprNode parse(String input) {
-    final cleaned = input
+    final cleaned = latexToPlain(input)
         .replaceAll(r'\cdot', '*')
         .replaceAll('cdot', '*')
         .replaceAll(r'\times', '*')

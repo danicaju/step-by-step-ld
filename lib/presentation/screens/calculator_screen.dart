@@ -28,6 +28,7 @@ import '../widgets/casio_coefficient_view.dart';
 import '../widgets/casio_complex_editor_view.dart';
 import '../widgets/casio_graph_canvas.dart';
 import '../widgets/casio_lcd_screen.dart';
+import '../widgets/lcd/lcd_dropdown_selector.dart';
 import '../widgets/casio_matrix_editor_view.dart';
 import '../widgets/casio_stat_table_view.dart';
 import '../widgets/casio_vector_editor_view.dart';
@@ -43,6 +44,7 @@ import '../widgets/modes/ruffini_degree_selector_view.dart';
 import '../widgets/modes/inequality_system_editor_view.dart';
 
 part 'calculator_screen_optn.dart';
+part 'calculator_screen_header_selectors.dart';
 part 'calculator_screen_toolbars_basic.dart';
 part 'calculator_screen_toolbars_advanced.dart';
 part 'calculator_screen_solvers_basic.dart';
@@ -133,6 +135,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   // Estado Modo 4 (Polinomios: Regla de Ruffini grado 2..6 o Identidades Notables)
   bool _polyIsNotableMode = false;
+  int _headerFocus = -1; // foco D-Pad en desplegables de cabecera LCD (-1 = ninguno)
   static const List<String> _allRuffiniLabels = [
     'a',
     'b',

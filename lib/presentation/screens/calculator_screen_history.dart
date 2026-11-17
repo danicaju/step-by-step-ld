@@ -374,7 +374,7 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Cargado ejercicio de clase: ${entry.modeName}'),
-        backgroundColor: const Color(0xFF2563EB),
+        backgroundColor: const Color(0xFF181E29),
         duration: const Duration(seconds: 2),
       ),
     );

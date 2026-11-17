@@ -1,3 +1,4 @@
+import 'balanced_scan.dart';
 import 'cursor_navigation_helper.dart';
 import 'template_navigation_helper.dart';
 import 'slash_fraction_converter.dart';
@@ -25,7 +26,7 @@ class LiveLatexFormatter {
 
   static String _formatMcmMcdLiveArgs(String inner) {
     const c = _cursorSentinel;
-    final parts = inner.split(',');
+    final parts = BalancedScan.splitTopLevel(inner);
     final formatted = <String>[];
     for (final part in parts) {
       final seg = part.trim();
@@ -68,26 +69,22 @@ class LiveLatexFormatter {
     out = SlashFractionConverter.convertSlashesToLatex(out, c);
 
     // 0b. Funciones mcm y mcd (soporte N-ario: mcm(a ; b ; c ; ...))
-    out = out.replaceAllMapped(
-      RegExp(r'mcm\(([^)]*)\)'),
-      (m) => '\\text{m.c.m.}\\left(${_formatMcmMcdLiveArgs(m[1]!)}\\right)',
+    out = _replaceBalancedPrefix(
+      out,
+      'mcm(',
+      (inner, _) => '\\text{m.c.m.}\\left(${_formatMcmMcdLiveArgs(inner)}\\right)',
     );
-    out = out.replaceAllMapped(
-      RegExp(r'mcm\(([^)]*)'),
-      (m) => '\\text{m.c.m.}\\left(${_formatMcmMcdLiveArgs(m[1]!)}\\right)',
-    );
-    out = out.replaceAllMapped(
-      RegExp(r'mcd\(([^)]*)\)'),
-      (m) => '\\text{M.C.D.}\\left(${_formatMcmMcdLiveArgs(m[1]!)}\\right)',
-    );
-    out = out.replaceAllMapped(
-      RegExp(r'mcd\(([^)]*)'),
-      (m) => '\\text{M.C.D.}\\left(${_formatMcmMcdLiveArgs(m[1]!)}\\right)',
+    out = _replaceBalancedPrefix(
+      out,
+      'mcd(',
+      (inner, _) => '\\text{M.C.D.}\\left(${_formatMcmMcdLiveArgs(inner)}\\right)',
     );
 
     // 0c. Placeholders tenues para huecos a y b en binomios e identidades notables ( + ), ( - )
+    //     (no se aplican a argumentos de funciones: `sin(-30)`, `√(-4)`).
+    const notFn = r'(?<!sin|cos|tan|ln|log|√|⁻¹|_|root|asin|acos|atan|\^)';
     out = out.replaceAllMapped(
-      RegExp(r'\(\s*(' + c + r'?)\s*([+\-])\s*(' + c + r'?)\s*\)'),
+      RegExp(notFn + r'\(\s*(' + c + r'?)\s*([+\-])\s*(' + c + r'?)\s*\)'),
       (m) {
         final slotA = m[1]!;
         final sign = m[2]!;
@@ -102,7 +99,7 @@ class LiveLatexFormatter {
       },
     );
     out = out.replaceAllMapped(
-      RegExp(r'\(([^()+\-]+)\s*([+\-])\s*(' + c + r'?)\s*\)'),
+      RegExp(notFn + r'\(([^()+\-]+)\s*([+\-])\s*(' + c + r'?)\s*\)'),
       (m) {
         final leftExpr = m[1]!;
         final sign = m[2]!;
@@ -114,7 +111,7 @@ class LiveLatexFormatter {
       },
     );
     out = out.replaceAllMapped(
-      RegExp(r'\(\s*(' + c + r'?)\s*([+\-])\s*([^()+\-]+)\)'),
+      RegExp(notFn + r'\(\s*(' + c + r'?)\s*([+\-])\s*([^()+\-]+)\)'),
       (m) {
         final slotA = m[1]!;
         final sign = m[2]!;
@@ -155,26 +152,18 @@ class LiveLatexFormatter {
     );
 
     // 5. Raíces n-ésimas (root(n,x))
-    out = out.replaceAllMapped(
-      RegExp(r'root\(([^,]+),([^)]+)\)'),
-      (m) => '\\sqrt[${m[1]}]{${m[2]}}',
-    );
-    out = out.replaceAllMapped(
-      RegExp(r'root\(([^)]*)'),
-      (m) {
-        final inner = m[1]!;
-        if (inner == c) return '\\sqrt[$_cursorBoxLatex]{\\square}';
-        if (inner.contains(',')) {
-          final parts = inner.split(',');
-          final idx = parts[0];
-          final rad = parts.length > 1 ? parts[1] : '';
-          if (rad == c) return '\\sqrt[$idx]{$_cursorBoxLatex}';
-          if (rad.isEmpty) return '\\sqrt[$idx]{\\square}';
-          return '\\sqrt[$idx]{$rad}';
-        }
-        return '\\sqrt[$inner]{\\square}';
-      },
-    );
+    out = _replaceBalancedPrefix(out, 'root(', (inner, closed) {
+      if (inner == c) return '\\sqrt[$_cursorBoxLatex]{\\square}';
+      final parts = BalancedScan.splitTopLevel(inner);
+      if (parts.length > 1) {
+        final idx = parts[0];
+        final rad = parts.sublist(1).join(',');
+        if (rad == c && !closed) return '\\sqrt[$idx]{$_cursorBoxLatex}';
+        if (rad.isEmpty) return '\\sqrt[$idx]{\\square}';
+        return '\\sqrt[$idx]{$rad}';
+      }
+      return '\\sqrt[$inner]{\\square}';
+    });
 
     // 5b. Raíces cúbicas (³√)
     out = _replaceBalancedPrefix(out, '³√(', (inner, isClosed) {
@@ -209,29 +198,16 @@ class LiveLatexFormatter {
     out = out.replaceAll(RegExp(r'√(?![\\{])'), r'\sqrt{\square}');
 
     // 5d. Logaritmo en base arbitraria log_(base,arg)
-    out = out.replaceAllMapped(
-      RegExp(r'log_\(([^,]*),([^)]*)\)'),
-      (m) {
-        final base = m[1] == c ? _cursorBoxLatex : (m[1]!.isEmpty ? r'\square' : m[1]!);
-        final arg = m[2] == c ? _cursorBoxLatex : (m[2]!.isEmpty ? r'\square' : m[2]!);
-        return '\\log_{$base}\\left($arg\\right)';
-      },
-    );
-    out = out.replaceAllMapped(
-      RegExp(r'log_\(([^)]*)'),
-      (m) {
-        final inner = m[1]!;
-        if (inner.contains(',')) {
-          final parts = inner.split(',');
-          final base = parts[0] == c ? _cursorBoxLatex : (parts[0].isEmpty ? r'\square' : parts[0]);
-          final argRaw = parts.length > 1 ? parts[1] : '';
-          final arg = argRaw == c ? _cursorBoxLatex : (argRaw.isEmpty ? r'\square' : argRaw);
-          return '\\log_{$base}\\left($arg\\right)';
-        }
-        final base = inner == c ? _cursorBoxLatex : (inner.isEmpty ? _cursorBoxLatex : inner);
-        return '\\log_{$base}\\left(\\square\\right)';
-      },
-    );
+    out = _replaceBalancedPrefix(out, 'log_(', (inner, _) {
+      String slot(String x) => x == c ? _cursorBoxLatex : (x.isEmpty ? r'\square' : x);
+      final parts = BalancedScan.splitTopLevel(inner);
+      if (parts.length > 1) {
+        final arg = slot(parts.sublist(1).join(','));
+        return '\\log_{${slot(parts[0])}}\\left($arg\\right)';
+      }
+      final base = inner.isEmpty ? _cursorBoxLatex : slot(inner);
+      return '\\log_{$base}\\left(\\square\\right)';
+    });
 
     // 5e. Funciones trigonométricas y log / ln
     out = _formatFunctionCalls(out, c);
@@ -300,12 +276,13 @@ class LiveLatexFormatter {
         }
       }
       if (closeIdx != null) {
-        final inner = out.substring(openParen + 1, closeIdx);
+        final inner =
+            _replaceBalancedPrefix(out.substring(openParen + 1, closeIdx), prefix, replacer);
         final replacement = replacer(inner, true);
         out = out.substring(0, idx) + replacement + out.substring(closeIdx + 1);
         searchFrom = idx + replacement.length;
       } else {
-        final inner = out.substring(openParen + 1);
+        final inner = _replaceBalancedPrefix(out.substring(openParen + 1), prefix, replacer);
         final replacement = replacer(inner, false);
         out = out.substring(0, idx) + replacement;
         break;

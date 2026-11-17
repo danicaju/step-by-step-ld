@@ -3,6 +3,7 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_math_fork/tex.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/header_select.dart';
 import 'package:casio_tutor_calc/domain/math_engine/core/rational.dart';
 import 'package:casio_tutor_calc/domain/math_engine/models/step_resolution.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/matrix_solver.dart';
@@ -369,7 +370,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('menu_mode_3')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('sys_dim_3')));
+      await pickHeader(tester, 'hdr_sys_size', 'sys_dim_3');
       await tester.pumpAndSettle();
 
       expect(find.byType(CasioCoefficientView), findsOneWidget);
@@ -406,13 +407,15 @@ void main() {
       await tester.pumpAndSettle();
 
       // Resuelve primero
-      await tester.tap(find.byKey(const Key('sys3_solve_btn')));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();
       expect(find.textContaining('PASO 1/'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       // Cambia en vivo a Sustitución
-      await tester.tap(find.text('Sustitución'));
+      await tester.tap(find.byKey(const Key('hdr_sys_method')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sustitución').last);
       await tester.pumpAndSettle();
       expect(find.textContaining('PASO 1/'), findsOneWidget);
       expect(tester.takeException(), isNull);

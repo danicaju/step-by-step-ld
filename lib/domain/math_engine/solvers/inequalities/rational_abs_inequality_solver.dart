@@ -130,12 +130,24 @@ class RationalAbsInequalitySolver {
       final minRLatex = InequalityParsingHelper.fmt(minR);
       final maxRLatex = InequalityParsingHelper.fmt(maxR);
 
+      // Términos sin dobles signos (`- -2`), sin `- 0` ni `1x`.
+      final bd = b.toDouble();
+      final ad = a.toDouble();
+      final bTerm = bd == 0
+          ? ''
+          : (bd < 0
+              ? ' + ${InequalityParsingHelper.fmt(-bd)}'
+              : ' - ${InequalityParsingHelper.fmt(bd)}');
+      final aTerm = ad == 1
+          ? 'x'
+          : (ad == -1 ? '-x' : '${InequalityParsingHelper.fmt(ad)}x');
+
       steps.add(
         MathStep(
           index: steps.length + 1,
           shortTitle: 'Despejar la incógnita x en la desigualdad doble',
           latexExpression:
-              '-${InequalityParsingHelper.fmt(isolatedC)} - $b ${effectiveSign.latex} ${a}x ${effectiveSign.latex} ${InequalityParsingHelper.fmt(isolatedC)} - $b \\implies '
+              '-${InequalityParsingHelper.fmt(isolatedC)}$bTerm ${effectiveSign.latex} $aTerm ${effectiveSign.latex} ${InequalityParsingHelper.fmt(isolatedC)}$bTerm \\implies '
               '$minRLatex ${effectiveSign.latex} x ${effectiveSign.latex} $maxRLatex',
           pedagogicalNote:
               'Restamos $b en los tres miembros y luego dividimos entre $a para despejar la x.',

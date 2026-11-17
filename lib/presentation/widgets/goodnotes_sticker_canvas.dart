@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import '../../domain/math_engine/models/step_resolution.dart';
 import '../../domain/math_engine/solvers/function_graph_solver.dart';
+import '../utils/latex_plain_text.dart';
 import 'casio_graph_canvas.dart';
 import 'casio_lcd_screen.dart';
 /// Canvas dedicado para renderizado de stickers con estética de cuaderno / pizarra
@@ -296,7 +297,7 @@ class GoodnotesStickerCanvas extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(left: 14.0),
             child: Text(
-              step.pedagogicalNote,
+              LatexPlainText.toPlain(step.pedagogicalNote),
               style: const TextStyle(
                 fontSize: 11,
                 color: Color(0xFF64748B),
@@ -328,7 +329,7 @@ class GoodnotesStickerCanvas extends StatelessWidget {
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
-                        step.warningTrick!,
+                        LatexPlainText.toPlain(step.warningTrick!),
                         style: const TextStyle(
                           color: Color(0xFF991B1B),
                           fontSize: 10.5,

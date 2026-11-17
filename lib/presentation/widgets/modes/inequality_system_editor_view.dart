@@ -214,15 +214,25 @@ class InequalitySystemEditorView extends StatelessWidget {
       builder: (context, constraints) {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          child: Column(
+          // FittedBox: en LCD baja (apaisado 900x500) todo el bloque escala en vez de desbordar.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topCenter,
+            child: SizedBox(
+              width: (constraints.maxWidth - 20).clamp(0.0, double.infinity),
+              child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Barra superior interna del LCD con selector 1D/2D y número de inecuaciones
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // FittedBox: en LCD estrecha (360 px) el encabezado se reduce en vez de desbordar.
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     GestureDetector(
                       key: const Key('ineq_sys_header_toggle_unk'),
@@ -235,7 +245,7 @@ class InequalitySystemEditorView extends StatelessWidget {
                           border: Border.all(color: unselectedBorder),
                         ),
                         child: Text(
-                          ineqSysUnknowns == 1 ? '⇄ Modo 1D (x)' : '⇄ Modo 2D (x, y)',
+                          ineqSysUnknowns == 1 ? '◀ Modo 1D (x) ▶' : '◀ Modo 2D (x, y) ▶',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -244,6 +254,7 @@ class InequalitySystemEditorView extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 10),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -275,6 +286,7 @@ class InequalitySystemEditorView extends StatelessWidget {
                       ],
                     ),
                   ],
+                  ),
                 ),
               ),
               Row(
@@ -376,6 +388,8 @@ class InequalitySystemEditorView extends StatelessWidget {
                 ],
               ),
             ],
+          ),
+            ),
           ),
         );
       },

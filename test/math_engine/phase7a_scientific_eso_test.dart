@@ -342,7 +342,8 @@ void main() {
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '0'));
       await tester.tap(find.text('SHIFT'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, '×10ˣ'));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '%').first);
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();
       expect(find.textContaining('variación'), findsWidgets);
@@ -354,22 +355,26 @@ void main() {
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '0'));
       await tester.tap(find.text('SHIFT'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, '.'));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, "° ' \"").first);
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '4'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '0'));
       await tester.tap(find.text('SHIFT'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, '.'));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, "° ' \"").first);
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '+'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '5'));
       await tester.tap(find.text('SHIFT'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, '.'));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, "° ' \"").first);
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '3'));
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '0'));
       await tester.tap(find.text('SHIFT'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, '.'));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, "° ' \"").first);
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();
       expect(find.textContaining('Suma por columnas'), findsWidgets);
@@ -385,7 +390,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('ALPHA'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, ')'));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, 'X').first);
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, 'x²'));
       await tester.pumpAndSettle();
@@ -395,7 +400,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('ALPHA'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, ')'));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, 'X').first);
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('CALC'));

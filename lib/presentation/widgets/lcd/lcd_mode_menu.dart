@@ -241,28 +241,42 @@ class LcdModeMenu extends StatelessWidget {
             ),
             const SizedBox(height: 6),
 
-            // Cuadrícula 2×2 espaciosa y legible (4 módulos por página)
+            // Cuadrícula 2×2 con soporte táctil Swipe Horizontal (Left / Right)
             Expanded(
-              child: Column(
-                children: [
-                  for (int row = 0; row < 2; row++) ...[
-                    if (row > 0) const SizedBox(height: 6),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          for (int col = 0; col < 2; col++) ...[
-                            if (col > 0) const SizedBox(width: 6),
-                            Expanded(
-                              child: (pageStart + row * 2 + col) < classWizMenuItems.length
-                                  ? _buildMenuTile(pageStart + row * 2 + col, formulaColor)
-                                  : const SizedBox.shrink(),
-                            ),
+              child: GestureDetector(
+                key: const Key('menu_grid_gesture'),
+                behavior: HitTestBehavior.translucent,
+                onHorizontalDragEnd: (details) {
+                  final velocity = details.primaryVelocity ?? 0;
+                  if (velocity < -80) {
+                    // Deslizar hacia la izquierda avanza a la siguiente página
+                    goToPage(1);
+                  } else if (velocity > 80) {
+                    // Deslizar hacia la derecha retrocede a la página anterior
+                    goToPage(-1);
+                  }
+                },
+                child: Column(
+                  children: [
+                    for (int row = 0; row < 2; row++) ...[
+                      if (row > 0) const SizedBox(height: 6),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            for (int col = 0; col < 2; col++) ...[
+                              if (col > 0) const SizedBox(width: 6),
+                              Expanded(
+                                child: (pageStart + row * 2 + col) < classWizMenuItems.length
+                                    ? _buildMenuTile(pageStart + row * 2 + col, formulaColor)
+                                    : const SizedBox.shrink(),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
 

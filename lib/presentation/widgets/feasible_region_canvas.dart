@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/math_engine/models/inequality_models.dart';
 import '../../domain/math_engine/solvers/inequalities/sutherland_hodgman_2d.dart';
+import '../utils/latex_plain_text.dart';
 
 /// Widget interactivo para renderizar la región factible 2D en el plano cartesiano
 /// con recorte exacto por Sutherland-Hodgman y diferenciación de contornos.
@@ -29,7 +30,7 @@ class FeasibleRegionCanvas extends StatelessWidget {
         border: Border.all(
           color: isOledDark
               ? const Color(0xFF263238)
-              : const Color(0xFF0F766E).withValues(alpha: 0.3),
+              : const Color(0xFF4F6B5C).withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
@@ -104,12 +105,12 @@ class _FeasibleRegionPainter extends CustomPainter {
         size.height - ((y - minY) / spanY) * size.height;
 
     final gridColor = isOledDark
-        ? const Color(0xFF1E293B)
-        : const Color(0xFFCBD5E1).withValues(alpha: 0.7);
+        ? const Color(0xFF1E2A26)
+        : const Color(0xFFC8D6CD).withValues(alpha: 0.7);
     final axisColor =
-        isOledDark ? const Color(0xFF94A3B8) : const Color(0xFF334155);
+        isOledDark ? const Color(0xFF9DB0A4) : const Color(0xFF2F3E38);
     final labelColor =
-        isOledDark ? const Color(0xFFE2E8F0) : const Color(0xFF0F172A);
+        isOledDark ? const Color(0xFFDDE6DF) : const Color(0xFF1A2530);
 
     // 2. Rejilla cartesiana
     final gridPaint = Paint()
@@ -182,15 +183,15 @@ class _FeasibleRegionPainter extends CustomPainter {
       }
       polyPath.close();
 
-      // Relleno semitransparente de la región factible (#5B84B1 con alfa)
+      // Relleno semitransparente de la región factible (oliva con alfa)
       final fillPaint = Paint()
-        ..color = const Color(0x885B84B1)
+        ..color = const Color(0x66708A78)
         ..style = PaintingStyle.fill;
       canvas.drawPath(polyPath, fillPaint);
 
-      // Perímetro morado (#9C4196): SÓLO sobre rectas frontera reales, NUNCA sobre bordes de pantalla
+      // Perímetro morado (#E5A93C): SÓLO sobre rectas frontera reales, NUNCA sobre bordes de pantalla
       final borderPaint = Paint()
-        ..color = const Color(0xFF9C4196)
+        ..color = const Color(0xFFE5A93C)
         ..strokeWidth = 3.5
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round;
@@ -224,10 +225,10 @@ class _FeasibleRegionPainter extends CustomPainter {
       // Etiqueta de Región Solución
       _drawText(
         canvas,
-        'REGIÓN SOLUCIÓN (Sf)',
+        data.isBounded ? 'REGIÓN SOLUCIÓN (Sf)' : 'REGIÓN NO ACOTADA (Sf)',
         const Offset(10, 8),
         TextStyle(
-          color: const Color(0xFF9C4196),
+          color: const Color(0xFFE5A93C),
           fontSize: 10.0,
           fontWeight: FontWeight.w900,
           backgroundColor: isOledDark ? Colors.black87 : Colors.white70,
@@ -250,7 +251,7 @@ class _FeasibleRegionPainter extends CustomPainter {
 
     // 5. Dibujar cada recta frontera de borde a borde del plano
     final lineColors = [
-      const Color(0xFF2563EB), // Azul
+      const Color(0xFF1A2530), // Texto Casio
       const Color(0xFF16A34A), // Verde
       const Color(0xFFDC2626), // Rojo
       const Color(0xFFD97706), // Naranja
@@ -306,7 +307,7 @@ class _FeasibleRegionPainter extends CustomPainter {
           ..color = isOledDark ? const Color(0xFF111615) : Colors.white
           ..style = PaintingStyle.fill;
         final openBorder = Paint()
-          ..color = const Color(0xFF9C4196)
+          ..color = const Color(0xFFE5A93C)
           ..strokeWidth = 2.5
           ..style = PaintingStyle.stroke;
         canvas.drawCircle(Offset(sx, sy), 5.5, openBg);
@@ -314,7 +315,7 @@ class _FeasibleRegionPainter extends CustomPainter {
       } else {
         // Vértice cerrado ●
         final solidDot = Paint()
-          ..color = const Color(0xFF9C4196)
+          ..color = const Color(0xFFE5A93C)
           ..style = PaintingStyle.fill;
         final solidBorder = Paint()
           ..color = Colors.white
@@ -326,7 +327,7 @@ class _FeasibleRegionPainter extends CustomPainter {
 
       _drawText(
         canvas,
-        '$name${v.toLatex()}',
+        '$name${LatexPlainText.toPlain(v.toLatex())}',
         Offset(sx + 7, sy - 14),
         TextStyle(
           color: labelColor,

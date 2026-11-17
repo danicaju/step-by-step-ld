@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 
 import '../../domain/math_engine/solvers/complex_solver.dart';
 import 'casio_cell_value_text.dart';
@@ -39,18 +40,14 @@ class CasioComplexEditorView extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(
+              child: _tex(
                 selectedOperation == ComplexOperation.fromPolar
-                    ? 'Conversión Polar r_α → Binómica a + bi'
+                    ? r'\text{Polar } r_{\alpha} \rightarrow \text{ Binomica } a + bi'
                     : (selectedOperation == ComplexOperation.toPolar
-                        ? 'Conversión Binómica a + bi → Polar r_α'
-                        : 'Complejos en Forma Binómica (a + bi)'),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  fontFamily: 'monospace',
-                  color: mutedColor,
-                ),
+                        ? r'\text{Binomica } a + bi \rightarrow \text{ Polar } r_{\alpha}'
+                        : r'\text{Forma binomica } a + bi'),
+                mutedColor,
+                12,
               ),
             ),
           ),
@@ -69,15 +66,15 @@ class CasioComplexEditorView extends StatelessWidget {
                       children: [
                         _buildBinomialRow(
                           prefix: selectedOperation.needsSecondComplex
-                              ? 'z₁ = '
-                              : 'z  = ',
+                              ? r'z_{1} ='
+                              : r'z =',
                           baseIdx: 0,
                           textColor: textColor,
                         ),
                         if (selectedOperation.needsSecondComplex) ...[
                           const SizedBox(height: 6),
                           _buildBinomialRow(
-                            prefix: 'z₂ = ',
+                            prefix: r'z_{2} =',
                             baseIdx: 2,
                             textColor: textColor,
                           ),
@@ -122,15 +119,7 @@ class CasioComplexEditorView extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          prefix,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            fontFamily: 'monospace',
-            color: textColor,
-          ),
-        ),
+        _tex(prefix, textColor, 17),
         _buildNumCell(
           index: baseIdx,
           hint: 'Real (a)',
@@ -166,19 +155,23 @@ class CasioComplexEditorView extends StatelessWidget {
     );
   }
 
+  Widget _tex(String latex, Color color, double size) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Math.tex(
+        latex,
+        mathStyle: MathStyle.text,
+        textStyle: TextStyle(fontSize: size, color: color, fontWeight: FontWeight.w800),
+        onErrorFallback: (_) => Text(latex, style: TextStyle(fontSize: size, color: color)),
+      ),
+    );
+  }
+
   Widget _buildPolarRow(Color textColor) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'z = ',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-            fontFamily: 'monospace',
-            color: textColor,
-          ),
-        ),
+        _tex(r'z =', textColor, 17),
         _buildNumCell(index: 0, hint: 'Mód r'),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -214,7 +207,7 @@ class CasioComplexEditorView extends StatelessWidget {
     final bool isActive = activeIndex == index;
     final String value = index < cells.length ? cells[index] : '';
     final activeBg =
-        isOledDark ? const Color(0xFF38BDF8) : const Color(0xFF0F172A);
+        isOledDark ? const Color(0xFFE5A93C) : const Color(0xFF0F172A);
     final activeFg = isOledDark ? Colors.black : Colors.white;
     final idleBg =
         isOledDark ? const Color(0xFF1A2421) : const Color(0xFFCAD6CE);
@@ -276,7 +269,7 @@ class CasioComplexEditorView extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final bg = selected
-        ? (isOledDark ? const Color(0xFF7C5CFF) : const Color(0xFF1D4ED8))
+        ? (isOledDark ? const Color(0xFFE5A93C) : const Color(0xFF181E29))
         : (isOledDark ? const Color(0xFF1A2421) : const Color(0xFFCAD6CE));
     final fg = selected
         ? Colors.white

@@ -236,14 +236,14 @@ class CasioCoefficientView extends StatelessWidget {
       // Modo 6 (Inecuaciones 2.º grado): [ a ]x² + [ b ]x + [ c ] [ ≶ ] 0
       final bool isSignActive = activeIndex == 3;
       final Color signBg = isSignActive
-          ? (isOledDark ? const Color(0xFF1E3A8A) : const Color(0xFF1E40AF))
+          ? const Color(0xFF181E29)
           : (isOledDark ? const Color(0xFF253042) : const Color(0xFFCBD5CE));
       final Color signBorder = isSignActive
           ? const Color(0xFFE5A93C)
-          : (isOledDark ? const Color(0xFF60A5FA) : const Color(0xFF3B82F6));
+          : const Color(0xFF7A8C80);
       final Color signText = isSignActive || isOledDark
           ? Colors.white
-          : const Color(0xFF1E3A8A);
+          : const Color(0xFF1A2530);
 
       return Row(
         mainAxisSize: MainAxisSize.min,

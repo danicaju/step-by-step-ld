@@ -1,3 +1,4 @@
+import 'balanced_scan.dart';
 import 'cursor_navigation_helper.dart';
 
 class TemplateNavigationHelper {
@@ -173,43 +174,50 @@ class TemplateNavigationHelper {
     int cursorPos,
   ) {
     final safe = CursorNavigationHelper.snapCursorOutsideKeywords(raw, cursorPos).clamp(0, raw.length);
+    // Plantilla envolvente más interna que contiene al cursor (por profundidad).
+    final candidates = <int>[];
     for (final fnPrefix in ['log_(', 'root(']) {
-      final start = raw.lastIndexOf(fnPrefix, safe);
-      if (start == -1) continue;
-      final openParen = start + fnPrefix.length - 1;
-      if (safe <= openParen) continue;
-
-      int depth = 1;
-      int? closeIdx;
-      for (int i = openParen + 1; i < raw.length; i++) {
-        if (raw[i] == '(') depth++;
-        if (raw[i] == ')') {
-          depth--;
-          if (depth == 0) {
-            closeIdx = i;
-            break;
-          }
-        }
+      var from = 0;
+      while (true) {
+        final s = raw.indexOf(fnPrefix, from);
+        if (s == -1 || s >= safe) break;
+        candidates.add(s);
+        from = s + 1;
       }
+    }
+    candidates.sort((a, b) => b.compareTo(a));
+    for (final start in candidates) {
+      final openParen = raw.indexOf('(', start);
+      if (safe <= openParen) continue;
+      final closeIdx = BalancedScan.findClose(raw, openParen);
       final endBoundary = closeIdx ?? raw.length;
       if (safe > endBoundary) continue;
 
       final inside = raw.substring(openParen + 1, endBoundary);
-      final commaIdx = inside.indexOf(',');
-      if (commaIdx == -1 && safe == endBoundary && inside.trim().isNotEmpty) {
-        final updated = '${raw.substring(0, safe)},${raw.substring(safe)}';
-        return (updated, safe + 1);
-      }
-      if (commaIdx != -1 && safe == endBoundary && !inside.endsWith(',')) {
-        if (closeIdx == null) {
-          // Salir al nivel base con un espacio en vez de forzar inserción de ')'
-          return ('$raw ', safe + 1);
+      final commaIdx = BalancedScan.topLevelIndexOf(inside);
+      if (commaIdx == -1) {
+        if (safe == endBoundary) {
+          final updated = '${raw.substring(0, safe)},${raw.substring(safe)}';
+          return (updated, safe + 1);
+        }
+      } else {
+        final absComma = openParen + 1 + commaIdx;
+        if (safe == absComma) {
+          // Si el cursor está sobre la coma, saltar al inicio del argumento
+          return (raw, absComma + 1);
+        }
+        if (safe == endBoundary) {
+          if (closeIdx == null) {
+            return ('$raw)', safe + 1);
+          } else {
+            return (raw, closeIdx + 1);
+          }
         }
       }
     }
 
     // Plantillas de identidades notables: (a + b)^2, (a - b)^2, (a + b)(a - b)
-    final parenMatch = RegExp(r'\(([^)]*)\)').firstMatch(raw);
+    final parenMatch = RegExp(r'(?<![a-z_√⁻¹^])\(([^()]*)\)').firstMatch(raw);
     if (parenMatch != null) {
       final insideStart = parenMatch.start + 1;
       final insideEnd = parenMatch.end - 1;
@@ -219,13 +227,67 @@ class TemplateNavigationHelper {
         if (opMatch != null) {
           final sepStart = insideStart + opMatch.start;
           final sepEnd = insideStart + opMatch.end;
-          if (safe >= insideStart && safe <= sepEnd && safe >= sepStart) {
+          // `safe < sepEnd`: si ya estamos tras el operador no hay salto (evita cursor atascado).
+          if (safe >= insideStart && safe < sepEnd && safe >= sepStart) {
             return (raw, sepEnd);
           }
         }
       }
     }
 
+    return null;
+  }
+
+  /// Gestiona D-Pad izquierda (`◀`) dentro de plantillas de 2 huecos como `log_(base,arg)` o `root(n,rad)`.
+  static (String raw, int cursor)? handleTwoSlotLeftArrow(
+    String raw,
+    int cursorPos,
+  ) {
+    if (raw.isEmpty) return null;
+    final safe = CursorNavigationHelper.snapCursorOutsideKeywords(raw, cursorPos, preferLeft: true).clamp(0, raw.length);
+    for (final fnPrefix in ['log_(', 'root(']) {
+      int searchFrom = 0;
+      while (true) {
+        final start = raw.indexOf(fnPrefix, searchFrom);
+        if (start == -1) break;
+        final openParen = start + fnPrefix.length - 1;
+        int depth = 1;
+        int? closeIdx;
+        for (int i = openParen + 1; i < raw.length; i++) {
+          if (raw[i] == '(') depth++;
+          if (raw[i] == ')') {
+            depth--;
+            if (depth == 0) {
+              closeIdx = i;
+              break;
+            }
+          }
+        }
+        final endBoundary = closeIdx ?? raw.length;
+        final inside = raw.substring(openParen + 1, endBoundary);
+        final commaIdx = BalancedScan.topLevelIndexOf(inside);
+
+        // 1. Si el cursor está justo después del paréntesis de cierre ')'
+        if (closeIdx != null && safe == closeIdx + 1) {
+          return (raw, closeIdx);
+        }
+
+        // 2. Si el cursor está justo al inicio del argumento (tras la coma)
+        if (commaIdx != -1) {
+          final absComma = openParen + 1 + commaIdx;
+          if (safe == absComma + 1) {
+            return (raw, absComma);
+          }
+        }
+
+        // 3. Si el cursor está justo después del paréntesis de apertura de la función
+        if (safe == openParen + 1) {
+          return (raw, start);
+        }
+
+        searchFrom = start + 1;
+      }
+    }
     return null;
   }
 
@@ -281,6 +343,10 @@ class TemplateNavigationHelper {
       'acos',
       'atan',
       'ln',
+      'log',
+      'sin⁻¹',
+      'cos⁻¹',
+      'tan⁻¹',
     ];
     final isStructuredTemplate = structuredPrefixes.any(beforeOpen.endsWith);
     if (!isStructuredTemplate) {
@@ -325,14 +391,15 @@ class TemplateNavigationHelper {
 
     final lastPowOpen = raw.lastIndexOf('^(');
     if (lastPowOpen != -1) {
-      final after = raw.substring(lastPowOpen + 2);
-      if (!after.contains(')')) {
+      if (BalancedScan.findClose(raw, lastPowOpen + 1) == null) {
         // Cierra limpiamente el exponente con ')' y sitúa el cursor al nivel base
         return ('$raw)', safe + 1);
       }
     }
 
-    final powMatch = RegExp(r'\^[0-9a-zA-Zπ.]+$|\^\([^)]+\)').firstMatch(raw);
+    // No interceptar si hay una plantilla log_/root/ln abierta sin cerrar.
+    if (BalancedScan.openDepth(raw) > 0) return null;
+    final powMatch = RegExp(r'\^[0-9a-zA-Zπ.]+$').firstMatch(raw);
     if (powMatch != null) {
       // Salir limpiamente de la potencia al presionar ▶
       return ('$raw ', safe + 1);

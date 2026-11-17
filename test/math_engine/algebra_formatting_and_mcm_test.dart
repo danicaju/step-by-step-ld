@@ -122,7 +122,7 @@ void main() {
       // SHIFT + × => inserta mcm(
       await tester.tap(find.text('SHIFT'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(CasioPhysicalKey, '×'));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, 'm.c.m.').first);
       await tester.pumpAndSettle();
 
       // 12 + D-Pad derecha ▶ => mcm(12,

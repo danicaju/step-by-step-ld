@@ -8,6 +8,7 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         _menuCursorIndex = (_menuCursorIndex - 1 + count) % count;
         return;
       }
+      if (_headerDpad('left')) return;
       if (_calculatorMode == 4 &&
           !_polyIsNotableMode &&
           _isChoosingRuffiniDegree &&
@@ -26,11 +27,21 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
           _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
           return;
         }
+        if (_ineqSysRowInputs[_ineqSysActiveRow].isEmpty) {
+          _flipIneqSysUnknowns();
+          return;
+        }
         if (_activeResolution == null) {
           final cur = _ineqSysRowInputs[_ineqSysActiveRow];
           final pos = _ineqSysRowCursors[_ineqSysActiveRow];
-          _ineqSysRowCursors[_ineqSysActiveRow] =
-              ExpressionParser.stepCursorLeft(cur, pos);
+          final slotLeft = ExpressionParser.handleTwoSlotLeftArrow(cur, pos);
+          if (slotLeft != null) {
+            _ineqSysRowInputs[_ineqSysActiveRow] = slotLeft.$1;
+            _ineqSysRowCursors[_ineqSysActiveRow] = slotLeft.$2;
+          } else {
+            _ineqSysRowCursors[_ineqSysActiveRow] =
+                ExpressionParser.stepCursorLeft(cur, pos);
+          }
         }
         return;
       }
@@ -62,11 +73,23 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
       }
       if (_calculatorMode == 2) {
         if (_eqActiveSide == 0) {
-          _eqLeftCursorPos =
-              ExpressionParser.stepCursorLeft(_eqLeftRaw, _eqLeftCursorPos);
+          final slotLeft = ExpressionParser.handleTwoSlotLeftArrow(_eqLeftRaw, _eqLeftCursorPos);
+          if (slotLeft != null) {
+            _eqLeftRaw = slotLeft.$1;
+            _eqLeftCursorPos = slotLeft.$2;
+          } else {
+            _eqLeftCursorPos =
+                ExpressionParser.stepCursorLeft(_eqLeftRaw, _eqLeftCursorPos);
+          }
         } else if (_eqRightCursorPos > 0) {
-          _eqRightCursorPos =
-              ExpressionParser.stepCursorLeft(_eqRightRaw, _eqRightCursorPos);
+          final slotLeft = ExpressionParser.handleTwoSlotLeftArrow(_eqRightRaw, _eqRightCursorPos);
+          if (slotLeft != null) {
+            _eqRightRaw = slotLeft.$1;
+            _eqRightCursorPos = slotLeft.$2;
+          } else {
+            _eqRightCursorPos =
+                ExpressionParser.stepCursorLeft(_eqRightRaw, _eqRightCursorPos);
+          }
         } else {
           // Salta al miembro izquierdo sin tocar el = central fijo
           _eqActiveSide = 0;
@@ -75,7 +98,13 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         return;
       }
       // Modo escritura libre: desplazar _cursorPos hacia la izquierda
-      _cursorPos = ExpressionParser.stepCursorLeft(_rawInput, _cursorPos);
+      final slotLeft = ExpressionParser.handleTwoSlotLeftArrow(_rawInput, _cursorPos);
+      if (slotLeft != null) {
+        _rawInput = slotLeft.$1;
+        _cursorPos = slotLeft.$2;
+      } else {
+        _cursorPos = ExpressionParser.stepCursorLeft(_rawInput, _cursorPos);
+      }
     });
   }
 
@@ -86,6 +115,7 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         _menuCursorIndex = (_menuCursorIndex + 1) % count;
         return;
       }
+      if (_headerDpad('right')) return;
       if (_calculatorMode == 4 &&
           !_polyIsNotableMode &&
           _isChoosingRuffiniDegree &&
@@ -102,6 +132,10 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
       if (_calculatorMode == 7) {
         if (_isChoosingIneqSysUnknowns) {
           _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
+          return;
+        }
+        if (_ineqSysRowInputs[_ineqSysActiveRow].isEmpty) {
+          _flipIneqSysUnknowns();
           return;
         }
         if (_activeResolution == null) {
@@ -254,6 +288,7 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         _menuCursorIndex = (_menuCursorIndex - 2 + count) % count;
         return;
       }
+      if (_headerDpad('up')) return;
       if (_calculatorMode == 4 &&
           !_polyIsNotableMode &&
           _isChoosingRuffiniDegree &&
@@ -359,6 +394,7 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         _menuCursorIndex = (_menuCursorIndex + 2) % count;
         return;
       }
+      if (_headerDpad('down')) return;
       if (_calculatorMode == 4 &&
           !_polyIsNotableMode &&
           _isChoosingRuffiniDegree &&

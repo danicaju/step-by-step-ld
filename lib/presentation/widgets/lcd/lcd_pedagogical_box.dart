@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/latex_plain_text.dart';
 
 /// Caja inferior de explicación pedagógica o alerta de examen en la LCD Casio.
 class LcdPedagogicalBox extends StatelessWidget {
@@ -54,7 +55,7 @@ class LcdPedagogicalBox extends StatelessWidget {
               constraints: BoxConstraints(maxHeight: maxNoteHeight),
               child: SingleChildScrollView(
                 child: Text(
-                  warningTrick ?? pedagogicalNote,
+                  LatexPlainText.toPlain(warningTrick ?? pedagogicalNote),
                   style: TextStyle(
                     color: warningTextColor,
                     fontSize: 11.5,

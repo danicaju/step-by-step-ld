@@ -110,7 +110,7 @@ class ComplexPolarSolver {
         originalInputLatex: z.toLatex(),
         steps: steps,
         exactResultLatex: polarLatex,
-        decimalApproxLatex: '${decR}_$decDeg^{\\circ}',
+        decimalApproxLatex: '${decR}_{$decDeg^{\\circ}}',
       ),
     );
   }
@@ -167,6 +167,9 @@ class ComplexPolarSolver {
   }
 
   /// Conversión inversa de Forma Polar `r_α` a Forma Binómica `a + bi`.
+  /// Coeficiente imaginario sin `1i`: `1` -> `i`, `3` -> `3i`.
+  static String _iCoef(String coef) => coef == '1' ? 'i' : '${coef}i';
+
   static StepByStepResolution fromPolar({
     required Rational modulus,
     required double angleDegrees,
@@ -199,21 +202,23 @@ class ComplexPolarSolver {
     } else if (exactTrig != null) {
       final aStr = _multiplyRationalByRadicalExpr(modulus, exactTrig.cosRadCoeff, exactTrig.cosRad);
       final bStr = _multiplyRationalByRadicalExpr(modulus, exactTrig.sinRadCoeff, exactTrig.sinRad);
-      exactLatex = bStr.startsWith('-') ? '$aStr - ${bStr.substring(1)}i' : '$aStr + ${bStr}i';
+      exactLatex = bStr.startsWith('-')
+          ? '$aStr - ${_iCoef(bStr.substring(1))}'
+          : '$aStr + ${_iCoef(bStr)}';
       step2Latex = 'z = ${modulus.toLatex()}\\left(${exactTrig.cosLatex} + (${exactTrig.sinLatex})i\\right) = $exactLatex';
     } else {
       final rD = modulus.toDouble();
       final aDec = rD * math.cos(rad);
       final bDec = rD * math.sin(rad);
       final bSign = bDec < 0 ? '-' : '+';
-      exactLatex = '${_formatLatexDec(aDec, decimals: 4)} $bSign ${_formatLatexDec(bDec.abs(), decimals: 4)}i';
+      exactLatex = '${_formatLatexDec(aDec, decimals: 4)} $bSign ${_iCoef(_formatLatexDec(bDec.abs(), decimals: 4))}';
       step2Latex = 'z = ${modulus.toLatex()} \\cdot \\cos($angleLatex) + ${modulus.toLatex()} \\cdot \\sin($angleLatex)i = $exactLatex';
     }
 
     final rD = modulus.toDouble();
     final aD = rD * math.cos(rad);
     final bD = rD * math.sin(rad);
-    final decStr = '${_formatDecimalStr(aD, 4)} ${bD < 0 ? '-' : '+'} ${_formatDecimalStr(bD.abs(), 4)}i';
+    final decStr = '${_formatDecimalStr(aD, 4)} ${bD < 0 ? '-' : '+'} ${_iCoef(_formatDecimalStr(bD.abs(), 4))}';
 
     return StepByStepResolution(
       originalInputLatex: '${modulus.toLatex()}_{$angleLatex}',

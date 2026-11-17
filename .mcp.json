@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "dart": {
+      "command": "dart",
+      "args": ["mcp-server"]
+    },
+    "context7": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@upstash/context7-mcp@latest"]
+    },
+    "firebase": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "firebase-tools@latest", "mcp"]
+    },
+    "stitch": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "stitch-mcp"],
+      "env": { "GOOGLE_CLOUD_PROJECT": "calculadora-casio" }
+    }
+  }
+}

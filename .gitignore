@@ -52,3 +52,19 @@ app.*.map.json
 .vercel
 
 .env*
+
+# Claude Code / Antigravity (local only; skills, commands, CLAUDE.md y .mcp.json SÍ se versionan)
+.claude/settings.local.json
+.claude/*.log
+.claude/logs/
+.claude/cache/
+.claude/projects/
+.claude/worktrees/
+CLAUDE.local.md
+.gemini/
+.agents/cache/
+.agents/logs/
+.agents/brain/
+.agents/scratch/
+*.pb
+conversation_summaries.db*

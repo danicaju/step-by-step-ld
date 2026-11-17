@@ -378,25 +378,27 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
           return true;
         }
         final targetVal = _evaluator.lastEvaluatedRational ?? _memory.ans;
-        if (_isShiftActive) {
-          _isShiftActive = false;
-          final updated = _memory.mMinus(targetVal);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('M- : ${targetVal.toLatex()} restado de M. (M = ${updated.toLatex()})'),
-              backgroundColor: const Color(0xFF0F766E),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        } else {
-          final updated = _memory.mPlus(targetVal);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('M+ : ${targetVal.toLatex()} sumado a M. (M = ${updated.toLatex()})'),
-              backgroundColor: const Color(0xFF0F766E),
-              duration: const Duration(seconds: 2),
-            ),
-          );
+        _isShiftActive = false;
+        final updated = _memory.mPlus(targetVal);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('M+ : ${targetVal.toLatex()} sumado a M. (M = ${updated.toLatex()})'),
+            backgroundColor: const Color(0xFF0F766E),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        return true;
+      }
+
+      // SHIFT + 0 => π
+      if (key == 'PI') {
+        _isShiftActive = false;
+        _isAlphaActive = false;
+        if (_supportsScientificFns) {
+          if (_activeResolution != null) {
+            _clearActiveResolutionCursor();
+          }
+          _applyRawInsertion('π');
         }
         return true;
       }

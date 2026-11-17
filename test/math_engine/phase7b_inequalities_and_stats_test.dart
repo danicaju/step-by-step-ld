@@ -3,6 +3,7 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_math_fork/tex.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../support/header_select.dart';
 import 'package:casio_tutor_calc/domain/math_engine/core/rational.dart';
 import 'package:casio_tutor_calc/domain/math_engine/models/step_resolution.dart';
 import 'package:casio_tutor_calc/domain/math_engine/parser/expression_parser.dart';
@@ -311,9 +312,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('M6: INEC. 1°'), findsOneWidget);
-      expect(find.byKey(const Key('ineq_deg_1')), findsOneWidget);
-      expect(find.byKey(const Key('ineq_deg_2')), findsOneWidget);
-      expect(find.byKey(const Key('lcd_ineq_sign_btn')), findsOneWidget);
+      expect(find.byKey(const Key('hdr_ineq_kind')), findsOneWidget);
+      expect(find.byKey(const Key('lcd_ineq_sign_btn')), findsNothing);
 
       // Escribir '-2x + 4 < 10' usando teclado físico y chip '<'
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '-'));
@@ -332,7 +332,7 @@ void main() {
       expect(tester.takeException(), isNull);
 
       // Cambiar a 2.º grado en Modo 6 -> entrada libre en editor natural
-      await tester.tap(find.byKey(const Key('ineq_deg_2')));
+      await pickHeader(tester, 'hdr_ineq_kind', 'ineq_deg_2');
       await tester.pumpAndSettle();
 
       expect(find.text('M6: INEC. 2°'), findsOneWidget);
@@ -440,7 +440,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.byKey(const Key('ineq_deg_2')));
+      await pickHeader(tester, 'hdr_ineq_kind', 'ineq_deg_2');
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 

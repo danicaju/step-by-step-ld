@@ -43,8 +43,8 @@ class CasioLcdScreen extends StatelessWidget {
   final bool isCalcPromptActive;
   final String? calcExpressionLatex;
   final String calcValueRaw;
-  final String? inequalitySignBadge;
-  final VoidCallback? onCycleInequalitySign;
+  final Widget? headerSelectors;
+
   final Widget? supplementaryVisualView;
 
   const CasioLcdScreen({
@@ -76,8 +76,7 @@ class CasioLcdScreen extends StatelessWidget {
     this.isCalcPromptActive = false,
     this.calcExpressionLatex,
     this.calcValueRaw = '',
-    this.inequalitySignBadge,
-    this.onCycleInequalitySign,
+    this.headerSelectors,
     this.supplementaryVisualView,
   });
 
@@ -231,6 +230,7 @@ class CasioLcdScreen extends StatelessWidget {
                         onToggleSound: onToggleSound,
                         onToggleTheme: onToggleTheme,
                       ),
+                      if (headerSelectors != null) headerSelectors!,
           // 2. Expresión de entrada original pequeña arriba a la izquierda (como en Casio reales)
           if (hasSteps) ...[
             const SizedBox(height: 4),
@@ -361,40 +361,6 @@ class CasioLcdScreen extends StatelessWidget {
                                 ),
                               );
                             },
-                          ),
-                        ),
-                      if (inequalitySignBadge != null && !hasSteps)
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          child: InkWell(
-                            key: const Key('lcd_ineq_sign_btn'),
-                            onTap: onCycleInequalitySign,
-                            borderRadius: BorderRadius.circular(5),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isOledDark
-                                    ? const Color(0xFF1E3A8A)
-                                    : const Color(0xFF1E40AF),
-                                borderRadius: BorderRadius.circular(5),
-                                border: Border.all(
-                                  color: const Color(0xFF60A5FA),
-                                  width: 1.0,
-                                ),
-                              ),
-                              child: Text(
-                                'Signo: $inequalitySignBadge ▾',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
                           ),
                         ),
                     ],

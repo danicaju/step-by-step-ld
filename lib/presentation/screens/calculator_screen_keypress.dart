@@ -3,6 +3,10 @@ part of 'calculator_screen.dart';
 extension _CalculatorScreenKeypress on _CalculatorScreenState {
   void _handleKeyPress(String key) {
     updateState(() {
+      if (key == '=' && _headerFocus >= 0) {
+        _headerFocus = -1;
+        return;
+      }
       if (_handleKeyPressControl(key)) return;
       if (_handleKeyPressFunctions(key)) return;
 
