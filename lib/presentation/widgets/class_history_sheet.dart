@@ -168,7 +168,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                         color: const Color(0xFF2563EB).withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.history_edu_rounded, color: Color(0xFF60A5FA), size: 22),
+                      child: const Icon(Icons.history_edu_rounded, color: Color(0xFFE5A93C), size: 22),
                     ),
                     const SizedBox(width: 10),
                     Expanded(

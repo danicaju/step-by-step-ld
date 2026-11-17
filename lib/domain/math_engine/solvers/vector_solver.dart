@@ -5,6 +5,7 @@ import '../core/rational.dart';
 import '../models/step_resolution.dart';
 import '../models/vector_models.dart';
 import 'vectors/vector_cross_product_solver.dart';
+import 'vectors/vector_mixed_product_solver.dart';
 
 export '../models/vector_models.dart';
 export 'vectors/vector_cross_product_solver.dart';
@@ -251,6 +252,13 @@ class VectorSolver {
     RationalVector v,
   ) =>
       VectorCrossProductSolver.crossProductAndArea(u, v);
+
+  static StepByStepResolution mixedProduct(
+    RationalVector u,
+    RationalVector v,
+    RationalVector w,
+  ) =>
+      VectorMixedProductSolver.mixedProduct(u, v, w);
 
   static StepByStepResolution add(RationalVector u, RationalVector v) {
     final dim = math.max(u.dimension, v.dimension);

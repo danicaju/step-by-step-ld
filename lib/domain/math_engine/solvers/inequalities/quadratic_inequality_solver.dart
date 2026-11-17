@@ -118,11 +118,13 @@ class QuadraticInequalitySolver {
       final sat1 = sign.matchesSign(v1.numerator.sign);
       final sat2 = sign.matchesSign(v2.numerator.sign);
 
+      final closedRoots = !sign.isStrict;
       final signIntervals = [
         InequalityInterval(
           start: double.negativeInfinity,
           end: r1.approx,
           endLabel: r1.latex,
+          includeEnd: closedRoots,
           isSatisfied: sat0,
         ),
         InequalityInterval(
@@ -130,12 +132,15 @@ class QuadraticInequalitySolver {
           end: r2.approx,
           startLabel: r1.latex,
           endLabel: r2.latex,
+          includeStart: closedRoots,
+          includeEnd: closedRoots,
           isSatisfied: sat1,
         ),
         InequalityInterval(
           start: r2.approx,
           end: double.infinity,
           startLabel: r2.latex,
+          includeStart: closedRoots,
           isSatisfied: sat2,
         ),
       ];
