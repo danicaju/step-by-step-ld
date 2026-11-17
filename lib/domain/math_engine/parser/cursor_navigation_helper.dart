@@ -1,6 +1,7 @@
 import 'balanced_scan.dart';
 import 'expression_tokenizer.dart';
 import 'fraction_template.dart';
+import 'nested_fraction_navigator.dart';
 import 'slash_fraction_converter.dart';
 
 class CursorNavigationHelper {
@@ -150,6 +151,10 @@ class CursorNavigationHelper {
   /// ([isUp] == false). Devuelve `null` si no aplica salto de fracción.
   static int? jumpFractionUpDown(String raw, int currentPos, {required bool isUp}) {
     final safe = currentPos.clamp(0, raw.length);
+    final nested = isUp
+        ? NestedFractionNavigator.up(raw, safe)
+        : NestedFractionNavigator.down(raw, safe);
+    if (nested != null) return nested;
     ({int numStart, int slashIdx, int denEnd})? bestSpan;
     int bestWidth = raw.length + 1;
 

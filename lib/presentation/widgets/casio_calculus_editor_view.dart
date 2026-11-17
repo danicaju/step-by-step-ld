@@ -45,16 +45,16 @@ class CasioCalculusEditorView extends StatelessWidget {
         isOledDark ? const Color(0xFF94A3B8) : const Color(0xFF475569);
 
     final prefixLatex = switch (selectedOperation) {
-      CalculusOperation.derivative => r"\frac{d}{dx}\left(",
+      CalculusOperation.derivative => r'\frac{d}{dx}(',
       CalculusOperation.tangentLine => r'f(x) =',
-      CalculusOperation.indefiniteIntegral => r'\int \left(',
-      CalculusOperation.definiteIntegral => r'\int \left(',
+      CalculusOperation.indefiniteIntegral => r'\int (',
+      CalculusOperation.definiteIntegral => r'\int (',
     };
     final suffixLatex = switch (selectedOperation) {
-      CalculusOperation.derivative => r'\right)',
+      CalculusOperation.derivative => r')',
       CalculusOperation.tangentLine => '',
-      CalculusOperation.indefiniteIntegral => r'\right)\,dx',
-      CalculusOperation.definiteIntegral => r'\right)\,dx',
+      CalculusOperation.indefiniteIntegral => r')\,dx',
+      CalculusOperation.definiteIntegral => r')\,dx',
     };
 
     final bodyLatex = expressionRaw.isEmpty
@@ -63,9 +63,21 @@ class CasioCalculusEditorView extends StatelessWidget {
             expressionRaw,
             cursorPos: activeField == 0 ? expressionCursorPos : null,
           );
-    final fullFormulaLatex = CasioLcdScreen.sanitizeForMathTex(
-      '$prefixLatex$bodyLatex$suffixLatex',
-    );
+    // Cabecera y cierre son de solo lectura y van fuera del buffer editable.
+    final bodyStyle = TextStyle(fontSize: 19, color: textColor);
+    Widget tex(String latex, String fallback) => Math.tex(
+          CasioLcdScreen.sanitizeForMathTex(latex),
+          textStyle: bodyStyle,
+          onErrorFallback: (_) => Text(
+            fallback,
+            style: TextStyle(
+              fontSize: 15,
+              fontFamily: 'monospace',
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+        );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -127,21 +139,19 @@ class CasioCalculusEditorView extends StatelessWidget {
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: Math.tex(
-                        fullFormulaLatex,
-                        textStyle: TextStyle(
-                          fontSize: 19,
-                          color: textColor,
-                        ),
-                        onErrorFallback: (_) => Text(
-                          expressionRaw.isEmpty ? 'f(x) = 0' : expressionRaw,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          tex(prefixLatex, 'f(x) ='),
+                          KeyedSubtree(
+                            key: const Key('calculus_body_tex'),
+                            child: tex(
+                              bodyLatex,
+                              expressionRaw.isEmpty ? '0' : expressionRaw,
+                            ),
                           ),
-                        ),
+                          if (suffixLatex.isNotEmpty) tex(suffixLatex, ')'),
+                        ],
                       ),
                     ),
                   ),
