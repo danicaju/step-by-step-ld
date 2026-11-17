@@ -70,6 +70,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                         isShiftActive: _isShiftActive,
                         isAlphaActive: _isAlphaActive,
                         isMemoryActive: _memory.hasActiveM,
+                        showDisp: _showDisp,
                         lcdTheme: _lcdTheme,
                         isOledDark: _isOledDark,
                         showDecimalApprox: _showDecimalApprox,

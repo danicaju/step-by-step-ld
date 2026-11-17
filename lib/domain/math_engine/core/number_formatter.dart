@@ -22,7 +22,22 @@ class NumberFormatter {
               .replaceFirst(RegExp(r'\.$'), '');
         }
     }
-    return CalculatorSettings.decimalComma ? raw.replaceAll('.', ',') : raw;
+    final grouped = groupThousands(raw);
+    return CalculatorSettings.decimalComma ? grouped.replaceAll('.', ',') : grouped;
+  }
+
+  /// Agrupa de tres en tres la parte entera si `Digit Sep` está activo.
+  static String groupThousands(String raw) {
+    if (!CalculatorSettings.digitSeparator || raw.contains(r'\')) return raw;
+    final m = RegExp(r'^(-?)(\d+)(.*)$').firstMatch(raw);
+    if (m == null) return raw;
+    final digits = m.group(2)!;
+    final buf = StringBuffer();
+    for (int i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buf.write(r'\,');
+      buf.write(digits[i]);
+    }
+    return '${m.group(1)}$buf${m.group(3)}';
   }
 
   static String _scientific(double value) {
@@ -35,7 +50,7 @@ class NumberFormatter {
 
   /// Fracción exacta en LaTeX: impropia `\frac{n}{d}` o mixta `w\frac{r}{d}`.
   static String fraction(int numerator, int denominator) {
-    if (denominator == 1) return '$numerator';
+    if (denominator == 1) return groupThousands('$numerator');
     final abs = numerator.abs();
     final sign = numerator < 0 ? '-' : '';
     if (CalculatorSettings.mixedFractions && abs > denominator) {

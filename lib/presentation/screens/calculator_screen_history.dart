@@ -129,6 +129,7 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
 
   void _recordCurrentResolutionToHistory(
       StepByStepResolution res, String modeName) {
+    if (_historySuppressed) return;
     final String? savedRawExpr;
     if (_calculatorMode == 2) {
       savedRawExpr = '${_eqLeftRaw.trim()} = ${_eqRightRaw.trim()}';
@@ -206,49 +207,6 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
       (m) => '√(${m[1]})',
     );
     return out.isEmpty ? '0' : out;
-  }
-
-  void _cycleHistoryReplayUp() {
-    if (_historyEntries.isEmpty) return;
-    if (_replayIndex == -1) {
-      _draftBeforeReplay = _calculatorMode == 2
-          ? '$_eqLeftRaw = $_eqRightRaw'
-          : _rawInput;
-      _replayIndex = 0;
-    } else if (_replayIndex < _historyEntries.length - 1) {
-      _replayIndex++;
-    } else {
-      return;
-    }
-    final restored = _entryToEditableRaw(_historyEntries[_replayIndex]);
-    if (_calculatorMode == 2) {
-      _restoreMode2EquationString(restored);
-    } else {
-      _rawInput = restored;
-      _cursorPos = _rawInput.length;
-    }
-  }
-
-  void _cycleHistoryReplayDown() {
-    if (_replayIndex < 0) return;
-    if (_replayIndex > 0) {
-      _replayIndex--;
-      final restored = _entryToEditableRaw(_historyEntries[_replayIndex]);
-      if (_calculatorMode == 2) {
-        _restoreMode2EquationString(restored);
-      } else {
-        _rawInput = restored;
-        _cursorPos = _rawInput.length;
-      }
-    } else {
-      _replayIndex = -1;
-      if (_calculatorMode == 2) {
-        _restoreMode2EquationString(_draftBeforeReplay);
-      } else {
-        _rawInput = _draftBeforeReplay.isEmpty ? '0' : _draftBeforeReplay;
-        _cursorPos = _rawInput.length;
-      }
-    }
   }
 
   Future<void> _copyLatexToClipboardShortcut() async {

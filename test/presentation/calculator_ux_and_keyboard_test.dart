@@ -401,7 +401,7 @@ void main() {
       // Borrado de token atómico completo
       final (delToken, delTokenPos) =
           ExpressionParser.deleteAtCursor('2+√(9)', 4);
-      expect(delToken, equals('2+9)'));
+      expect(delToken, equals('2+9')); // DEL desenvuelve la raiz
       expect(delTokenPos, equals(2));
 
       // Salto entre numerador y denominador

@@ -107,7 +107,7 @@ void main() {
       expect(astAns, isA<VariableNode>());
       expect((astAns as VariableNode).name, equals('ANS'));
 
-      expect(ExpressionParser.rawToLiveLatex('ANS + 2'), contains(r'\text{ANS}'));
+      expect(ExpressionParser.rawToLiveLatex('ANS + 2'), contains(r'\text{Ans}'));
     });
   });
 

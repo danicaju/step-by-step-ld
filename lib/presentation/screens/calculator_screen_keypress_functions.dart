@@ -21,6 +21,12 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
           _handleFactorize();
           return true;
         }
+        if (_isAlphaActive && _calculatorMode == 1) {
+          _isAlphaActive = false;
+          if (_activeResolution != null) _clearActiveResolutionCursor();
+          _applyRawInsertion('∶');
+          return true;
+        }
       }
 
       // Tecla × (con SHIFT inserta m.c.m., con ALPHA M.C.D.)

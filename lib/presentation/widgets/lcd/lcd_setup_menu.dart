@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 
 import 'lcd_palette.dart';
 
-/// Títulos de las 6 filas del SETUP (2 páginas de 3).
+/// Títulos de las 8 filas del SETUP (3 páginas de 3).
 const List<String> kSetupRowTitles = [
   'Unidad Angular',
   'Formato Número',
   'Fracción Resultado',
   'Separador Decimal',
   'Tema LCD',
+  'Salida por Defecto',
+  'Separador Dígitos',
   'Inicializar / Reset',
 ];
 
@@ -19,10 +21,12 @@ const List<List<String>> kSetupRowOptions = [
   ['d/c (Impropia)', 'ab/c (Mixta)'],
   ['Punto (.)', 'Coma (,)'],
   ['Clásica (Oliva)', 'Papel (Alto Contraste)', 'Nocturno'],
+  ['MathI/MathO (Exacta)', 'MathI/DecimalO (Decimal)'],
+  ['Desactivado', 'Activado (1 234,5)'],
   ['Limpiar Memorias (A-Y, M, ANS)', 'Restaurar Config'],
 ];
 
-/// Menú SETUP de la LCD (SHIFT + MODE): 2 páginas, filas 1-6, sub-opciones y dígitos Fix/Sci.
+/// Menú SETUP de la LCD (SHIFT + MODE): 3 páginas, filas 1-8, sub-opciones y dígitos Fix/Sci.
 class LcdSetupMenuView extends StatelessWidget {
   final LcdTheme theme;
   final int focusRow;
@@ -108,8 +112,8 @@ class LcdSetupMenuView extends StatelessWidget {
     }
 
     final List<Widget> body;
-    String title = 'SETUP  ${page + 1}/2';
-    String hint = '▲▼ mover · 1-6 o = elegir · AC salir';
+    String title = 'SETUP  ${page + 1}/3';
+    String hint = '▲▼ mover · 1-8 o = elegir · AC salir';
     if (digitsPrompt != null) {
       title = '$digitsPrompt  (0-9)';
       hint = 'Pulsa 0-9 · AC volver';
@@ -144,13 +148,13 @@ class LcdSetupMenuView extends StatelessWidget {
             left: '${i + 1}: ${opts[i]}',
             right: '',
             focused: subCursor == i,
-            current: focusRow != 5 && currentOption == i,
+            current: focusRow != 7 && currentOption == i,
             onTap: () => onTapOption?.call(i),
           ),
       ];
     } else {
       body = [
-        for (int r = page * 3; r < page * 3 + 3; r++)
+        for (int r = page * 3; r < page * 3 + 3 && r < kSetupRowTitles.length; r++)
           row(
             key: Key('setup_row_$r'),
             left: '${r + 1}: ${kSetupRowTitles[r]}',

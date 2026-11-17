@@ -51,6 +51,7 @@ extension _CalculatorScreenKeypressHelpers on _CalculatorScreenState {
   }
 
   void _clearActiveResolutionCursor() {
+    _resetMultiStatement();
     _activeResolution = null;
     _activeStepIndex = 0;
     if (_calculatorMode == 2) {

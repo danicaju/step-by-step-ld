@@ -3,6 +3,7 @@ import 'expression_tokenizer.dart';
 import 'fraction_template.dart';
 import 'nested_fraction_navigator.dart';
 import 'slash_fraction_converter.dart';
+import 'unwrap_helper.dart';
 
 class CursorNavigationHelper {
 
@@ -128,6 +129,8 @@ class CursorNavigationHelper {
     if (fracDel != null) {
       return fracDel.$1.isEmpty ? (emptyResult, emptyCursor) : fracDel;
     }
+    final unwrapped = UnwrapHelper.tryUnwrap(raw, safe);
+    if (unwrapped != null) return unwrapped;
     final prefix = raw.substring(0, safe);
     final suffix = raw.substring(safe);
 

@@ -2,6 +2,10 @@ part of 'calculator_screen.dart';
 
 extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
   void _solveMode1() {
+      if ((_rawInput.contains('∶') || _rawInput.contains('=')) &&
+          _solveMultiStatement()) {
+        return;
+      }
       if (_rawInput.trim().isEmpty || _rawInput == '0') {
         _showLcdError('Escribe una operación matemática.');
         return;

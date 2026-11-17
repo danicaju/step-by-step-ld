@@ -17,6 +17,8 @@ extension _CalculatorScreenSetup on _CalculatorScreenState {
         CalculatorSettings.mixedFractions ? 'ab/c' : 'd/c',
         CalculatorSettings.decimalComma ? 'Coma' : 'Punto',
         const ['Clásica', 'Papel', 'Nocturno'][_lcdTheme.index],
+        CalculatorSettings.mathOutput == MathOutputMode.mathO ? 'MathO' : 'DecimalO',
+        CalculatorSettings.digitSeparator ? 'Sí' : 'No',
         '',
       ];
 
@@ -26,6 +28,8 @@ extension _CalculatorScreenSetup on _CalculatorScreenState {
         2 => CalculatorSettings.mixedFractions ? 1 : 0,
         3 => CalculatorSettings.decimalComma ? 1 : 0,
         4 => _lcdTheme.index,
+        5 => CalculatorSettings.mathOutput.index,
+        6 => CalculatorSettings.digitSeparator ? 1 : 0,
         _ => 0,
       };
 
@@ -78,6 +82,10 @@ extension _CalculatorScreenSetup on _CalculatorScreenState {
       case 4:
         _lcdTheme = LcdTheme.values[idx];
       case 5:
+        CalculatorSettings.mathOutput = MathOutputMode.values[idx];
+      case 6:
+        CalculatorSettings.digitSeparator = idx == 1;
+      case 7:
         if (idx == 0) {
           _memory.resetAll();
         } else {
@@ -118,7 +126,7 @@ extension _CalculatorScreenSetup on _CalculatorScreenState {
       _closeSetup();
     } else if (key == '=') {
       _setupSubCursor = _setupCurrentOption(_setupRow);
-    } else if (n != null && n >= 1 && n <= 6) {
+    } else if (n != null && n >= 1 && n <= 8) {
       _setupRow = n - 1;
       _setupSubCursor = _setupCurrentOption(_setupRow);
     }
@@ -137,9 +145,21 @@ extension _CalculatorScreenSetup on _CalculatorScreenState {
       return;
     }
     if (vertical) {
-      _setupRow = (_setupRow + step + 6) % 6;
+      _setupRow = (_setupRow + step + 8) % 8;
     } else {
-      _setupRow = (_setupRow + 3 * step + 6) % 6;
+      final next = ((_setupRow ~/ 3 + step + 3) % 3) * 3 + _setupRow % 3;
+      _setupRow = next < 8 ? next : 7;
     }
+  }
+
+  /// MathI/DecimalO: tras `=` en M1 muestra directamente el resultado decimal.
+  void _applyDecimalOutputPreference() {
+    if (CalculatorSettings.mathOutput != MathOutputMode.decimalO) return;
+    final res = _activeResolution;
+    if (res == null || res.steps.isEmpty) return;
+    updateState(() {
+      _activeStepIndex = res.steps.length - 1;
+      _showDecimalApprox = true;
+    });
   }
 }

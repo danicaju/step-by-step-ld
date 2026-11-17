@@ -18,6 +18,7 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
         }
         return;
       }
+      _prepareAfterEquals(key);
       if (_handleKeyPressControl(key)) return;
       if (_handleKeyPressFunctions(key)) return;
 
@@ -143,6 +144,9 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
           }
           return;
         }
+
+        // Multi-sentencia (Disp): = avanza a la siguiente sentencia.
+        if (_advanceMultiStatement()) return;
 
         // En Modos de Expresión (Modos 1, 2, 4 Notables y 6 lineal):
         if (_activeResolution != null) {

@@ -70,17 +70,17 @@ void main() {
   });
 
   group('SETUP en la LCD', () {
-    testWidgets('abre con SHIFT+MODE, pagina 1/2 y D-Pad pasa a pagina 2/2', (tester) async {
+    testWidgets('abre con SHIFT+MODE, pagina 1/3 y D-Pad pasa a pagina 2/3', (tester) async {
       await _boot(tester);
       await _openSetup(tester);
-      expect(find.text('SETUP  1/2'), findsOneWidget);
+      expect(find.text('SETUP  1/3'), findsOneWidget);
       await tester.tap(find.byIcon(Icons.arrow_drop_down_rounded).first);
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.arrow_drop_down_rounded).first);
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.arrow_drop_down_rounded).first);
       await tester.pumpAndSettle();
-      expect(find.text('SETUP  2/2'), findsOneWidget);
+      expect(find.text('SETUP  2/3'), findsOneWidget);
     });
 
     testWidgets('1 -> 3 elige GRA y el indicador lo muestra', (tester) async {
@@ -112,14 +112,14 @@ void main() {
       expect(CalculatorSettings.mixedFractions, isTrue);
     });
 
-    testWidgets('4 -> 1 separador punto; 6 -> 2 restaura configuracion', (tester) async {
+    testWidgets('4 -> 1 separador punto; 8 -> 2 restaura configuracion', (tester) async {
       await _boot(tester);
       await _openSetup(tester);
       await _key(tester, '4');
       await _key(tester, '1');
       expect(CalculatorSettings.decimalComma, isFalse);
       await _openSetup(tester);
-      await _key(tester, '6');
+      await _key(tester, '8');
       await _key(tester, '2');
       expect(CalculatorSettings.decimalComma, isTrue);
     });

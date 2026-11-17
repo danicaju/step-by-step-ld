@@ -126,6 +126,12 @@ extension _CalculatorScreenChassis on _CalculatorScreenState {
                             }
                           } else if (_isAlphaActive && _calculatorMode == 2) {
                             _insertEqualsInEquation();
+                          } else if (_isAlphaActive && _calculatorMode == 1) {
+                            updateState(() {
+                              _isAlphaActive = false;
+                              if (_activeResolution != null) _clearActiveResolutionCursor();
+                              _applyRawInsertion('=');
+                            });
                           } else {
                             _handleKeyPress('CALC');
                           }

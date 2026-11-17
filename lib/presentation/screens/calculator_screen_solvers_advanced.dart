@@ -12,6 +12,7 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
     switch (_calculatorMode) {
       case 1:
         _solveMode1();
+        _applyDecimalOutputPreference();
         break;
       case 2:
         _solveMode2();

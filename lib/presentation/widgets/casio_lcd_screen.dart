@@ -23,6 +23,7 @@ class CasioLcdScreen extends StatelessWidget {
   final bool isShiftActive;
   final bool isAlphaActive;
   final bool isMemoryActive;
+  final bool showDisp;
   final bool isOledDark;
   final LcdTheme? lcdTheme;
   final bool isSoundMuted;
@@ -59,6 +60,7 @@ class CasioLcdScreen extends StatelessWidget {
     required this.isShiftActive,
     required this.isAlphaActive,
     this.isMemoryActive = false,
+    this.showDisp = false,
     this.isOledDark = false,
     this.lcdTheme,
     this.isSoundMuted = false,
@@ -223,6 +225,7 @@ class CasioLcdScreen extends StatelessWidget {
                         isShiftActive: isShiftActive,
                         isAlphaActive: isAlphaActive,
                         isMemoryActive: isMemoryActive,
+                        showDisp: showDisp,
                         isRadMode: isRadMode,
                         angleLabel: angleLabel,
                         onToggleAngleUnit: onToggleAngleUnit,

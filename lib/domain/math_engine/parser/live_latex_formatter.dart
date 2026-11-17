@@ -212,8 +212,8 @@ class LiveLatexFormatter {
     out = out.replaceAllMapped(RegExp(r'\bpi\b'), (_) => r'\pi ');
 
     // 6. Memoria ANS y variables
-    out = out.replaceAll('ANS', r'\text{ANS}');
-    out = out.replaceAll('ans', r'\text{ANS}');
+    out = out.replaceAll('ANS', r'\text{Ans}');
+    out = out.replaceAll('ans', r'\text{Ans}');
 
     // 7. Operadores de multiplicación española (\cdot), desigualdades e igualdad
     out = out
@@ -224,6 +224,7 @@ class LiveLatexFormatter {
           (_) => ' - ',
         )
         .replaceAll(RegExp(r' {2,}'), ' ')
+        .replaceAll('∶', r' \;{:}\; ')
         .replaceAll(':', ' : ')
         .replaceAll('<=', r' \le ')
         .replaceAll('≤', r' \le ')
