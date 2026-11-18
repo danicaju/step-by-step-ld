@@ -28,7 +28,7 @@ class LcdPedagogicalBox extends StatelessWidget {
         ? (warningTrick != null ? const Color(0xFFFCA5A5) : const Color(0xFFE2E8F0))
         : (warningTrick != null ? const Color(0xFF991B1B) : const Color(0xFF1E293B));
     final Color warningIconColor = isOledDark
-        ? (warningTrick != null ? const Color(0xFFEF4444) : const Color(0xFF38BDF8))
+        ? (warningTrick != null ? const Color(0xFFEF4444) : const Color(0xFFE5A93C))
         : (warningTrick != null ? const Color(0xFFB91C1C) : const Color(0xFF1E293B));
 
     return Container(

@@ -356,7 +356,7 @@ class LcdModeMenu extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isOledDark ? const Color(0xFF38BDF8) : const Color(0xFF0F172A))
+              ? (isOledDark ? const Color(0xFFE5A93C) : const Color(0xFF0F172A))
               : (isOledDark
                   ? const Color(0xFF1A2220)
                   : const Color(0xFFCBD5CE).withValues(alpha: 0.5)),

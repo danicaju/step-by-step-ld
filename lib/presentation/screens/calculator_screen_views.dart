@@ -50,13 +50,22 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
           : 'Escribe rectas con x, y y pulsa = para ver la región 2D';
     }
     if (_calculatorMode == 8) {
-      return 'Introduce xi/fi, muévete con D-Pad ◀ ▶ ▲ ▼ y pulsa = para calcular';
+      return switch (_cw.x.m8View) {
+        1 => 'Introduce xi e yi, muévete con D-Pad ◀ ▶ ▲ ▼ y pulsa = para la regresión',
+        2 => 'Rellena μ, σ y a (◀ ▶ en la barra cambia P(X ≤ a)); avanza con ▶ y pulsa =',
+        3 => 'Rellena n, p y k (◀ ▶ en la barra cambia P(X = k)); avanza con ▶ y pulsa =',
+        _ => 'Introduce xi/fi, muévete con D-Pad ◀ ▶ ▲ ▼ y pulsa = para calcular',
+      };
     }
     if (_calculatorMode == 9) {
       return 'Rellena celdas (0 si vacío), muévete con D-Pad o = y elige operación en LCD';
     }
     if (_calculatorMode == 10) {
-      return 'Elige 2D/3D y operación (|u|, u·v, u×v), edita u y v y pulsa =';
+      return switch (_cw.x.m10View) {
+        1 => 'Elige la forma de dar la recta (2 puntos, punto y vector...), rellena los datos y pulsa =',
+        2 => 'Rellena 3 datos del triángulo (lados a, b, c o ángulos) y pulsa =',
+        _ => 'Elige 2D/3D y operación (|u|, u·v, u×v), edita u y v y pulsa =',
+      };
     }
     if (_calculatorMode == 11) {
       return 'Introduce z1 = a + bi y z2 = c + di (o módulo/ángulo en Polar) y pulsa =';

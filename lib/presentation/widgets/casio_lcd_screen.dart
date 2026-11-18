@@ -258,6 +258,7 @@ class CasioLcdScreen extends StatelessWidget {
                         stepTitle: stepTitle,
                         stepTitleColor: stepTitleColor,
                         isOledDark: isOledDark,
+                        stepTitleBelow: lcdConstraints.maxHeight >= 150,
                         isSoundMuted: isSoundMuted,
                         onToggleSound: onToggleSound,
                         onToggleTheme: onToggleTheme,

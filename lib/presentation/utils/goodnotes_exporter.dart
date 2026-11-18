@@ -145,7 +145,7 @@ class GoodnotesExporter {
                     children: [
                       const Icon(
                         Icons.image_outlined,
-                        color: Color(0xFF0D9488),
+                        color: Color(0xFFE5A93C),
                       ),
                       const SizedBox(width: 8),
                       const Text(
@@ -202,7 +202,7 @@ class GoodnotesExporter {
                       Expanded(
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0D9488),
+                            backgroundColor: const Color(0xFF2F5D50),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 13),
                             shape: RoundedRectangleBorder(
@@ -239,8 +239,8 @@ class GoodnotesExporter {
                       const SizedBox(width: 10),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF4F46E5),
-                          foregroundColor: Colors.white,
+                          backgroundColor: const Color(0xFFE5A93C),
+                          foregroundColor: const Color(0xFF1A2530),
                           padding: const EdgeInsets.symmetric(
                             vertical: 13,
                             horizontal: 16,
@@ -261,8 +261,7 @@ class GoodnotesExporter {
                               const SnackBar(
                                 content: Text(
                                     '¡Bloque LaTeX copiado al portapapeles!'),
-                                backgroundColor: Color(0xFF4F46E5),
-                                duration: Duration(seconds: 2),
+                                                    duration: Duration(seconds: 2),
                               ),
                             );
                           }

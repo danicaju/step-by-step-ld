@@ -20,6 +20,9 @@ class LcdStatusBar extends StatelessWidget {
   final String stepTitle;
   final Color stepTitleColor;
   final bool isOledDark;
+
+  /// En LCD muy bajas el titulo del paso se queda en la fila de insignias (no hay sitio para otra linea).
+  final bool stepTitleBelow;
   final bool isSoundMuted;
   final VoidCallback? onToggleSound;
   final VoidCallback? onToggleTheme;
@@ -42,6 +45,7 @@ class LcdStatusBar extends StatelessWidget {
     required this.stepTitle,
     required this.stepTitleColor,
     this.isOledDark = false,
+    this.stepTitleBelow = true,
     this.isSoundMuted = false,
     this.onToggleSound,
     this.onToggleTheme,
@@ -49,7 +53,9 @@ class LcdStatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    // Con pasos, el titulo del paso va en su propia linea (legible) en vez de apretado en la fila de insignias.
+    final bool titleBelow = stepTitleBelow && hasSteps && stepTitle.trim().isNotEmpty;
+    final row = Row(
       children: [
         StatusBadge(
           label: 'S',
@@ -168,7 +174,7 @@ class LcdStatusBar extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
+                color: const Color(0xFF1A2530),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: FittedBox(
@@ -187,7 +193,9 @@ class LcdStatusBar extends StatelessWidget {
           ),
         const SizedBox(width: 6),
         Expanded(
-          child: Align(
+          child: titleBelow
+              ? const SizedBox.shrink()
+              : Align(
             alignment: Alignment.centerRight,
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -241,11 +249,34 @@ class LcdStatusBar extends StatelessWidget {
                 size: 15,
                 color: isOledDark
                     ? const Color(0xFFFBBF24)
-                    : const Color(0xFF334155),
+                    : const Color(0xFF1A2530),
               ),
             ),
           ),
         ],
+      ],
+    );
+    if (!titleBelow) return row;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        row,
+        const SizedBox(height: 2),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            stepTitle,
+            key: const Key('lcd_step_title'),
+            maxLines: 1,
+            style: TextStyle(
+              color: stepTitleColor,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
       ],
     );
   }

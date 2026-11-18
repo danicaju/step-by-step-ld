@@ -90,10 +90,9 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('¡Resumen LaTeX de ${entriesToExport.length} ejercicios copiado al portapapeles!'),
-        backgroundColor: const Color(0xFF2563EB),
         action: SnackBarAction(
           label: 'Compartir',
-          textColor: Colors.white,
+          textColor: const Color(0xFFE5A93C),
           onPressed: () {
             Share.share(tex, subject: 'Resumen de Clase de Matemáticas - Casio Tutor');
           },
@@ -165,7 +164,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB).withValues(alpha: 0.2),
+                        color: const Color(0xFFE5A93C).withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(Icons.history_edu_rounded, color: Color(0xFFE5A93C), size: 22),
@@ -195,7 +194,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                     ),
                     IconButton(
                       tooltip: 'Exportar Resumen .TEX',
-                      icon: const Icon(Icons.download_rounded, color: Color(0xFF38BDF8)),
+                      icon: const Icon(Icons.download_rounded, color: Color(0xFFE5A93C)),
                       onPressed: _exportTexSummary,
                     ),
                     IconButton(
@@ -221,10 +220,11 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                         child: ChoiceChip(
                           label: Text(filter),
                           selected: _selectedFilter == filter,
-                          selectedColor: const Color(0xFF2563EB),
-                          backgroundColor: const Color(0xFF1E293B),
+                          selectedColor: const Color(0xFFE5A93C),
+                          checkmarkColor: const Color(0xFF1A2530),
+                          backgroundColor: const Color(0xFF1A2530),
                           labelStyle: TextStyle(
-                            color: _selectedFilter == filter ? Colors.white : const Color(0xFFCBD5E1),
+                            color: _selectedFilter == filter ? const Color(0xFF1A2530) : const Color(0xFFC8D6CD),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -246,7 +246,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
               // Lista de ejercicios
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: Color(0xFF2563EB)))
+                    ? const Center(child: CircularProgressIndicator(color: Color(0xFFE5A93C)))
                     : _filteredEntries.isEmpty
                         ? Center(
                             child: Column(
@@ -405,7 +405,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                                     const Text(
                                                       '= ',
                                                       style: TextStyle(
-                                                        color: Color(0xFF38BDF8),
+                                                        color: Color(0xFFE5A93C),
                                                         fontSize: 14,
                                                         fontWeight: FontWeight.bold,
                                                       ),
@@ -413,13 +413,13 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                                     Math.tex(
                                                       CasioLcdScreen.sanitizeForMathTex(entry.resolution.exactResultLatex),
                                                       textStyle: const TextStyle(
-                                                        color: Color(0xFF38BDF8),
+                                                        color: Color(0xFFE5A93C),
                                                         fontSize: 14,
                                                         fontWeight: FontWeight.bold,
                                                       ),
                                                       onErrorFallback: (err) => Text(
                                                         entry.resolution.exactResultLatex,
-                                                        style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 13, fontWeight: FontWeight.bold),
+                                                        style: const TextStyle(color: Color(0xFFE5A93C), fontSize: 13, fontWeight: FontWeight.bold),
                                                       ),
                                                     ),
                                                   ],

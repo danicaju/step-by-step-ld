@@ -216,7 +216,7 @@ class CasioVectorEditorView extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final activeBg =
-        isOledDark ? const Color(0xFF38BDF8) : const Color(0xFF0F172A);
+        isOledDark ? const Color(0xFFE5A93C) : const Color(0xFF0F172A);
     final activeFg = isOledDark ? Colors.black : Colors.white;
     final idleBg =
         isOledDark ? const Color(0xFF1A2421) : const Color(0xFFCAD6CE);
@@ -278,7 +278,7 @@ class CasioVectorEditorView extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final bg = selected
-        ? (isOledDark ? const Color(0xFF38BDF8) : const Color(0xFF0F172A))
+        ? (isOledDark ? const Color(0xFFE5A93C) : const Color(0xFF0F172A))
         : (isOledDark ? const Color(0xFF1A2421) : const Color(0xFFCAD6CE));
     final fg = selected
         ? (isOledDark ? Colors.black : Colors.white)

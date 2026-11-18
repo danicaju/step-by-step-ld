@@ -235,7 +235,6 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('¡Bloque LaTeX copiado al portapapeles!'),
-            backgroundColor: Color(0xFF4F46E5),
             duration: Duration(seconds: 2),
           ),
         );
@@ -255,7 +254,6 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Ecuación LaTeX copiada al portapapeles.'),
-            backgroundColor: Color(0xFF4F46E5),
             duration: Duration(seconds: 2),
           ),
         );
@@ -270,7 +268,6 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Expresión LaTeX copiada al portapapeles.'),
-            backgroundColor: Color(0xFF4F46E5),
             duration: Duration(seconds: 2),
           ),
         );

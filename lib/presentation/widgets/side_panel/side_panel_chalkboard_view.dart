@@ -63,8 +63,8 @@ class SidePanelChalkboardView extends StatelessWidget {
                 message: 'COPIAR LaTeX',
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4F46E5),
-                    foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFFE5A93C),
+                    foregroundColor: const Color(0xFF1A2530),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,

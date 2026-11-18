@@ -34,7 +34,7 @@ class SidePanelSummaryDialog {
         backgroundColor: const Color(0xFF1E293B),
         title: const Row(
           children: [
-            Icon(Icons.summarize_rounded, color: Color(0xFF38BDF8), size: 22),
+            Icon(Icons.summarize_rounded, color: Color(0xFFE5A93C), size: 22),
             SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -93,7 +93,7 @@ class SidePanelSummaryDialog {
                                 Text(
                                   '${i + 1}. ${entries[i].modeName}',
                                   style: const TextStyle(
-                                    color: Color(0xFF2563EB),
+                                    color: Color(0xFFE5A93C),
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -140,8 +140,8 @@ class SidePanelSummaryDialog {
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4F46E5),
-              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFFE5A93C),
+              foregroundColor: const Color(0xFF1A2530),
             ),
             icon: const Icon(Icons.code_rounded, size: 16),
             label: const Text('Copiar .TEX'),
@@ -155,7 +155,6 @@ class SidePanelSummaryDialog {
                     content: Text(
                       'Resumen .TEX (${entries.length} ejercicios) copiado al portapapeles.',
                     ),
-                    backgroundColor: const Color(0xFF2563EB),
                   ),
                 );
               }
@@ -163,7 +162,7 @@ class SidePanelSummaryDialog {
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0D9488),
+              backgroundColor: const Color(0xFF2F5D50),
               foregroundColor: Colors.white,
             ),
             icon: const Icon(Icons.image_rounded, size: 16),

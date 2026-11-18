@@ -225,9 +225,13 @@ final class TrigNode extends ExprNode {
       TrigFunction.acos => r'\cos^{-1}',
       TrigFunction.atan => r'\tan^{-1}',
     };
-    final argLatex = showDegSymbol && arg is! DmsNode
-        ? '${arg.toLatex()}^\\circ'
-        : arg.toLatex();
+    final a = arg;
+    // El simbolo de grado afecta a TODO el argumento: `sin((log_2 5 + 1)°)`, no `log_2 5 + 1°`.
+    final argLatex = showDegSymbol && a is! DmsNode
+        ? (a is BinaryOpNode && !a.parenthesized
+            ? '\\left(${a.toLatex()}\\right)^\\circ'
+            : '${a.toLatex()}^\\circ')
+        : a.toLatex();
     return '$fnLatex\\left($argLatex\\right)';
   }
 }

@@ -109,7 +109,8 @@ class CalculusStepTexts {
     final rs = rules(f);
     return _s(
       '1. Identificar la regla de derivación',
-      "f(x) = ${_t(f)} \\qquad ${rs.map((r) => _ruleFormulas[r]!).join(r'\quad ')}",
+      // Una regla por linea: en una sola fila la LCD la reduciria a letra ilegible.
+      "\\begin{array}{l} f(x) = ${_t(f)} \\\\[4pt] ${rs.map((r) => _ruleFormulas[r]!).join(r' \\ ')} \\end{array}",
       'Miramos la estructura de f(x) y elegimos la regla: ${rs.map((r) => _ruleNames[r]).join(', ')}. '
           'Siempre derivamos de fuera hacia dentro.',
     );

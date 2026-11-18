@@ -60,8 +60,8 @@ class SidePanelHistoryTab extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
-                        foregroundColor: Colors.white,
+                        backgroundColor: const Color(0xFFE5A93C),
+                        foregroundColor: const Color(0xFF1A2530),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 8,
@@ -226,7 +226,7 @@ class SidePanelHistoryTab extends StatelessWidget {
                                 const Text(
                                   '= ',
                                   style: TextStyle(
-                                    color: Color(0xFF38BDF8),
+                                    color: Color(0xFFE5A93C),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -239,14 +239,14 @@ class SidePanelHistoryTab extends StatelessWidget {
                                         entry.resolution.exactResultLatex,
                                       ),
                                       textStyle: const TextStyle(
-                                        color: Color(0xFF38BDF8),
+                                        color: Color(0xFFE5A93C),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
                                       ),
                                       onErrorFallback: (_) => Text(
                                         entry.resolution.exactResultLatex,
                                         style: const TextStyle(
-                                          color: Color(0xFF38BDF8),
+                                          color: Color(0xFFE5A93C),
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
                                         ),
