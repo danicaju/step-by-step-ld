@@ -3,6 +3,9 @@ import '../core/algebraic_latex_formatter.dart';
 import '../core/rational.dart';
 import '../models/step_resolution.dart';
 import 'equations/eq_poly.dart';
+import 'ruffini_helpers.dart';
+
+export 'ruffini_helpers.dart' show RuffiniFactorization;
 
 class RuffiniStepResult {
   final int root;
@@ -33,6 +36,13 @@ class RuffiniStepResult {
         '$row3\n'
         '\\end{array}';
   }
+}
+
+/// Resolucion paso a paso junto con la factorizacion estructurada (para verificarla).
+class RuffiniOutcome {
+  final StepByStepResolution resolution;
+  final RuffiniFactorization factorization;
+  const RuffiniOutcome(this.resolution, this.factorization);
 }
 
 class RuffiniSolver {
@@ -159,26 +169,37 @@ class RuffiniSolver {
   }
 
   /// Factoriza un polinomio mediante la Regla de Ruffini paso a paso
-  static StepByStepResolution factorize(List<int> inputCoeffs) {
+  static StepByStepResolution factorize(List<int> inputCoeffs) =>
+      factorizeFull(inputCoeffs).resolution;
+
+  /// Igual que [factorize], devolviendo ademas la factorizacion estructurada.
+  ///
+  /// Orden: factor comun (constante y `x^k`), candidatos `±p/q` (si `a_n != ±1` son racionales),
+  /// Ruffini con raices enteras o racionales hasta grado 2, y remate con la formula cuadratica
+  /// (raices racionales, irracionales o irreducible en R si Δ < 0).
+  static RuffiniOutcome factorizeFull(List<int> inputCoeffs) {
     // Normalizar lista eliminando ceros a la izquierda
-    var coeffs = List<int>.from(inputCoeffs);
+    final coeffs = List<int>.from(inputCoeffs);
     while (coeffs.isNotEmpty && coeffs.first == 0) {
       coeffs.removeAt(0);
     }
 
     if (coeffs.isEmpty) {
-      return const StepByStepResolution(
-        originalInputLatex: 'P(x) = 0',
-        steps: [
-          MathStep(
-            index: 1,
-            shortTitle: 'Polinomio nulo',
-            latexExpression: 'P(x) = 0',
-            pedagogicalNote: 'El polinomio nulo tiene infinitas raíces.',
-          ),
-        ],
-        exactResultLatex: '0',
-        decimalApproxLatex: '0',
+      return const RuffiniOutcome(
+        StepByStepResolution(
+          originalInputLatex: 'P(x) = 0',
+          steps: [
+            MathStep(
+              index: 1,
+              shortTitle: 'Polinomio nulo',
+              latexExpression: 'P(x) = 0',
+              pedagogicalNote: 'El polinomio nulo tiene infinitas raíces.',
+            ),
+          ],
+          exactResultLatex: '0',
+          decimalApproxLatex: '0',
+        ),
+        RuffiniFactorization(constant: 0, xPower: 0, roots: [], remaining: [0]),
       );
     }
 
@@ -202,188 +223,210 @@ class RuffiniSolver {
           'Es necesario colocar un 0 en la tabla de Ruffini para cada grado ausente.';
     }
 
-    List<int> currentCoeffs = List<int>.from(coeffs);
-    final List<int> foundRoots = [];
-
-    // Si el término independiente es 0, sacar factor común x / x^k antes de Ruffini
+    // Factor comun: x^k (sin termino independiente) y la constante (mcd con el signo de a_n).
+    var current = List<int>.from(coeffs);
     int zeroRootCount = 0;
-    while (currentCoeffs.length > 1 && currentCoeffs.last == 0) {
-      currentCoeffs.removeLast();
+    while (current.length > 1 && current.last == 0) {
+      current.removeLast();
       zeroRootCount++;
     }
+    final content = Rational.gcdMany(current);
+    final constant = current.first < 0 ? -content : content;
+    if (constant != 1) {
+      current = [for (final c in current) c ~/ constant];
+    }
 
-    if (zeroRootCount > 0) {
-      final commonLatex = zeroRootCount == 1 ? 'x' : 'x^{$zeroRootCount}';
-      final commonPlain = _plainDegreeTerm(zeroRootCount);
-      final restLatex = currentCoeffs.length == 1
-          ? '${currentCoeffs.first}'
-          : '(${polynomialToLatex(currentCoeffs)})';
+    if (zeroRootCount > 0 || (constant != 1 && current.length > 1)) {
+      final cText = constant == 1 ? '' : (constant == -1 ? '-' : '$constant');
+      final xText = zeroRootCount == 0
+          ? ''
+          : (zeroRootCount == 1 ? 'x' : 'x^{$zeroRootCount}');
+      final commonLatex = '$cText$xText' == '-' ? '-1' : '$cText$xText';
+      final commonPlain = '$cText${zeroRootCount == 0 ? '' : _plainDegreeTerm(zeroRootCount)}';
+      final restLatex = current.length == 1
+          ? '${current.first}'
+          : '(${polynomialToLatex(current)})';
+      final why = [
+        if (zeroRootCount > 0)
+          'no hay término independiente (a₀ = 0), así que ${_plainDegreeTerm(zeroRootCount)} es factor común',
+        if (constant != 1)
+          constant == -1
+              ? 'cambiamos el signo para que el coeficiente principal sea positivo'
+              : 'los coeficientes tienen un factor numérico común (${constant.abs()}${constant < 0 ? ' y el signo de a_n' : ''})',
+      ].join('; ');
       steps.add(
         MathStep(
           index: steps.length + 1,
           shortTitle: 'Sacar factor común $commonPlain',
           latexExpression: '$polyLatex = $commonLatex \\cdot $restLatex',
-          pedagogicalNote:
-              'Como no hay término independiente (a₀ = 0), sacamos $commonPlain como factor común antes de buscar divisores.',
-          warningTrick: currentCoeffs.length <= 2 ? missingDegreeWarning : null,
+          pedagogicalNote: 'Antes de buscar raíces: $why.',
+          warningTrick: current.length <= 2 ? missingDegreeWarning : null,
         ),
       );
     }
 
-    // Paso 1 (o 2): Divisores del término independiente si queda grado >= 2
-    if (currentCoeffs.length >= 3) {
-      final lastCoeff = currentCoeffs.last;
-      final divisors = getDivisors(lastCoeff);
-      final divPos = divisors.where((d) => d > 0).toList()..sort();
-      final divisorsFormatted = divPos.map((d) => '\\pm $d').join(', ');
+    final foundRoots = <(int, int)>[];
+    final rootsLatex = <String>[if (zeroRootCount > 0) 'x = 0'];
+    final rootsPlain = <String>[if (zeroRootCount > 0) 'x = 0'];
+    final factorParts = <String>[];
 
+    // Candidatos ±p/q solo si todavia se buscaran raices con Ruffini (grado >= 3).
+    if (current.length >= 4) {
+      final a0 = current.last, an = current.first;
+      final pos = RuffiniCandidates.positive(a0, an);
+      final divA0 = RuffiniCandidates.positiveDivisors(a0).map((d) => '\\pm $d').join(', ');
+      final divAn = RuffiniCandidates.positiveDivisors(an).map((d) => '\\pm $d').join(', ');
+      final monic = an.abs() == 1;
       steps.add(
         MathStep(
           index: steps.length + 1,
-          shortTitle: 'Candidatos a raíz entera (Divisores de a₀)',
-          latexExpression:
-              '\\text{Divisores de } $lastCoeff = \\left\\{ $divisorsFormatted \\right\\}',
-          pedagogicalNote:
-              'Según el Teorema del Resto, las raíces enteras de un polinomio con coeficientes enteros deben ser divisores del término independiente ($lastCoeff).',
+          shortTitle: monic
+              ? 'Candidatos a raíz entera (Divisores de a₀)'
+              : 'Candidatos a raíz racional (±p/q, p divide a a₀, q divide a aₙ)',
+          latexExpression: monic
+              ? '\\text{Divisores de } $a0 = \\left\\{ $divA0 \\right\\}'
+              : '\\text{Divisores de } $a0 = \\left\\{ $divA0 \\right\\},\\; '
+                  '\\text{divisores de } $an = \\left\\{ $divAn \\right\\} \\;\\Rightarrow\\; '
+                  '\\pm\\frac{p}{q} \\in \\left\\{ ${RuffiniCandidates.listLatex(pos)} \\right\\}',
+          pedagogicalNote: monic
+              ? 'Según el Teorema del Resto, las raíces enteras de un polinomio con coeficientes enteros deben ser divisores del término independiente ($a0).'
+              : 'Como aₙ = $an no es ±1, las raíces racionales son ±p/q con p divisor de a₀ ($a0) y q divisor de aₙ ($an), con la fracción simplificada.',
           warningTrick: missingDegreeWarning,
         ),
       );
     }
 
     // Iterar aplicando Ruffini mientras el grado sea >= 3
-    while (currentCoeffs.length > 3) {
-      int? successfulRoot;
-      RuffiniStepResult? successfulStep;
-
-      final currentDivisors = getDivisors(currentCoeffs.last);
-      for (final candidate in currentDivisors) {
-        final stepResult = executeRuffiniStep(currentCoeffs, candidate);
-        if (stepResult.remainder == 0) {
-          successfulRoot = candidate;
-          successfulStep = stepResult;
+    while (current.length > 3) {
+      (int, int)? hit;
+      for (final cand in RuffiniCandidates.searchOrder(current.last, current.first)) {
+        final d = RationalRuffini.divide(current, Rational(cand.$1, cand.$2));
+        if (d.remainder.isZero) {
+          hit = cand;
           break;
         }
       }
+      if (hit == null) break; // sin mas raices racionales
 
-      if (successfulRoot != null && successfulStep != null) {
-        foundRoots.add(successfulRoot);
-        final factorLatex = AlgebraicLatexFormatter.linearFactor(successfulRoot);
-
-        steps.add(
-          MathStep(
-            index: steps.length + 1,
-            shortTitle: 'Tabla de Ruffini con raíz x = $successfulRoot',
-            latexExpression: successfulStep.toLatexTable(),
-            pedagogicalNote:
-                'Bajamos el primer coeficiente (${currentCoeffs.first}), multiplicamos por la raíz ($successfulRoot) y sumamos en columna. '
-                'Como el resto es 0, x = $successfulRoot es raíz y divide exactamente al polinomio.',
-            warningTrick:
-                'La raíz x = $successfulRoot pasa al factor $factorLatex (se cambia el signo de la raíz).',
-          ),
-        );
-
-        currentCoeffs = [
-          ...successfulStep.quotientCoeffs,
-          successfulStep.remainder,
-        ]..removeLast();
+      final (p, q) = hit;
+      final rootRat = Rational(p, q);
+      final String table;
+      final List<int> next;
+      if (q == 1) {
+        final st = executeRuffiniStep(current, p);
+        table = st.toLatexTable();
+        next = st.quotientCoeffs;
       } else {
-        // No se encontraron más raíces enteras por Ruffini
-        break;
+        final d = RationalRuffini.divide(current, rootRat);
+        table = RationalRuffini.tableLatex(current, rootRat, d.quotient, d.products, d.remainder);
+        next = [for (final c in d.quotient) (c / Rational(q)).numerator];
       }
+      final factor = RuffiniCandidates.factorLatex(p, q);
+      final rootText = q == 1 ? '$p' : '$p/$q';
+      foundRoots.add(hit);
+      factorParts.add(factor);
+      rootsLatex.add('x = ${rootRat.toLatex()}');
+      rootsPlain.add('x = $rootText');
+      steps.add(
+        MathStep(
+          index: steps.length + 1,
+          shortTitle: 'Tabla de Ruffini con raíz x = $rootText',
+          latexExpression: table,
+          pedagogicalNote:
+              'Bajamos el primer coeficiente (${current.first}), multiplicamos por la raíz ($rootText) y sumamos en columna. '
+              'Como el resto es 0, x = $rootText es raíz y divide exactamente al polinomio.',
+          warningTrick: q == 1
+              ? 'La raíz x = $p pasa al factor $factor (se cambia el signo de la raíz).'
+              : 'La raíz x = $rootText pasa al factor primitivo $factor: el denominador ($q) se mueve a la x y el cociente de la tabla se divide entre $q.',
+        ),
+      );
+      current = next;
     }
 
-    // Si queda un polinomio de grado 2: ax² + bx + c
-    if (currentCoeffs.length == 3) {
-      final a = currentCoeffs[0];
-      final b = currentCoeffs[1];
-      final c = currentCoeffs[2];
-
-      final quadPolyLatex = polynomialToLatex(currentCoeffs);
-      final disc = b * b - 4 * a * c;
-
-      if (disc >= 0) {
-        final sqrtDisc = math.sqrt(disc);
-        if (sqrtDisc == sqrtDisc.toInt()) {
-          final sInt = sqrtDisc.toInt();
-          final r1Num = -b + sInt;
-          final r2Num = -b - sInt;
-          final twoA = 2 * a;
-
-          if (r1Num % twoA == 0 && r2Num % twoA == 0) {
-            final r1 = r1Num ~/ twoA;
-            final r2 = r2Num ~/ twoA;
-            foundRoots.add(r1);
-            foundRoots.add(r2);
-
-            final f1 = AlgebraicLatexFormatter.linearFactor(r1);
-            final f2 = AlgebraicLatexFormatter.linearFactor(r2);
-
-            steps.add(
-              MathStep(
-                index: steps.length + 1,
-                shortTitle: 'Resolver el cociente cuadrático restante',
-                latexExpression:
-                    '$quadPolyLatex = 0 \\implies x = \\frac{-${AlgebraicLatexFormatter.parenIfNegative(b)} \\pm \\sqrt{$disc}}{2 \\cdot ${AlgebraicLatexFormatter.parenIfNegative(a)}} \\implies x = $r1, \\; x = $r2',
-                pedagogicalNote:
-                    'Al llegar a grado 2, resolvemos la ecuación de segundo grado directamente para obtener las dos últimas raíces.',
-                warningTrick:
-                    'Las raíces $r1 y $r2 se convierten en los factores $f1 y $f2.',
-              ),
-            );
-            currentCoeffs = [a];
-          }
-        }
-      }
+    // Remate: lineal, cuadratico (formula) o resto sin descomponer.
+    var remaining = <int>[1];
+    var absorbed = 1;
+    String? stalledNote;
+    var irreducibleReal = false;
+    if (current.length == 3) {
+      final qc = RuffiniQuadratic.solve(current[0], current[1], current[2]);
+      steps.add(
+        MathStep(
+          index: steps.length + 1,
+          shortTitle: qc.title,
+          latexExpression: qc.latex,
+          pedagogicalNote: qc.note,
+          warningTrick: qc.warning,
+        ),
+      );
+      foundRoots.addAll(qc.rationalRoots);
+      factorParts.add(qc.factorLatex);
+      rootsLatex.addAll(qc.rootsLatex);
+      rootsPlain.addAll(qc.rootsPlain);
+      absorbed = qc.absorbedConstant;
+      irreducibleReal = qc.irreducible;
+      if (qc.irrational || qc.irreducible) remaining = current;
+    } else if (current.length == 2) {
+      final p = -current[1], q = current[0];
+      final g = Rational.gcd(p, q);
+      foundRoots.add((p ~/ g, q ~/ g));
+      factorParts.add(RuffiniCandidates.factorLatex(p ~/ g, q ~/ g));
+      rootsLatex.add('x = ${Rational(p, q).toLatex()}');
+      rootsPlain.add('x = ${p ~/ g}${q ~/ g == 1 ? '' : '/${q ~/ g}'}');
+    } else if (current.length > 3) {
+      remaining = current;
+      factorParts.add('(${polynomialToLatex(current)})');
+      stalledNote =
+          'No quedan más raíces racionales (ni enteras): el factor ${_plain(current)} se deja sin descomponer. '
+          'Aun así puede tener raíces irracionales o complejas, que Ruffini no encuentra.';
     }
 
     // Construcción de la factorización completa final
-    final leadCoeff = coeffs.first;
-    final factorParts = <String>[];
-    if (leadCoeff != 1 && leadCoeff != -1) {
-      factorParts.add('$leadCoeff');
-    } else if (leadCoeff == -1) {
-      factorParts.add('-');
-    }
-
-    if (zeroRootCount == 1) {
-      factorParts.add('x');
-    } else if (zeroRootCount > 1) {
-      factorParts.add('x^{$zeroRootCount}');
-    }
-
-    for (final r in foundRoots) {
-      factorParts.add(AlgebraicLatexFormatter.linearFactor(r));
-    }
-
-    if (currentCoeffs.length > 1) {
-      factorParts.add('(${polynomialToLatex(currentCoeffs)})');
-    }
-
-    final factoredLatex = factorParts.join();
-    final allRootsForDisplay = [
-      if (zeroRootCount > 0) 0,
-      ...foundRoots,
-    ];
-    final rootsFormatted = allRootsForDisplay.isEmpty
-        ? r'\text{Sin raices enteras}'
-        : allRootsForDisplay.map((r) => 'x = $r').join(', \\; ');
+    final shownConstant = constant * absorbed;
+    final prefix = shownConstant == 1 ? '' : (shownConstant == -1 ? '-' : '$shownConstant');
+    final xPart = zeroRootCount == 0
+        ? ''
+        : (zeroRootCount == 1 ? 'x' : 'x^{$zeroRootCount}');
+    var factoredLatex = '$prefix$xPart${factorParts.join()}';
+    if (factoredLatex.isEmpty) factoredLatex = '1';
+    final noRootsText = irreducibleReal
+        ? r'\text{Sin raices reales}'
+        : r'\text{Sin raices racionales}';
+    final rootsFormatted = rootsLatex.isEmpty ? noRootsText : rootsLatex.join(', \\; ');
+    final hasRoots = rootsPlain.isNotEmpty && rootsLatex.isNotEmpty;
 
     steps.add(
       MathStep(
         index: steps.length + 1,
         shortTitle: 'Factorización completa del polinomio',
         latexExpression: '$polyLatex = $factoredLatex',
-        pedagogicalNote: allRootsForDisplay.isEmpty
-            ? 'No se han encontrado raíces enteras entre los divisores.'
-            : 'Expresamos el polinomio como producto de factores simples (x - r). Las raíces obtenidas son: ${allRootsForDisplay.map((r) => 'x = $r').join(', ')}.',
+        pedagogicalNote: hasRoots
+            ? 'Expresamos el polinomio como producto de factores simples. Las raíces obtenidas son: ${rootsPlain.join(', ')}.${stalledNote == null ? '' : ' $stalledNote'}'
+            : (stalledNote ??
+                (irreducibleReal
+                    ? 'No hay raíces reales: el polinomio no se descompone más en ℝ (ver el discriminante negativo).'
+                    : 'No se han encontrado raíces racionales entre los candidatos.')),
       ),
     );
 
-    return StepByStepResolution(
-      originalInputLatex: polyLatex,
-      steps: steps,
-      exactResultLatex: factoredLatex,
-      decimalApproxLatex: rootsFormatted,
+    return RuffiniOutcome(
+      StepByStepResolution(
+        originalInputLatex: polyLatex,
+        steps: steps,
+        exactResultLatex: factoredLatex,
+        decimalApproxLatex: rootsFormatted,
+      ),
+      RuffiniFactorization(
+        constant: constant,
+        xPower: zeroRootCount,
+        roots: foundRoots,
+        remaining: remaining,
+      ),
     );
+  }
+
+  static String _plain(List<int> coeffs) {
+    final latex = polynomialToLatex(coeffs);
+    return '(${latex.replaceAll(RegExp(r'\^\{(\d+)\}'), r'^$1')})';
   }
 }
