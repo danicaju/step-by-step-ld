@@ -222,7 +222,7 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
       if (key == ')') {
         if (_isAlphaActive) {
           _isAlphaActive = false;
-          if (_supportsExpressionInput) {
+          if (_supportsExpressionInput || _calculatorMode == 7) {
             if (_activeResolution != null) {
               _activeResolution = null;
               _activeStepIndex = 0;
@@ -239,7 +239,7 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
       if (key == '(') {
         if (_isAlphaActive) {
           _isAlphaActive = false;
-          if (_supportsScientificFns) {
+          if (_supportsScientificFns || _calculatorMode == 7) {
             if (_activeResolution != null) {
               _activeResolution = null;
               _activeStepIndex = 0;

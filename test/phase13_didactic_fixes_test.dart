@@ -81,6 +81,19 @@ void main() {
       await pickHeader(t, 'hdr_ineqsys_rows', 'ineqsys_rows_3');
       expect(find.byType(InequalitySystemEditorView), findsOneWidget);
     });
+
+    testWidgets('ALPHA + ) escribe x y ALPHA + ( escribe y en las filas', (t) async {
+      await boot(t);
+      await _openMode(t, 7);
+      await keys(t, ['2']);
+      await alphaKey(t, ')');
+      await keys(t, ['+']);
+      await alphaKey(t, '(');
+      final view = t.widget<InequalitySystemEditorView>(find.byType(InequalitySystemEditorView));
+      final row = view.ineqSysRowInputs[view.ineqSysActiveRow];
+      expect(row, contains('x'));
+      expect(row, contains('y'));
+    });
   });
 
   group('2/3. M4 entrada visual', () {
