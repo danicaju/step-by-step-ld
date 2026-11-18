@@ -157,8 +157,47 @@ class SlashFractionConverter {
     return 0;
   }
 
+  /// Indice justo despues del `)` que cierra el grupo abierto en [open]; `null` si sigue abierto.
+  static int? _closedGroupEnd(String s, int open) {
+    var depth = 0;
+    for (var j = open; j < s.length; j++) {
+      if (s[j] == '(') depth++;
+      if (s[j] == ')') {
+        depth--;
+        if (depth == 0) return j + 1;
+      }
+    }
+    return null;
+  }
+
+  /// Fin de un denominador-plantilla `(den)`: solo las potencias (`^2`, `^(n)`) siguen unidas a el
+  /// (`1/(2)^2` = 1/4). Lo que se escribe despues -cifras, letras, `(`, y el propio cursor- queda
+  /// FUERA de la fraccion, igual que lo evalua el parser (`(1)/(2)3` = 3/2).
+  static int _templateDenominatorEnd(String s, int groupEnd, String sentinel) {
+    var i = groupEnd;
+    while (i < s.length && s[i] == '^') {
+      i++;
+      if (sentinel.isNotEmpty && i < s.length && s[i] == sentinel) i++;
+      if (i < s.length && (s[i] == '-' || s[i] == '+')) i++;
+      if (i < s.length && s[i] == '(') {
+        i = _closedGroupEnd(s, i) ?? s.length;
+        continue;
+      }
+      final runStart = i;
+      while (i < s.length && isFractionAtomChar(s[i], sentinel)) {
+        i++;
+      }
+      if (sentinel.isNotEmpty && i > runStart && s[i - 1] == sentinel) i--;
+    }
+    return i;
+  }
+
   static int scanDenominatorRight(String s, int slashIdx, String cursorSentinel) {
     int i = slashIdx + 1;
+    if (i < s.length && s[i] == '(') {
+      final end = _closedGroupEnd(s, i);
+      if (end != null) return _templateDenominatorEnd(s, end, cursorSentinel);
+    }
     if (i < s.length && cursorSentinel.isNotEmpty && s[i] == cursorSentinel) {
       i++;
     }
