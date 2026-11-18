@@ -2,6 +2,7 @@ import '../parser/expression_parser.dart';
 import '../solvers/calculus/sym_build.dart';
 import '../solvers/exact/ext_expr.dart';
 import '../solvers/exact/ext_parser.dart';
+import '../solvers/trig_and_angles_solver.dart';
 
 /// Funcion f(x) tipada (AST extendido) con evaluacion numerica que nunca lanza.
 ///
@@ -10,7 +11,13 @@ class FunctionModel {
   final String raw;
   final XNode node;
 
-  const FunctionModel._(this.raw, this.node);
+  /// Unidad angular con la que se evaluan sin/cos/tan (DEG o RAD de la calculadora).
+  final AngleUnit angle;
+
+  const FunctionModel._(this.raw, this.node, [this.angle = AngleUnit.rad]);
+
+  /// Misma funcion evaluada con otra unidad angular.
+  FunctionModel withAngle(AngleUnit unit) => FunctionModel._(raw, node, unit);
 
   /// Parsea `raw` (con `x`). Lanza `FormatException` si la sintaxis no es valida.
   factory FunctionModel.parse(String raw) {
@@ -27,7 +34,7 @@ class FunctionModel {
   }
 
   /// Valor de f en [x]; `null` si x esta fuera del dominio o el resultado no es finito.
-  double? at(double x) => Sx.numAt(node, x);
+  double? at(double x) => Sx.numAt(node, x, angle: angle);
 
   String get latex => node.latex();
 }

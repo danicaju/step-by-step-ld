@@ -277,7 +277,7 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
 
 
   void _solveMode5() {
-      if (_graphKind == 2 && !_m5FormActive) {
+      if (!_m5FormActive) {
         _solveMode5Free();
         return;
       }

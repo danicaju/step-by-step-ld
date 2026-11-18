@@ -39,6 +39,7 @@ import '../widgets/lcd/lcd_powered_off.dart';
 import '../widgets/lcd/lcd_memory_viewer.dart';
 import '../widgets/lcd/lcd_menu_navigation.dart';
 import '../../domain/math_engine/parser/balanced_scan.dart';
+import '../../domain/math_engine/functions/function_family_study_solver.dart';
 import '../../domain/math_engine/solvers/complex/pol_rec_solver.dart';
 import '../widgets/lcd/lcd_setup_menu.dart';
 import '../../domain/math_engine/core/calculator_settings.dart';

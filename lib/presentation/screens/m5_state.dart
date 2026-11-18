@@ -1,4 +1,5 @@
 import '../../domain/math_engine/calculus/limits_asymptotes_solver.dart';
+import '../../domain/math_engine/functions/function_family.dart';
 import '../widgets/modes/function_table_widget.dart';
 import '../widgets/modes/limit_form_widget.dart';
 
@@ -13,6 +14,13 @@ class M5State {
 
   StudyResult? study;
 
+  /// Familia detectada del ultimo estudio y unidad angular usada (DEG/RAD).
+  FamilyInfo? info;
+  bool deg = false;
+
+  /// Desplazamiento del visor con el D-Pad, en fracciones de ventana.
+  double panX = 0, panY = 0;
+
   bool get isForm => view != 0;
 
   /// ¿El cursor esta en la primera fila, de modo que ▲ sube a la cabecera?
@@ -23,5 +31,7 @@ class M5State {
     limit.clear();
     table.clear();
     study = null;
+    info = null;
+    panX = panY = 0;
   }
 }

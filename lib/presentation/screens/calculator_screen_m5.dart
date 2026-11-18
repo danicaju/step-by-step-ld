@@ -8,7 +8,7 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
   bool get _m5FormActive => _calculatorMode == 5 && _m5.isForm;
 
   /// ¿M5 usa el editor de expresiones en vez de las celdas de coeficientes?
-  bool get _m5Custom => _calculatorMode == 5 && (_m5.isForm || _graphKind == 2);
+  bool get _m5Custom => _calculatorMode == 5;
 
   /// `f(x) =` + expresion libre con LaTeX en vivo y cursor.
   String _m5FreeLatex(bool showLiveCursor) =>
@@ -40,11 +40,34 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
     if (_calculatorMode != 5 || !_showGraphView || st == null) return null;
     if (_lcdErrorKind != null || _isMenuOpen || _isSetupOpen) return null;
     if (!identical(_activeResolution, st.resolution)) return null;
-    return UniversalGraphView(model: st.model, asymptotes: st.asymptotes);
+    return UniversalGraphView(
+      model: st.model,
+      asymptotes: st.asymptotes,
+      info: _m5.info,
+      degrees: _m5.deg,
+      panX: _m5.panX,
+      panY: _m5.panY,
+    );
   }
 
   /// D-Pad en los formularios de M5. `true` si lo consumio.
   bool _m5Dpad(String dir) {
+    final st = _m5.study;
+    if (_calculatorMode == 5 && _m5.view == 0 && _showGraphView && st != null && identical(_activeResolution, st.resolution)) {
+      // Grafica visible: el D-Pad desplaza el visor (los pasos avanzan con `=`).
+      const step = 0.15;
+      switch (dir) {
+        case 'left':
+          _m5.panX = (_m5.panX - step).clamp(-20.0, 20.0);
+        case 'right':
+          _m5.panX = (_m5.panX + step).clamp(-20.0, 20.0);
+        case 'up':
+          _m5.panY = (_m5.panY + step).clamp(-20.0, 20.0);
+        default:
+          _m5.panY = (_m5.panY - step).clamp(-20.0, 20.0);
+      }
+      return true;
+    }
     if (!_m5FormActive || _activeResolution != null) return false;
     if (_m5.view == 1) {
       _m5.limit.dpad(dir);
@@ -153,9 +176,17 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
   /// Estudio + Grafica de una f(x) libre escrita con el editor de expresiones.
   void _solveMode5Free() {
     try {
-      final st = LimitsAsymptotesSolver.study(_rawInput);
+      final fs = FunctionFamilyStudySolver.study(
+        _rawInput,
+        expectedKind: _graphKind + 1,
+        degrees: _angleUnit == AngleUnit.deg,
+      );
+      final st = fs.result;
       updateState(() {
         _m5.study = st;
+        _m5.info = fs.info;
+        _m5.deg = fs.degrees;
+        _m5.panX = _m5.panY = 0;
         _currentGraphAnalysis = null;
         _selectedGraphPoint = null;
         _activeResolution = st.resolution;

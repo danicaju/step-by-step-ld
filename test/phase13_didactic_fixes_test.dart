@@ -164,22 +164,18 @@ void main() {
   });
 
   group('4. M5 racional y libre', () {
-    testWidgets('plantilla racional con fraccion vertical y 4 celdas', (t) async {
+    testWidgets('tipo Racional usa la plantilla f(x) = y el titulo M5: RACIONAL', (t) async {
       await boot(t);
       await _openMode(t, 5);
-      await pickHeader(t, 'hdr_graph_kind', 'graph_kind_1');
-      expect(find.byKey(const Key('m5_rational_template')), findsOneWidget);
-      expect(find.byKey(const Key('m5_rational_bar')), findsOneWidget);
-      for (var i = 0; i < 4; i++) {
-        expect(find.byKey(Key('coeff_cell_$i')), findsOneWidget);
-      }
+      await pickHeader(t, 'hdr_graph_kind', 'graph_kind_4');
+      expect(lcd(t).currentInputLatex, contains('f(x)'));
       expect(find.text('M5: RACIONAL'), findsOneWidget);
     });
 
     testWidgets('funcion libre muestra el prefijo f(x) =', (t) async {
       await boot(t);
       await _openMode(t, 5);
-      await pickHeader(t, 'hdr_graph_kind', 'graph_kind_2');
+      await pickHeader(t, 'hdr_graph_kind', 'graph_kind_0');
       expect(lcd(t).currentInputLatex, contains('f(x)'));
     });
 

@@ -174,8 +174,12 @@ void main() {
     testWidgets('M5 Racional (2x+1)/(x-3): dominio y asintotas por teclado', (t) async {
       await boot(t);
       await goMode(t, 5);
-      await pickHeader(t, 'hdr_graph_kind', 'graph_kind_1');
-      await keys(t, ['2', '=', '1', '=', '1', '=', '-', '3', '=']);
+      await pickHeader(t, 'hdr_graph_kind', 'graph_kind_4');
+      await keys(t, ['(', '2']);
+      await alphaKey(t, ')');
+      await keys(t, ['+', '1', ')', '÷', '(']);
+      await alphaKey(t, ')');
+      await keys(t, ['-', '3', ')', '=']);
       expect(find.byKey(const Key('universal_graph_clip')), findsOneWidget);
       await tapF(t, find.text('Ver Pasos'));
       expect(result(t), allOf(contains('x = 3'), contains('y = 2')));

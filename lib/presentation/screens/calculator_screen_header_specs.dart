@@ -43,10 +43,9 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
               keyName: 'hdr_graph_kind',
               prefix: 'Tipo',
               value: _graphKind,
-              items: const [
-                LcdDropdownItem(value: 0, label: 'ax^2+bx+c', key: Key('graph_kind_0')),
-                LcdDropdownItem(value: 1, label: 'Racional (px+q)/(rx+s)', key: Key('graph_kind_1')),
-                LcdDropdownItem(value: 2, label: 'f(x) libre', key: Key('graph_kind_2')),
+              items: [
+                for (var k = 0; k < kM5KindLabels.length; k++)
+                  LcdDropdownItem(value: k, label: kM5KindLabels[k], key: Key('graph_kind_$k')),
               ],
               onSelect: (v) {
                 _graphKind = v;
@@ -54,10 +53,8 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
                 _currentGraphAnalysis = null;
                 _selectedGraphPoint = null;
                 _m5.study = null;
-                if (v == 2) {
-                  _rawInput = '0';
-                  _cursorPos = 1;
-                }
+                _rawInput = '0';
+                _cursorPos = 1;
                 _resetResolutionView();
               },
             ),

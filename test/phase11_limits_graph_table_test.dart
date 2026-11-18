@@ -274,7 +274,7 @@ void main() {
     testWidgets('f(x) libre: estudio con visor universal', (t) async {
       await boot(t);
       await goM5(t);
-      await pickHeader(t, 'hdr_graph_kind', 'graph_kind_2');
+      await pickHeader(t, 'hdr_graph_kind', 'graph_kind_0');
       await keys(t, ['1', 'a/b', '(']);
       await alphaKey(t, ')');
       await keys(t, ['-', '3', ')', '=']);

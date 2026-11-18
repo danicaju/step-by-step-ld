@@ -153,31 +153,13 @@ void main() {
       expect(find.text('MENU'), findsWidgets);
       expect(find.text('3:Ecuaciones 2.º Grado'), findsNothing);
 
-      // Pulsar '5' para entrar en Modo 5 (Gráficas / Parábolas con coeficientes a, b, c)
+      // Pulsar '5' para entrar en Modo 5 (Estudio de funciones: editor libre f(x) = ...)
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '5'));
       await tester.pumpAndSettle();
+      expect(find.byKey(const Key('hdr_graph_kind')), findsOneWidget);
 
-      // Debe mostrar etiquetas de coeficientes en pantalla LCD
-      expect(find.text('a'), findsOneWidget);
-      expect(find.text('b'), findsOneWidget);
-      expect(find.text('c'), findsOneWidget);
-
-      // Teclear coeficiente '1' y pulsar '='
-      await tester.tap(find.text('1'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('=').last);
-      await tester.pumpAndSettle();
-
-      // Teclear '-' y '5' y pulsar '='
-      await tester.tap(find.text('-'));
-      await tester.pumpAndSettle();
+      // Teclear 5 y pulsar '=' -> estudio de la funcion constante f(x) = 5
       await tester.tap(find.text('5'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('=').last);
-      await tester.pumpAndSettle();
-
-      // Teclear '6' y pulsar '=' -> debe resolver parábola y = x² - 5x + 6
-      await tester.tap(find.text('6'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('=').last);
       await tester.pumpAndSettle();
@@ -187,19 +169,15 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('PASO 1/'), findsOneWidget);
 
-      // Pulsar DEL: debe salir de la vista de pasos y devolver a los coeficientes
+      // Pulsar DEL: debe salir de la vista de pasos y volver al editor
       await tester.tap(find.text('DEL'));
       await tester.pumpAndSettle();
-      expect(find.text('1'), findsWidgets);
-      expect(find.text('-5'), findsWidgets);
-      expect(find.text('6'), findsWidgets);
+      expect(find.byKey(const Key('hdr_graph_kind')), findsOneWidget);
 
-      // Pulsar AC: debe limpiar todos los coeficientes
+      // Pulsar AC: debe limpiar la entrada
       await tester.tap(find.text('AC'));
       await tester.pumpAndSettle();
-      expect(find.text('a'), findsOneWidget);
-      expect(find.text('b'), findsOneWidget);
-      expect(find.text('c'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('Modo Coeficientes permite introducir fracciones verticales con la tecla a/b (/)', (tester) async {
