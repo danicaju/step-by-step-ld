@@ -168,13 +168,17 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
           return true;
         }
         if (_isCoefficientMode) {
+          if (_activeResolution != null) {
+            _activeResolution = null;
+            _activeStepIndex = 0;
+          }
           final cells = _currentCellValues;
           final idx = _currentActiveIndex;
           if (idx < cells.length) {
-            final cur = cells[idx];
-            if (cur.isNotEmpty && cur != '-' && !cur.contains('/')) {
-              cells[idx] += '/';
-            }
+            // a/b abre la fraccion aunque la celda este vacia: primero el numerador.
+            final (text, numEdit) = CellFractionEditor.slash(cells[idx], _cw.x.cellNumEdit);
+            cells[idx] = text;
+            _cw.x.cellNumEdit = numEdit;
           }
           return true;
         }

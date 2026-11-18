@@ -80,6 +80,7 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
         return;
       }
       if (_isCoefficientMode) {
+        if (_cellFracDpad('up')) return;
         if (_calculatorMode == 3 && _systemDim == 2) {
           if (_sysActiveIndex >= 3) {
             _sysActiveIndex -= 3;
@@ -197,6 +198,7 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
         return;
       }
       if (_isCoefficientMode) {
+        if (_cellFracDpad('down')) return;
         if (_calculatorMode == 3 && _systemDim == 2) {
           if (_sysActiveIndex < 3) {
             _sysActiveIndex += 3;

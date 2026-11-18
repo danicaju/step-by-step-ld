@@ -62,9 +62,12 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
         return;
       }
       try {
-        final res = InequalitySolver.solveString(
+        final res = _withTypedStatement(
+          InequalitySolver.solveString(
+            _rawInput,
+            fallbackSign: _inequalitySign,
+          ),
           _rawInput,
-          fallbackSign: _inequalitySign,
         );
         final visual = InequalitySolver.getVisualData(res);
         updateState(() {

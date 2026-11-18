@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import '../core/algebraic_latex_formatter.dart';
+import '../core/rational.dart';
 import '../models/step_resolution.dart';
+import 'equations/eq_poly.dart';
 
 class RuffiniStepResult {
   final int root;
@@ -105,6 +107,56 @@ class RuffiniSolver {
 
   static String _plainDegreeTerm(int d) =>
       d == 1 ? 'x' : 'x${_superscript(d)}';
+
+  /// Ruffini con coeficientes racionales: se multiplica por el m.c.m. de los denominadores
+  /// para trabajar con enteros (las raices no cambian) y al final se devuelve el factor `1/m`.
+  static StepByStepResolution factorizeRational(List<Rational> coeffs) {
+    if (coeffs.every((c) => c.isInteger)) {
+      return factorize([for (final c in coeffs) c.numerator]);
+    }
+    final den = Rational.lcmMany([for (final c in coeffs) c.denominator]);
+    final ints = [for (final c in coeffs) (c * Rational(den)).numerator];
+    final n = coeffs.length - 1;
+    final given = {for (var i = 0; i < coeffs.length; i++) n - i: coeffs[i]};
+    final scaled = {for (var i = 0; i < ints.length; i++) n - i: Rational(ints[i])};
+    final pLatex = 'P(x) = ${PolyOps.latex(given)}';
+    final inner = factorize(ints);
+
+    final steps = <MathStep>[
+      MathStep(
+        index: 1,
+        shortTitle: 'Quitar denominadores',
+        latexExpression:
+            '$pLatex \\;\\Rightarrow\\; Q(x) = $den \\cdot P(x) = ${PolyOps.latex(scaled)}',
+        pedagogicalNote:
+            'Ruffini funciona con coeficientes enteros: multiplicamos P(x) por el m.c.m. de los denominadores ($den). Q(x) y P(x) tienen las mismas raíces.',
+        warningTrick: 'Al final hay que volver a P(x): P(x) = Q(x) / $den.',
+      ),
+      for (final st in inner.steps)
+        MathStep(
+          index: st.index + 1,
+          shortTitle: st.shortTitle,
+          latexExpression: st.latexExpression.replaceAll('P(x)', 'Q(x)'),
+          pedagogicalNote: st.pedagogicalNote,
+          warningTrick: st.warningTrick,
+        ),
+    ];
+    final result = '\\frac{1}{$den}\\left(${inner.exactResultLatex}\\right)';
+    steps.add(
+      MathStep(
+        index: steps.length + 1,
+        shortTitle: 'Volver a P(x)',
+        latexExpression: 'P(x) = \\frac{Q(x)}{$den} = $result',
+        pedagogicalNote: 'Dividimos entre $den para recuperar el polinomio original; las raíces son las mismas.',
+      ),
+    );
+    return StepByStepResolution(
+      originalInputLatex: pLatex,
+      steps: steps,
+      exactResultLatex: result,
+      decimalApproxLatex: inner.decimalApproxLatex,
+    );
+  }
 
   /// Factoriza un polinomio mediante la Regla de Ruffini paso a paso
   static StepByStepResolution factorize(List<int> inputCoeffs) {

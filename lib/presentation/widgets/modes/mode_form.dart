@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../lcd/lcd_palette.dart';
 import 'expr_key_input.dart';
+import 'form_cell_text.dart';
 
 /// Campo de un formulario: `expr` = expresion en x; si no, numero (`0-9 . - /`).
 class ModeField {
@@ -229,18 +230,17 @@ class ModeFormWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           alignment: Alignment.centerLeft,
           decoration: BoxDecoration(
-            color: active ? _ink : pal.inset,
+            color: active
+                ? (f.expr ? Color.alphaBlend(_amber.withValues(alpha: 0.22), pal.inset) : _ink)
+                : pal.inset,
             borderRadius: BorderRadius.circular(5),
             border: Border.all(color: active ? _amber : _border, width: active ? 2.2 : 1),
           ),
-          child: Text(
-            f.text + (active ? '_' : ''),
-            style: TextStyle(
-              color: active ? const Color(0xFFC8D6CD) : fg,
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              fontFamily: 'monospace',
-            ),
+          child: FormCellText(
+            text: f.text,
+            active: active,
+            latex: f.expr,
+            color: active ? (f.expr ? fg : const Color(0xFFC8D6CD)) : fg,
           ),
         ),
       ]),

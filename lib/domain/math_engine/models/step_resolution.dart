@@ -47,6 +47,14 @@ class StepByStepResolution {
     required this.decimalApproxLatex,
   });
 
+  /// Misma resolucion con otro enunciado (p. ej. con las fracciones verticales tecleadas).
+  StepByStepResolution withOriginalInput(String latex) => StepByStepResolution(
+        originalInputLatex: latex,
+        steps: steps,
+        exactResultLatex: exactResultLatex,
+        decimalApproxLatex: decimalApproxLatex,
+      );
+
   Map<String, dynamic> toJson() => {
         'originalInputLatex': originalInputLatex,
         'steps': steps.map((s) => s.toJson()).toList(),

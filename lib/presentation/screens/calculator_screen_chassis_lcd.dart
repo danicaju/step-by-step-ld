@@ -267,6 +267,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                             : null,
                         calcValueRaw: _calcValueRaw,
                         headerSelectors: _buildHeaderSelectors(),
+                        supplementaryVisualFlex: _extraVisualFlex,
                         supplementaryVisualView: _extraVisual() ??
                             ((_calculatorMode == 6 || _calculatorMode == 7) &&
                                     _activeIneqVisualData != null &&
@@ -289,6 +290,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                 isOledDark: _isOledDark,
                                 notableTypeIndex: _identityType.index,
                                 graphKind: _graphKind,
+                                fractionNumeratorActive: _cw.x.cellNumEdit,
                                 inequalitySignSymbol: _inequalitySign.symbol,
                                 onCycleInequalitySign: () {
                                   updateState(() {

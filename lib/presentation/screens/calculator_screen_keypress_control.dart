@@ -253,7 +253,9 @@ extension _CalculatorScreenKeypressControl on _CalculatorScreenState {
           final cells = _currentCellValues;
           final idx = _currentActiveIndex;
           if (idx < cells.length && cells[idx].isNotEmpty) {
-            cells[idx] = cells[idx].substring(0, cells[idx].length - 1);
+            final (text, numEdit) = CellFractionEditor.backspace(cells[idx], _cw.x.cellNumEdit);
+            cells[idx] = text;
+            _cw.x.cellNumEdit = numEdit;
           }
           return true;
         }

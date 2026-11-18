@@ -82,6 +82,7 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
   }
 
   set _currentActiveIndex(int val) {
+    _cw.x.cellNumEdit = false;
     switch (_calculatorMode) {
       case 3:
         if (_systemDim == 4) {

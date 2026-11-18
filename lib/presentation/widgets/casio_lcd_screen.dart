@@ -60,6 +60,9 @@ class CasioLcdScreen extends StatelessWidget {
 
   final Widget? supplementaryVisualView;
 
+  /// Reparto (sobre 10) del alto para [supplementaryVisualView]; el resto es la formula.
+  final int supplementaryVisualFlex;
+
   const CasioLcdScreen({
     super.key,
     required this.currentInputLatex,
@@ -100,6 +103,7 @@ class CasioLcdScreen extends StatelessWidget {
     this.calcValueRaw = '',
     this.headerSelectors,
     this.supplementaryVisualView,
+    this.supplementaryVisualFlex = 6,
   });
 
   /// Número de módulos visibles por página en el MENU paginado (2×2).
@@ -233,7 +237,12 @@ class CasioLcdScreen extends StatelessWidget {
                   final double maxNoteHeight = lcdConstraints.maxHeight.isFinite
                       ? (lcdConstraints.maxHeight * 0.34).clamp(28.0, 68.0)
                       : 68.0;
-                  final double headerExtra = headerSelectors != null ? 30.0 : 0.0;
+                  // Visual dominante (caja espanola): el dibujo manda, sin selector ni enunciado repetido.
+                  final bool visualFirst = hasSteps &&
+                      supplementaryVisualView != null &&
+                      supplementaryVisualFlex >= 8;
+                  final double headerExtra =
+                      headerSelectors != null && !visualFirst ? 30.0 : 0.0;
                   final bool showBottomNote = lcdConstraints.maxHeight >=
                           (supplementaryVisualView != null ? 190.0 : 118.0) + headerExtra &&
                       (coefficientView == null ||
@@ -263,9 +272,9 @@ class CasioLcdScreen extends StatelessWidget {
                         onToggleSound: onToggleSound,
                         onToggleTheme: onToggleTheme,
                       ),
-                      if (headerSelectors != null) headerSelectors!,
+                      if (headerSelectors != null && !visualFirst) headerSelectors!,
           // 2. Expresión de entrada original pequeña arriba a la izquierda (como en Casio reales)
-          if (hasSteps && lcdConstraints.maxHeight >= 100) ...[
+          if (hasSteps && lcdConstraints.maxHeight >= 100 && !visualFirst) ...[
             const SizedBox(height: 4),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -321,7 +330,7 @@ class CasioLcdScreen extends StatelessWidget {
                             return Column(
                               children: [
                                 Expanded(
-                                  flex: 4,
+                                  flex: 10 - supplementaryVisualFlex,
                                   child: Align(
                                     alignment: Alignment.center,
                                     child: FittedBox(
@@ -348,7 +357,7 @@ class CasioLcdScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 3),
                                 Expanded(
-                                  flex: 6,
+                                  flex: supplementaryVisualFlex,
                                   child: supplementaryVisualView!,
                                 ),
                               ],

@@ -22,8 +22,11 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
         _showLcdError('Escribe una operación matemática.');
         return;
       }
+      // Lo que tecleo el alumno: el enunciado de los pasos conserva sus fracciones verticales.
+      final typedRaw = _rawInput;
       try {
-        final symbolic = M1SymbolicSolver.solve(_rawInput, memory: _memory.getAllVariablesWithAns());
+        final symbolicRaw = M1SymbolicSolver.solve(_rawInput, memory: _memory.getAllVariablesWithAns());
+        final symbolic = symbolicRaw == null ? null : _withTypedStatement(symbolicRaw, typedRaw);
         if (symbolic != null) {
           updateState(() {
             _activeResolution = symbolic;
@@ -50,7 +53,8 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
           _recordCurrentResolutionToHistory(polRec, 'M1: CALCULAR');
           return;
         }
-        final extended = _tryExtendedMode1(finalizedInput);
+        final extendedRaw = _tryExtendedMode1(finalizedInput);
+        final extended = extendedRaw == null ? null : _withTypedStatement(extendedRaw, typedRaw);
         if (extended != null) {
           updateState(() {
             _rawInput = finalizedInput;
@@ -61,10 +65,13 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
           return;
         }
         final ast = _parser.parse(finalizedInput);
-        final res = _evaluator.evaluate(
-          ast,
-          memoryVariables: _memory.getAllVariablesWithAns(),
-          angleUnit: _angleUnit,
+        final res = _withTypedStatement(
+          _evaluator.evaluate(
+            ast,
+            memoryVariables: _memory.getAllVariablesWithAns(),
+            angleUnit: _angleUnit,
+          ),
+          typedRaw,
         );
         if (_evaluator.lastEvaluatedRational != null) {
           _memory.setAns(_evaluator.lastEvaluatedRational!);
@@ -142,10 +149,17 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
       }
       try {
         final fullEq = '$lhsTrim = $rhsTrim';
-        final res = PolynomialEquationSolver.solveEquationString(
+        final solved = PolynomialEquationSolver.solveEquationString(
           fullEq,
           angle: _angleUnit,
         );
+        final typedL = _typedStatementTex(_eqLeftRaw);
+        final typedR = _typedStatementTex(_eqRightRaw);
+        final typedEq = (typedL == null && typedR == null)
+            ? null
+            : '${typedL ?? ExpressionParser.rawToLiveLatex(lhsTrim)} = '
+                '${typedR ?? ExpressionParser.rawToLiveLatex(rhsTrim)}';
+        final res = typedEq == null ? solved : solved.withOriginalInput(typedEq);
         updateState(() {
           _activeResolution = res;
         });
@@ -265,13 +279,19 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
         });
         return;
       }
-      final coeffs = <int>[];
-      for (int i = 0; i < _ruffiniValues.length; i++) {
-        coeffs.add(
-          _parseCoeffValue(_ruffiniValues[i], defaultValue: i == 0 ? 1 : 0),
-        );
+      final coeffs = <Rational>[];
+      try {
+        for (int i = 0; i < _ruffiniValues.length; i++) {
+          coeffs.add(_parseRationalCell(
+            _ruffiniValues[i],
+            defaultValue: Rational(i == 0 ? 1 : 0),
+          ));
+        }
+      } on FormatException catch (e) {
+        _showLcdError(e.message);
+        return;
       }
-      if (coeffs.first == 0) {
+      if (coeffs.first.isZero) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('El coeficiente principal "a" no puede ser 0.'),
@@ -280,7 +300,7 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
         );
         return;
       }
-      final res = RuffiniSolver.factorize(coeffs);
+      final res = RuffiniSolver.factorizeRational(coeffs);
       updateState(() {
         _activeResolution = res;
       });

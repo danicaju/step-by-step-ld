@@ -32,11 +32,13 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
   /// Visual del resultado (caja, campana o croquis) en el ultimo paso.
   Widget? _extraVisual() {
     final res = _activeResolution;
-    if (res == null || _activeStepIndex != res.steps.length - 1) return null;
+    if (res == null) return null;
     final x = _x;
+    // La caja espanola se dibuja en TODOS los pasos (es el grueso de la explicacion).
     if (_calculatorMode == 4 && x.boxResult != null && identical(res, x.boxResult!.resolution)) {
-      return SpanishBoxDivisionView(result: x.boxResult!, isOledDark: _isOledDark);
+      return SpanishBoxDivisionView(result: x.boxResult!, stage: _activeStepIndex, isOledDark: _isOledDark);
     }
+    if (_activeStepIndex != res.steps.length - 1) return null;
     if (_calculatorMode == 8 && x.normalResult != null && identical(res, x.normalResult!.resolution)) {
       return GaussianBellView(result: x.normalResult!);
     }
@@ -45,6 +47,9 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
     }
     return null;
   }
+
+  /// Reparto (sobre 10) del alto de la LCD para el visual: la caja ocupa casi todo.
+  int get _extraVisualFlex => _calculatorMode == 4 && _x.m4View == 2 ? 8 : 6;
 
   bool _extraDpad(String dir) {
     final f = _extraForm;

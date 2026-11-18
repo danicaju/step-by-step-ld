@@ -341,6 +341,9 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
   }
 
   String _appendTokenToNumericCell(String current, String token) {
+    if (current.contains('/')) {
+      return CellFractionEditor.append(current, token, _cw.x.cellNumEdit);
+    }
     if (token == '-') {
       return current.startsWith('-') ? current.substring(1) : '-$current';
     }

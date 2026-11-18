@@ -66,6 +66,9 @@ class ExtraViewsState {
     ],
   );
 
+  /// Celdas de coeficientes (Ruffini...): la fraccion `a/b` abierta edita el numerador.
+  bool cellNumEdit = false;
+
   BoxDivisionResult? boxResult;
   NormalResult? normalResult;
   TriangleResult? triResult;
@@ -80,6 +83,7 @@ class ExtraViewsState {
     m4View = 0;
     m8View = 0;
     m10View = 0;
+    cellNumEdit = false;
     for (final f in [box, frac, line, tri, normal, bin]) {
       f.clear();
     }

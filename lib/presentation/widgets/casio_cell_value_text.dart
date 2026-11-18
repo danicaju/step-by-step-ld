@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
 import '../../domain/math_engine/parser/expression_parser.dart';
+import '../utils/cell_fraction_editor.dart';
 import 'casio_lcd_screen.dart';
 
 /// Renderiza el valor de una celda en las vistas estructuradas de la LCD.
@@ -15,13 +16,35 @@ class CasioCellValueText extends StatelessWidget {
   final TextStyle style;
   final TextStyle? fallbackStyle;
 
+  /// Celda activa con fraccion: 0 = se edita el numerador, 1 = el denominador (cursor).
+  final int? fractionPart;
+
+  /// Estilo del LaTeX: `display` agranda las fracciones (celdas de coeficientes).
+  final MathStyle mathStyle;
+
   const CasioCellValueText({
     super.key,
     required this.value,
     required this.emptyFallback,
     required this.style,
     this.fallbackStyle,
+    this.fractionPart,
+    this.mathStyle = MathStyle.text,
   });
+
+  /// `\frac{n}{d}` con huecos `\square` y cursor en la parte activa.
+  static String fractionTex(String value, {int? activePart}) {
+    final parts = CellFractionEditor.parts(value.trim());
+    if (parts == null) return ExpressionParser.rawToLiveLatex(value.trim());
+    String part(String t, bool active) {
+      if (t.isEmpty || t == '-') {
+        return active ? '$t\\blacksquare' : '$t\\square';
+      }
+      return active ? '$t\\mid' : t;
+    }
+
+    return '\\frac{${part(parts.$1, activePart == 0)}}{${part(parts.$2, activePart == 1)}}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +56,7 @@ class CasioCellValueText extends StatelessWidget {
       return Text(value, style: style);
     }
 
-    final rawLatex = ExpressionParser.rawToLiveLatex(trimmed);
+    final rawLatex = fractionTex(trimmed, activePart: fractionPart);
     final sanitized = CasioLcdScreen.sanitizeForMathTex(rawLatex);
     final effectiveSize = (style.fontSize ?? 13.0) * 0.92;
 
@@ -41,7 +64,7 @@ class CasioCellValueText extends StatelessWidget {
       fit: BoxFit.scaleDown,
       child: Math.tex(
         sanitized,
-        mathStyle: MathStyle.text,
+        mathStyle: mathStyle,
         textStyle: style.copyWith(
           fontFamily: null,
           fontSize: effectiveSize,

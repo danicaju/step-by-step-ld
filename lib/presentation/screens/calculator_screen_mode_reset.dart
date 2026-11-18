@@ -233,18 +233,29 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
     return _parseStatRational(trimmed);
   }
 
+  /// Entero o decimal de un lado de una fraccion; `null` si esta vacio o mal escrito.
+  Rational? _tryRationalPart(String t) {
+    final v = t.trim();
+    if (v.isEmpty || v == '-') return null;
+    final i = int.tryParse(v);
+    if (i != null) return Rational(i);
+    try {
+      return Rational.fromDecimalString(v);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Rational _parseStatRational(String raw) {
     final s = raw.trim().replaceAll(',', '.');
     if (s.contains('/')) {
       final parts = s.split('/');
       if (parts.length == 2) {
-        final n = int.tryParse(parts[0]);
-        final d = int.tryParse(parts[1]);
-        if (n != null && d != null && d != 0) {
-          return Rational(n, d);
-        }
+        final n = _tryRationalPart(parts[0]);
+        final d = _tryRationalPart(parts[1]);
+        if (n != null && d != null && !d.isZero) return n / d;
       }
-      throw FormatException('Fracción no válida: $raw');
+      throw FormatException('Fracción incompleta o no válida: $raw');
     }
     if (s.contains('.')) {
       return Rational.fromDecimalString(s);

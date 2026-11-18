@@ -57,6 +57,7 @@ import '../widgets/modes/calculator_method_tab.dart';
 import '../widgets/modes/inequality_system_editor_view.dart';
 import 'classwiz_state.dart';
 import '../widgets/solar_panel.dart';
+import '../utils/cell_fraction_editor.dart';
 
 part 'calculator_screen_optn.dart';
 part 'calculator_screen_lcd_error.dart';
@@ -75,6 +76,8 @@ part 'calculator_screen_solvers_advanced.dart';
 part 'calculator_screen_mode_cells.dart';
 part 'calculator_screen_dpad.dart';
 part 'calculator_screen_dpad_vertical.dart';
+part 'calculator_screen_cell_fraction.dart';
+part 'calculator_screen_statement.dart';
 part 'calculator_screen_history.dart';
 part 'calculator_screen_mode_reset.dart';
 part 'calculator_screen_keypress_helpers.dart';

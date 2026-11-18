@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter_math_fork/flutter_math.dart' show MathStyle;
+
 import 'casio_cell_value_text.dart';
 
 class CasioCoefficientView extends StatelessWidget {
@@ -14,6 +16,9 @@ class CasioCoefficientView extends StatelessWidget {
   final ValueChanged<int>? onCellTap;
   final int graphKind; // M5: 0 = cuadratica, 1 = racional
 
+  /// La celda activa contiene una fraccion: `true` edita el numerador, `false` el denominador.
+  final bool fractionNumeratorActive;
+
   const CasioCoefficientView({
     super.key,
     required this.mode,
@@ -26,6 +31,7 @@ class CasioCoefficientView extends StatelessWidget {
     this.onCycleInequalitySign,
     this.onCellTap,
     this.graphKind = 0,
+    this.fractionNumeratorActive = false,
   });
 
   Widget _buildCell(int index, {bool compact = false}) {
@@ -81,6 +87,8 @@ class CasioCoefficientView extends StatelessWidget {
       child: CasioCellValueText(
         value: val,
         emptyFallback: label,
+        fractionPart: isActive ? (fractionNumeratorActive ? 0 : 1) : null,
+        mathStyle: MathStyle.display,
         style: TextStyle(
           color: isActive ? activeText : inactiveText,
           fontSize: compact ? 13 : 16,

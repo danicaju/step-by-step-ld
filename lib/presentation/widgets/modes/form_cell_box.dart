@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../lcd/lcd_palette.dart';
+import 'form_cell_text.dart';
 import 'mode_form.dart';
 
 /// Celda editable de un [ModeFormState] (misma estetica Casio que `ModeFormWidget`).
@@ -32,6 +33,10 @@ class FormCellBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Las celdas de expresion se pintan en LaTeX: fondo claro (el cursor es oscuro).
+    final latex = field.expr;
+    final activeFill = latex ? Color.alphaBlend(amber.withValues(alpha: 0.22), pal.inset) : ink;
+    final activeInk = latex ? fg : const Color(0xFFC8D6CD);
     return GestureDetector(
       onTap: onTap,
       child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -43,18 +48,15 @@ class FormCellBox extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           alignment: Alignment.centerLeft,
           decoration: BoxDecoration(
-            color: active ? ink : pal.inset,
+            color: active ? activeFill : pal.inset,
             borderRadius: BorderRadius.circular(5),
             border: Border.all(color: active ? amber : border, width: active ? 2.2 : 1),
           ),
-          child: Text(
-            field.text + (active ? '_' : ''),
-            style: TextStyle(
-              color: active ? const Color(0xFFC8D6CD) : fg,
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              fontFamily: 'monospace',
-            ),
+          child: FormCellText(
+            text: field.text,
+            active: active,
+            latex: latex,
+            color: active ? activeInk : fg,
           ),
         ),
       ]),

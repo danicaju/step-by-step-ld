@@ -73,6 +73,16 @@ class SpanishBoxDivisionSolver {
     return k == 0 ? coef : (k == 1 ? '${coef}x' : '${coef}x^{$k}');
   }
 
+  /// Termino en texto plano para las notas: `2x³`, `x`, `-5`.
+  static String plainTerm(Rational c, int k) {
+    const sup = {'0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'};
+    final abs = c.abs();
+    final num = abs.isInteger ? '${abs.numerator}' : '${abs.numerator}/${abs.denominator}';
+    final coef = (abs == Rational(1) && k > 0) ? '' : num;
+    final x = k == 0 ? '' : (k == 1 ? 'x' : 'x${'$k'.split('').map((d) => sup[d]).join()}');
+    return '${c.isNegative ? '-' : ''}$coef$x';
+  }
+
   static String _signed(Rational c, int k) {
     final t = _term(c.abs(), k);
     return c.isNegative ? '-$t' : t;
@@ -107,26 +117,30 @@ class SpanishBoxDivisionSolver {
         shortTitle: 'Ordenar y completar',
         latexExpression: '\\left(${complete(p, top)}\\right) : \\left(${PolyOps.latex(q)}\\right)',
         pedagogicalNote:
-            'Ordenamos por grados decrecientes y completamos con 0x^k los términos que faltan, para alinear las columnas.',
+            'Dibujamos la caja: el dividendo ordenado y completo (con 0x^k en los huecos) a la izquierda y el divisor dentro de la caja.',
       ),
     ];
     for (var i = 0; i < steps.length; i++) {
       final s = steps[i];
-      final lead = PolyOps.degree(i == 0 ? p : steps[i - 1].remainder);
-      final leadC = PolyOps.coeff(i == 0 ? p : steps[i - 1].remainder, lead);
+      final before = i == 0 ? p : steps[i - 1].remainder;
+      final lead = PolyOps.degree(before);
+      final leadC = PolyOps.coeff(before, lead);
+      final leadTxt = plainTerm(leadC, lead), divTxt = plainTerm(lq, dq), termTxt = plainTerm(s.coeff, s.degree);
       mathSteps.add(MathStep(
         index: mathSteps.length + 1,
-        shortTitle: 'Dividir los términos principales',
+        shortTitle: 'Dividir los términos principales (${i + 1}/${steps.length})',
         latexExpression: '\\frac{${_signed(leadC, lead)}}{${_signed(lq, dq)}} = ${_signed(s.coeff, s.degree)}',
         pedagogicalNote:
-            'Dividimos el término de mayor grado del resto entre el de mayor grado del divisor; el resultado es el siguiente término del cociente.',
+            'Dividimos $leadTxt (mayor grado del resto) entre $divTxt (mayor grado del divisor): $termTxt. Es el siguiente término del cociente.',
       ));
+      final restTxt = s.remainder.isEmpty ? '0' : PolyOps.latex(s.remainder);
       mathSteps.add(MathStep(
         index: mathSteps.length + 1,
-        shortTitle: 'Multiplicar y restar',
-        latexExpression: '-\\left(${PolyOps.latex(s.subtrahend)}\\right) \\Rightarrow ${s.remainder.isEmpty ? '0' : PolyOps.latex(s.remainder)}',
+        shortTitle: 'Multiplicar y restar (${i + 1}/${steps.length})',
+        latexExpression:
+            '${_signed(s.coeff, s.degree)} \\cdot \\left(${PolyOps.latex(q)}\\right) = ${PolyOps.latex(s.subtrahend)} \\;\\Rightarrow\\; R_{${i + 1}}(x) = $restTxt',
         pedagogicalNote:
-            'Multiplicamos el término por el divisor, lo escribimos con el signo cambiado debajo del dividendo y sumamos por columnas.',
+            'Multiplicamos $termTxt por todo el divisor y lo escribimos con el signo cambiado bajo el dividendo; sumamos por columnas y queda el resto parcial.',
       ));
     }
     final check =

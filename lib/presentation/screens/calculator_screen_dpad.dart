@@ -86,6 +86,7 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         return;
       }
       if (_isCoefficientMode) {
+        if (_cellFracDpad('left')) return;
         if (_currentActiveIndex > 0) {
           _currentActiveIndex--;
         }
@@ -223,6 +224,7 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         return;
       }
       if (_isCoefficientMode) {
+        if (_cellFracDpad('right')) return;
         final maxIdx = (_calculatorMode == 6 && _ineqDegree == 2)
             ? 3
             : _currentCellValues.length - 1;
