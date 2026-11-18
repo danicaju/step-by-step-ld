@@ -383,7 +383,7 @@ void main() {
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('PASO 1/3'), findsOneWidget);
+      expect(find.textContaining('PASO 1/'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

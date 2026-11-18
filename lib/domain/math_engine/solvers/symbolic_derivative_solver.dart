@@ -1,5 +1,6 @@
 import '../core/rational.dart';
 import '../models/step_resolution.dart';
+import 'calculus/calculus_step_texts.dart';
 import 'calculus/sym_build.dart';
 import 'calculus/sym_diff.dart';
 import 'calculus/sym_latex.dart';
@@ -15,38 +16,6 @@ class SymbolicDerivativeSolver {
   static XNode parse(String raw) => ExtParser().parse(raw);
 
   static String _t(XNode n) => SymLatex.tex(n);
-
-  static String _kinds(XNode f) {
-    final k = <String>[];
-    void walk(XNode n) {
-      switch (n) {
-        case XBin(:final l, :final op, :final r):
-          if (op == '*' && Sx.hasX(l) && Sx.hasX(r)) k.add('producto');
-          if (op == '/' && Sx.hasX(r)) k.add('cociente');
-          walk(l);
-          walk(r);
-        case XNeg(:final a):
-          walk(a);
-        case XPow(:final base, :final exp):
-          k.add(Sx.hasX(exp) ? 'exponencial' : 'potencia');
-          walk(base);
-          walk(exp);
-        case XRoot(:final rad):
-          k.add('raíz');
-          walk(rad);
-        case XFn(:final name, :final arg):
-          k.add(name);
-          if (arg is! XVar) k.add('cadena');
-          walk(arg);
-        default:
-          break;
-      }
-    }
-
-    walk(f);
-    final uniq = k.toSet().toList();
-    return uniq.isEmpty ? 'constante' : uniq.join(', ');
-  }
 
   /// `f'(x)` simbolica con pasos.
   static ({XNode derivative, List<MathStep> steps}) differentiate(XNode f) {
@@ -67,32 +36,39 @@ class SymbolicDerivativeSolver {
   static StepByStepResolution derivative(String expressionRaw) {
     final f = parse(expressionRaw);
     final r = differentiate(f);
+    final composite = r.steps.isNotEmpty;
+    final apply = composite ? null : CalculusStepTexts.apply(f, r.derivative);
     final steps = <MathStep>[
-      MathStep(
-        index: 1,
-        shortTitle: 'Identificar las reglas de derivación',
-        latexExpression: "f(x) = ${_t(f)}",
-        pedagogicalNote:
-            'Reconocemos la estructura de f(x) para elegir las reglas: ${_kinds(f)}. Tabla: (xⁿ)\' = n·xⁿ⁻¹, (sen u)\' = cos u · u\', (cos u)\' = -sen u · u\', (eᵘ)\' = eᵘ · u\', (ln u)\' = u\'/u.',
-      ),
+      CalculusStepTexts.identifyRule(f),
+      CalculusStepTexts.pieces(f),
+      if (apply != null) apply,
       ...r.steps.map((s) => MathStep(
-            index: s.index,
-            shortTitle: s.shortTitle,
+            index: 0,
+            shortTitle: '3. ${s.shortTitle}',
             latexExpression: s.latexExpression,
             pedagogicalNote: s.pedagogicalNote,
           )),
+      MathStep(
+        index: 0,
+        shortTitle: '4. Simplificación algebraica y resultado de la derivada',
+        latexExpression: "f'(x) = ${_t(r.derivative)}",
+        pedagogicalNote:
+            'Desarrollamos productos, agrupamos términos semejantes y simplificamos potencias hasta dejar el resultado limpio. Las derivadas trigonométricas suponen ángulos en radianes.',
+      ),
     ];
-    steps.add(MathStep(
-      index: steps.length + 1,
-      shortTitle: "Resultado f'(x)",
-      latexExpression: "f'(x) = ${_t(r.derivative)}",
-      pedagogicalNote:
-          'Simplificamos el resultado. Las derivadas trigonométricas suponen ángulos en radianes.',
-    ));
     final res = "f'(x) = ${_t(r.derivative)}";
     return StepByStepResolution(
       originalInputLatex: 'f(x) = ${_t(f)}',
-      steps: steps,
+      steps: [
+        for (var i = 0; i < steps.length; i++)
+          MathStep(
+            index: i + 1,
+            shortTitle: steps[i].shortTitle,
+            latexExpression: steps[i].latexExpression,
+            pedagogicalNote: steps[i].pedagogicalNote,
+            warningTrick: steps[i].warningTrick,
+          ),
+      ],
       exactResultLatex: res,
       decimalApproxLatex: res,
     );

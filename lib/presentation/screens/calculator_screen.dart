@@ -213,7 +213,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   final List<int> _ineqSysRowCursors = [0, 0, 0, 0];
   int _ineqSysActiveRow = 0;
   bool _show2DRegionView = true;
-  bool _isChoosingIneqSysUnknowns = true;
   FeasibleRegion2DVisualData? _currentFeasibleRegion;
 
   // Estado Modo 8 (Estadística 1-Var: tabla xi | fi)
@@ -314,6 +313,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   : null,
             );
       liveLatex = '$leftTex = $rightTex';
+    } else if (_calculatorMode == 5 && _m5Custom && !_m5FormActive) {
+      liveLatex = _m5FreeLatex(showLiveCursor);
     } else if (_calculatorMode == 1 ||
         (_calculatorMode == 4 && _polyIsNotableMode) ||
         _calculatorMode == 6) {

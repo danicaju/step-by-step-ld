@@ -82,8 +82,7 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
       _ineqSysRowCursors[i] = 0;
     }
     _ineqSysActiveRow = 0;
-    _show2DRegionView = true;
-    _isChoosingIneqSysUnknowns = true;
+    _show2DRegionView = _ineqSysUnknowns == 2;
     _currentFeasibleRegion = null;
 
     _statRows = [(xi: '', fi: '')];

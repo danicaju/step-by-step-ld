@@ -58,7 +58,7 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
         }
       }
 
-      // Tecla x² (Normal: ^2, SHIFT: exponente libre ^(, ALPHA: cubo ^3)
+      // Tecla x² (Normal: ^2 rapido, SHIFT: exponente libre ^( que retiene el cursor dentro, ALPHA: cubo ^3)
       if (key == '^2') {
         if (_isShiftActive) {
           _isShiftActive = false;

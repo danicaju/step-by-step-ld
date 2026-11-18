@@ -47,10 +47,6 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         return;
       }
       if (_calculatorMode == 7) {
-        if (_isChoosingIneqSysUnknowns) {
-          _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
-          return;
-        }
         if (_ineqSysRowInputs[_ineqSysActiveRow].isEmpty) {
           _flipIneqSysUnknowns();
           return;
@@ -177,10 +173,6 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         return;
       }
       if (_calculatorMode == 7) {
-        if (_isChoosingIneqSysUnknowns) {
-          _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
-          return;
-        }
         if (_ineqSysRowInputs[_ineqSysActiveRow].isEmpty) {
           _flipIneqSysUnknowns();
           return;

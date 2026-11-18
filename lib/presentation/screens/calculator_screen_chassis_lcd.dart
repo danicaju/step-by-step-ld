@@ -91,9 +91,6 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                         customHeaderTitle: _lcdCustomHeaderTitle,
                         customBodyView: _extraFormActive
                             ? _buildExtraForm()
-                            : (_calculatorMode == 7 &&
-                                _isChoosingIneqSysUnknowns)
-                            ? _buildIneqSysUnknownsSelector()
                             : (_calculatorMode == 8
                                     ? CasioStatTableView(
                                         rows: _statRows,
@@ -209,8 +206,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                                     operationsInHeader: true,
                                                   )
                                                 : (_calculatorMode == 7
-                                                    ? (_isChoosingIneqSysUnknowns ||
-                                                            _activeResolution !=
+                                                    ? (_activeResolution !=
                                                                 null
                                                         ? null
                                                         : _buildInequalitySystemEditorView())
@@ -292,6 +288,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                 activeIndex: _currentActiveIndex,
                                 isOledDark: _isOledDark,
                                 notableTypeIndex: _identityType.index,
+                                graphKind: _graphKind,
                                 inequalitySignSymbol: _inequalitySign.symbol,
                                 onCycleInequalitySign: () {
                                   updateState(() {

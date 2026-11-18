@@ -72,17 +72,6 @@ extension _CalculatorScreenKeypressHelpers on _CalculatorScreenState {
 
   void _applyRawInsertion(String token, {bool keepLeadingZero = false}) {
     if (_calculatorMode == 7) {
-      if (_isChoosingIneqSysUnknowns) {
-        if (token == '1') {
-          _ineqSysUnknowns = 1;
-          _isChoosingIneqSysUnknowns = false;
-          return;
-        } else if (token == '2') {
-          _ineqSysUnknowns = 2;
-          _isChoosingIneqSysUnknowns = false;
-          return;
-        }
-      }
       _replayIndex = -1;
       var cur = _ineqSysRowInputs[_ineqSysActiveRow];
       var pos = _ineqSysRowCursors[_ineqSysActiveRow];

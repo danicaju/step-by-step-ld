@@ -20,20 +20,33 @@ class ModeFormState {
   final List<List<ModeField>> layouts;
   final int cols;
 
+  /// Navegacion de fracciones verticales: foco 0 = operador; 1/2 = num/den izquierda
+  /// (o unica); 3/4 = num/den derecha. ▲▼ cambian num/den (o la operacion en el operador).
+  final bool fractionStyle;
+
   int selector = 0;
   int focus = 0;
 
-  ModeFormState({this.selectorLabels = const [], required this.layouts, this.cols = 1});
+  ModeFormState({
+    this.selectorLabels = const [],
+    required this.layouts,
+    this.cols = 1,
+    this.fractionStyle = false,
+  });
 
   bool get hasSelector => selectorLabels.isNotEmpty;
   int get base => hasSelector ? 1 : 0;
   List<ModeField> get fields => layouts[selector];
-  bool get atTop => focus == 0;
+  bool get atTop => fractionStyle ? (focus == 1 || focus == 3) : focus == 0;
   ModeField? get active => focus - base >= 0 && focus - base < fields.length ? fields[focus - base] : null;
   String text(int i) => fields[i].text;
 
   /// D-Pad. `true` siempre (el formulario consume la pulsacion).
   void dpad(String dir) {
+    if (fractionStyle) {
+      _fractionDpad(dir);
+      return;
+    }
     final last = base + fields.length - 1;
     switch (dir) {
       case 'left':
@@ -61,6 +74,38 @@ class ModeFormState {
           focus += cols;
         }
     }
+    if (focus > last) focus = last;
+  }
+
+  void _fractionDpad(String dir) {
+    final two = selector != 0;
+    switch (dir) {
+      case 'left':
+        if (focus == 0) {
+          if (two) focus = 1;
+        } else if (!two || focus >= 3) {
+          focus = 0;
+        }
+      case 'right':
+        if (focus == 0) {
+          focus = two ? 3 : 1;
+        } else if (two && focus <= 2) {
+          focus = 0;
+        }
+      case 'up':
+        if (focus == 0) {
+          selector = (selector + layouts.length - 1) % layouts.length;
+        } else if (focus == 2 || focus == 4) {
+          focus--;
+        }
+      case 'down':
+        if (focus == 0) {
+          selector = (selector + 1) % layouts.length;
+        } else if (focus == 1 || focus == 3) {
+          focus++;
+        }
+    }
+    final last = base + fields.length - 1;
     if (focus > last) focus = last;
   }
 

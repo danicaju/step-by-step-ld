@@ -304,7 +304,6 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
         }
         _ineqSysRows = rawRows.length.clamp(2, 4);
         _ineqSysUnknowns = (entry.rawExpression ?? restored).contains('y') ? 2 : 1;
-        _isChoosingIneqSysUnknowns = false;
         _ineqSysActiveRow = 0;
       } else if (_calculatorMode == 12) {
         _calculusExprRaw = entry.rawExpression ?? '';

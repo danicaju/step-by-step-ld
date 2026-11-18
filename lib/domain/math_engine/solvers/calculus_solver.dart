@@ -41,6 +41,23 @@ class CalculusSolver {
     if (isIntegral && RegExp(r'\)\^\{?([3-9]|\d\d)').hasMatch(expressionRaw)) {
       poly = null;
     }
+    if (poly != null && operation != CalculusOperation.tangentLine) {
+      // Pasos de pizarra (regla, piezas, formula, simplificacion): el motor simbolico
+      // tambien resuelve polinomios; si no puede, se usa el camino polinomico clasico.
+      try {
+        return switch (operation) {
+          CalculusOperation.derivative => SymbolicDerivativeSolver.derivative(expressionRaw),
+          CalculusOperation.indefiniteIntegral => SymbolicIntegralSolver.indefinite(expressionRaw),
+          _ => SymbolicIntegralSolver.definite(
+              expressionRaw,
+              integralLowerA ?? Rational(0),
+              integralUpperB ?? Rational(1),
+            ),
+        };
+      } catch (_) {
+        // continua con el solver polinomico
+      }
+    }
     if (poly == null) {
       // No es un polinomio: calculo simbolico sobre el AST completo.
       return switch (operation) {

@@ -54,10 +54,6 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
         return;
       }
       if (_calculatorMode == 7) {
-        if (_isChoosingIneqSysUnknowns) {
-          _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
-          return;
-        }
         if (_activeResolution == null && _ineqSysActiveRow > 0) {
           _ineqSysActiveRow--;
         }
@@ -92,6 +88,8 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
           if (_sys3ActiveIndex >= 4) {
             _sys3ActiveIndex -= 4;
           }
+        } else if (_calculatorMode == 5 && _graphKind == 1) {
+          if (_currentActiveIndex >= 2) _currentActiveIndex -= 2; // r,s -> p,q
         } else {
           if (_currentActiveIndex > 0) {
             _currentActiveIndex--;
@@ -173,10 +171,6 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
         return;
       }
       if (_calculatorMode == 7) {
-        if (_isChoosingIneqSysUnknowns) {
-          _ineqSysUnknowns = _ineqSysUnknowns == 1 ? 2 : 1;
-          return;
-        }
         if (_activeResolution == null && _ineqSysActiveRow < _ineqSysRows - 1) {
           _ineqSysActiveRow++;
         }
@@ -211,6 +205,8 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
           if (_sys3ActiveIndex < 8) {
             _sys3ActiveIndex += 4;
           }
+        } else if (_calculatorMode == 5 && _graphKind == 1) {
+          if (_currentActiveIndex < 2) _currentActiveIndex += 2; // p,q -> r,s
         } else {
           if (_currentActiveIndex < _currentCellValues.length - 1) {
             _currentActiveIndex++;

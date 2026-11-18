@@ -18,6 +18,12 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
       return 'Introduce x, y, z, d con = o D-Pad (vacío=0) y elige Gauss / Cramer';
     }
     if (_calculatorMode == 4) {
+      if (_cw.x.m4View == 2) {
+        return 'Escribe dividendo P(x) a la izq. y divisor Q(x) en la caja; pulsa =';
+      }
+      if (_cw.x.m4View == 3) {
+        return 'Escribe las fracciones P(x)/Q(x); ◀ ▶ cambia fracción u operación, ▲ ▼ num./den.; pulsa =';
+      }
       if (_polyIsNotableMode) {
         return switch (_identityType) {
           NotableIdentityType.squareOfSum => 'Escribe (a + b)², ej: (2x + 3)², y pulsa =',
@@ -68,6 +74,8 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
       return 'SISTEMA 2×2 (${_systemMethod.displayName.toUpperCase()})';
     }
     if (_calculatorMode == 4) {
+      if (_cw.x.m4View == 2) return 'DIVISIÓN EN CAJA P(x) : Q(x)';
+      if (_cw.x.m4View == 3) return 'FRACCIONES ALGEBRAICAS';
       if (_polyIsNotableMode) {
         return switch (_identityType) {
           NotableIdentityType.squareOfSum => '(A + B)² = A² + 2AB + B²',
@@ -107,20 +115,6 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
       return 'DERIV. E INT. (${_calculusOp.shortLabel})';
     }
     return null;
-  }
-
-  Widget _buildIneqSysUnknownsSelector() {
-    return IneqSysUnknownsSelectorView(
-      isOledDark: _isOledDark,
-      ineqSysUnknowns: _ineqSysUnknowns,
-      onSelectUnknowns: (unk) {
-        updateState(() {
-          _ineqSysUnknowns = unk;
-          _isChoosingIneqSysUnknowns = false;
-          if (unk == 2) _show2DRegionView = true;
-        });
-      },
-    );
   }
 
   void _flipIneqSysUnknowns() {

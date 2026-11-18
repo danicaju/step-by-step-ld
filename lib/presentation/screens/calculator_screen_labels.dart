@@ -7,12 +7,18 @@ extension _CalculatorScreenLabels on _CalculatorScreenState {
       1: 'M1: CALCULAR',
       2: 'M2: ECUACIONES',
       3: _systemDim == 3 ? 'M3: SIST 3×3' : 'M3: SIST 2×2',
-      4: _polyIsNotableMode
+      4: _cw.x.m4View >= 2
+          ? 'M4: POLINOMIOS'
+          : _polyIsNotableMode
           ? 'M4: NOTABLES'
           : (_isChoosingRuffiniDegree
               ? 'M4: RUFFINI'
               : 'M4: RUFFINI ($_ruffiniDegree.º)'),
-      5: 'M5: PARÁBOLAS',
+      5: switch (_graphKind) {
+        1 => 'M5: RACIONAL',
+        2 => 'M5: f(x) LIBRE',
+        _ => 'M5: PARÁBOLAS',
+      },
       6: switch (_ineqDegree) {
         1 => 'M6: INEC. 1°',
         2 => 'M6: INEC. 2°',

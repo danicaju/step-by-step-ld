@@ -22,6 +22,7 @@ class ExtraViewsState {
   final ModeFormState frac = ModeFormState(
     selectorLabels: const ['Simplificar', 'Suma', 'Resta', 'Producto', 'Cociente'],
     cols: 2,
+    fractionStyle: true,
     layouts: [
       [ModeField('P(x)', expr: true), ModeField('Q(x)', expr: true)],
       for (var i = 0; i < 4; i++)

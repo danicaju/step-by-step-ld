@@ -110,7 +110,6 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
             ],
             onSelect: (v) {
               _ineqSysUnknowns = v;
-              _isChoosingIneqSysUnknowns = false;
               _show2DRegionView = v == 2;
               _resetResolutionView();
             },

@@ -12,6 +12,7 @@ class CasioCoefficientView extends StatelessWidget {
   final String inequalitySignSymbol; // '<', '≤', '>', '≥'
   final VoidCallback? onCycleInequalitySign;
   final ValueChanged<int>? onCellTap;
+  final int graphKind; // M5: 0 = cuadratica, 1 = racional
 
   const CasioCoefficientView({
     super.key,
@@ -24,6 +25,7 @@ class CasioCoefficientView extends StatelessWidget {
     this.inequalitySignSymbol = '<',
     this.onCycleInequalitySign,
     this.onCellTap,
+    this.graphKind = 0,
   });
 
   Widget _buildCell(int index, {bool compact = false}) {
@@ -210,6 +212,41 @@ class CasioCoefficientView extends StatelessWidget {
                   _buildCell(5),
                 ],
               ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    if (mode == 5 && graphKind == 1) {
+      // Modo 5 racional: f(x) = ([p]x + [q]) / ([r]x + [s]) con fraccion vertical real
+      final Color ink = isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF1A2530);
+      return Row(
+        key: const Key('m5_rational_template'),
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _mathSymbol('f(x) = '),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                _buildCell(0, compact: true),
+                _mathSymbol('x + '),
+                _buildCell(1, compact: true),
+              ]),
+              Container(
+                key: const Key('m5_rational_bar'),
+                height: 2,
+                width: 150,
+                margin: const EdgeInsets.symmetric(vertical: 3),
+                color: ink,
+              ),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                _buildCell(2, compact: true),
+                _mathSymbol('x + '),
+                _buildCell(3, compact: true),
+              ]),
             ],
           ),
         ],

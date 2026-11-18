@@ -314,7 +314,22 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
     final r = _parseCoeffValue(_ratValues[2], defaultValue: 1);
     final s = _parseCoeffValue(_ratValues[3], defaultValue: 0);
     try {
-      final res = RationalFunctionSolver.analyze('($p*x+($q))/($r*x+($s))');
+      final raw = '($p*x+($q))/($r*x+($s))';
+      if (RationalHyperbolaStudy.isHyperbola(p, q, r, s)) {
+        final base = LimitsAsymptotesSolver.study(raw);
+        final res = RationalHyperbolaStudy.analyze(p, q, r, s);
+        updateState(() {
+          _m5.study = StudyResult(base.model, base.domain, base.asymptotes, res);
+          _currentGraphAnalysis = null;
+          _selectedGraphPoint = null;
+          _activeResolution = res;
+          _activeStepIndex = 0;
+          _showGraphView = true;
+        });
+        _recordCurrentResolutionToHistory(res, 'M5: Funcion racional');
+        return;
+      }
+      final res = RationalFunctionSolver.analyze(raw);
       updateState(() {
         _currentGraphAnalysis = null;
         _selectedGraphPoint = null;

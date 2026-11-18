@@ -2,6 +2,7 @@ import '../arithmetic/casio_iberia_arsenal.dart';
 import '../core/rational.dart';
 import '../models/step_resolution.dart';
 import '../solvers/equations/eq_poly.dart';
+import 'algebraic_fraction_steps.dart';
 import 'spanish_box_division_solver.dart';
 
 enum FractionOp { simplify, add, sub, mul, div }
@@ -97,7 +98,7 @@ class AlgebraicFractionSolver {
     };
     steps.add(_s(start, 'Factorizar numerador y denominador',
         '${_frac(n, d)} = \\frac{${fn.latex(grey: common)}}{${fd.latex(grey: common)}}',
-        'Sacamos factor común y buscamos raíces (Ruffini). Los factores en gris son comunes.'));
+        'Numerador: ${AlgebraicFractionSteps.method(n)}. Denominador: ${AlgebraicFractionSteps.method(d)}. Los factores en gris son comunes y se tachan.'));
     final cn = <String, (Poly, int)>{}, cd = <String, (Poly, int)>{};
     fn.factors.forEach((k, v) {
       final m = common.contains(k) ? (v.$2 - fd.factors[k]!.$2).clamp(0, 99) : v.$2;
@@ -136,13 +137,17 @@ class AlgebraicFractionSolver {
     final c = SpanishBoxDivisionSolver.parsePoly(n2, 'el numerador 2');
     final d = SpanishBoxDivisionSolver.parsePoly(d2, 'el denominador 2');
     final given = '${_frac(a, b)} ${_opSym(op)} ${_frac(c, d)}';
-    final steps = <MathStep>[];
+    final steps = <MathStep>[
+      AlgebraicFractionSteps.factorization(1, [
+        ('P1(x)', a), ('Q1(x)', b), ('P2(x)', c), ('Q2(x)', d),
+      ]),
+    ];
     Poly num, den;
     if (op == FractionOp.mul || op == FractionOp.div) {
       final (x, y) = op == FractionOp.mul ? (c, d) : (d, c);
       num = PolyOps.mul(a, x);
       den = PolyOps.mul(b, y);
-      steps.add(_s(1, op == FractionOp.mul ? 'Multiplicar numeradores y denominadores' : 'Multiplicar por la inversa',
+      steps.add(_s(steps.length + 1, op == FractionOp.mul ? 'Multiplicar numeradores y denominadores' : 'Multiplicar por la inversa',
           '$given = ${_frac(a, b)} \\cdot ${_frac(x, y)} = ${_frac(num, den)}',
           op == FractionOp.mul ? 'Producto: numerador por numerador y denominador por denominador.' : 'Dividir es multiplicar por la fracción inversa.',
           trick: op == FractionOp.div ? 'El divisor ${_frac(c, d)} no puede ser 0.' : null));
@@ -158,7 +163,7 @@ class AlgebraicFractionSolver {
       final cb = fb.c, cd = fd.c;
       final cLcm = Rational(Rational.lcm(cb.numerator.abs(), cd.numerator.abs()));
       final big = Factored(cLcm, lcm);
-      steps.add(_s(1, 'm.c.m. de los denominadores',
+      steps.add(_s(steps.length + 1, 'm.c.m. de los denominadores',
           '${_p(b)} = ${fb.latex()},\\quad ${_p(d)} = ${fd.latex()}\\;\\Rightarrow\\; \\text{m.c.m.} = ${big.latex()}',
           'Factorizamos cada denominador y tomamos los factores comunes y no comunes con el mayor exponente.'));
       Poly lift(Poly numr, Factored f) {
@@ -173,14 +178,18 @@ class AlgebraicFractionSolver {
       }
 
       final n1e = lift(a, fb), n2e = lift(c, fd);
-      steps.add(_s(2, 'Fracciones equivalentes',
+      steps.add(_s(steps.length + 1, 'Fracciones equivalentes',
           '${_frac(a, b)} = ${_frac(n1e, big.expand())},\\quad ${_frac(c, d)} = ${_frac(n2e, big.expand())}',
           'Multiplicamos numerador y denominador de cada fracción por lo que falta para llegar al m.c.m.'));
       num = op == FractionOp.add ? PolyOps.add(n1e, n2e) : PolyOps.sub(n1e, n2e);
       den = big.expand();
-      steps.add(_s(3, op == FractionOp.add ? 'Sumar numeradores' : 'Restar numeradores',
-          '${_frac(n1e, den)} ${_opSym(op)} ${_frac(n2e, den)} = ${_frac(num, den)}',
+      final sign = op == FractionOp.add ? '+' : '-';
+      steps.add(_s(steps.length + 1, op == FractionOp.add ? 'Sumar numeradores' : 'Restar numeradores',
+          '${_frac(n1e, den)} ${_opSym(op)} ${_frac(n2e, den)} = \\frac{(${_p(n1e)}) $sign (${_p(n2e)})}{${_p(den)}}',
           'Con el mismo denominador, operamos los numeradores (con paréntesis en la resta).'));
+      steps.add(_s(steps.length + 1, 'Desarrollar y reducir términos semejantes',
+          '(${_p(n1e)}) $sign (${_p(n2e)}) = ${_p(num)}',
+          'Quitamos paréntesis (en la resta cambia el signo de todo el segundo numerador) y agrupamos términos semejantes.'));
     }
     if (num.isEmpty) {
       steps.add(_s(steps.length + 1, 'Resultado', '0', 'El numerador es 0: la fracción vale 0.'));

@@ -32,6 +32,9 @@ class UniversalFunctionPainter extends CustomPainter {
 
   /// Ventana automatica: x en [-halfX, halfX]; y por percentiles de los valores finitos.
   static GraphWindow autoWindow(FunctionModel f, AsymptoteSet a, {double halfX = 10}) {
+    if (a.vertical.length == 1 && a.horizontal.length == 1 && a.oblique.isEmpty) {
+      return _hyperbolaWindow(f, a.vertical.first.x, a.horizontal.first.n);
+    }
     final ys = <double>[];
     for (var i = 0; i <= 400; i++) {
       final y = f.at(-halfX + 2 * halfX * i / 400);
@@ -51,6 +54,50 @@ class UniversalFunctionPainter extends CustomPainter {
     }
     final pad = (hi - lo) * 0.15;
     return GraphWindow(-halfX, halfX, lo - pad, hi + pad);
+  }
+
+  /// Hiperbola: ventana centrada en (AV, AH) que deja ver ambos cortes con los ejes.
+  static GraphWindow _hyperbolaWindow(FunctionModel f, double cx, double cy) {
+    var hx = math.max(5.0, cx.abs() + 2);
+    for (final r in roots(f, cx - 60, cx + 60)) {
+      hx = math.max(hx, (r - cx).abs() * 1.3 + 1);
+    }
+    var hy = math.max(3.0, cy.abs() * 1.2 + 1);
+    final y0 = f.at(0);
+    if (y0 != null) hy = math.max(hy, (y0 - cy).abs() * 1.3 + 1);
+    return GraphWindow(cx - hx, cx + hx, cy - hy, cy + hy);
+  }
+
+  /// Ceros de f (cambios de signo refinados por biseccion), sin contar las asintotas verticales.
+  static List<double> roots(FunctionModel f, double a, double b, {int n = 800}) {
+    final out = <double>[];
+    double? px, py;
+    for (var i = 0; i <= n; i++) {
+      final x = a + (b - a) * i / n;
+      final y = f.at(x);
+      if (y != null && py != null && px != null && py.sign != y.sign && py != 0) {
+        var lo = px, hi = x, flo = py;
+        for (var k = 0; k < 50; k++) {
+          final mid = (lo + hi) / 2;
+          final fm = f.at(mid);
+          if (fm == null) break;
+          if (fm.sign == flo.sign) {
+            lo = mid;
+            flo = fm;
+          } else {
+            hi = mid;
+          }
+        }
+        final r = (lo + hi) / 2;
+        final fr = f.at(r);
+        if (fr != null && fr.abs() < 1e-6) out.add(r);
+      } else if (y != null && y == 0) {
+        out.add(x);
+      }
+      px = x;
+      py = y;
+    }
+    return out;
   }
 
   /// Ramas continuas de la curva en la ventana (probado sin dibujar).
@@ -110,6 +157,7 @@ class UniversalFunctionPainter extends CustomPainter {
       _dashed(canvas, a, b, oColor, const [9, 3, 2, 3]);
       _label(canvas, size, plainLabel(o.latex), Offset(size.width * 0.52, size.height * 0.06), oColor);
     }
+    _intercepts(canvas, size);
     final paint = Paint()
       ..color = ink
       ..style = PaintingStyle.stroke
@@ -133,6 +181,29 @@ class UniversalFunctionPainter extends CustomPainter {
       }
       canvas.drawPath(path, paint);
     }
+  }
+
+  /// Puntos de corte con OX y OY (marcados y rotulados).
+  void _intercepts(Canvas canvas, Size size) {
+    final dot = Paint()..color = const Color(0xFFE05D5D);
+    final ring = Paint()
+      ..color = ink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    void mark(double x, double y, String text) {
+      if (x < window.xMin || x > window.xMax || y < window.yMin || y > window.yMax) return;
+      final c = _px(size, x, y);
+      canvas.drawCircle(c, 4, dot);
+      canvas.drawCircle(c, 4, ring);
+      _label(canvas, size, text, c + const Offset(6, 4), ink);
+    }
+
+    String fmt(double v) => (v - v.roundToDouble()).abs() < 1e-9 ? v.round().toString() : v.toStringAsFixed(2);
+    for (final r in roots(model, window.xMin, window.xMax)) {
+      mark(r, 0, '(${fmt(r)}, 0)');
+    }
+    final y0 = model.at(0);
+    if (y0 != null) mark(0, y0, '(0, ${fmt(y0)})');
   }
 
   void _grid(Canvas canvas, Size size) {

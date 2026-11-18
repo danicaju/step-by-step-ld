@@ -10,6 +10,15 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
   /// ¿M5 usa el editor de expresiones en vez de las celdas de coeficientes?
   bool get _m5Custom => _calculatorMode == 5 && (_m5.isForm || _graphKind == 2);
 
+  /// `f(x) =` + expresion libre con LaTeX en vivo y cursor.
+  String _m5FreeLatex(bool showLiveCursor) =>
+      r'f(x) = \;' +
+      ExpressionParser.rawToLiveLatex(
+        _rawInput,
+        cursorPos: showLiveCursor ? _cursorPos : null,
+        overwrite: !_isInsertMode,
+      );
+
   Widget _buildM5Form() {
     if (_m5.view == 1) {
       return LimitFormWidget(

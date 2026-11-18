@@ -41,7 +41,6 @@ extension _CalculatorScreenKeypressControl on _CalculatorScreenState {
           _currentFeasibleRegion = null;
           _currentGraphAnalysis = null;
           _isCalcPromptActive = false;
-          _isChoosingIneqSysUnknowns = false;
         }
         return true;
       }
@@ -145,15 +144,11 @@ extension _CalculatorScreenKeypressControl on _CalculatorScreenState {
             _ineqSysRowInputs[_ineqSysActiveRow] = '';
             _ineqSysRowCursors[_ineqSysActiveRow] = 0;
           } else {
-            final allEmpty = _ineqSysRowInputs.every((r) => r.isEmpty);
             for (int i = 0; i < _ineqSysRowInputs.length; i++) {
               _ineqSysRowInputs[i] = '';
               _ineqSysRowCursors[i] = 0;
             }
             _ineqSysActiveRow = 0;
-            if (allEmpty) {
-              _isChoosingIneqSysUnknowns = true;
-            }
           }
         } else if (_calculatorMode == 8) {
           _statRows = [(xi: '', fi: '')];

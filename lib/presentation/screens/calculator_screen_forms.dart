@@ -15,6 +15,12 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
 
   Widget _buildExtraForm() {
     final f = _extraForm!;
+    if (_calculatorMode == 4) {
+      void onFocus(int i) => updateState(() => f.focus = i);
+      return _x.m4View == 2
+          ? BoxDivisionInputWidget(form: f, theme: _lcdTheme, onFocus: onFocus)
+          : FractionInputWidget(form: f, theme: _lcdTheme, onFocus: onFocus);
+    }
     return ModeFormWidget(
       form: f,
       theme: _lcdTheme,

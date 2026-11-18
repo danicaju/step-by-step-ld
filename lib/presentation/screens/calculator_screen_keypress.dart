@@ -28,13 +28,6 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
 
         // En Modo 7 (Sistemas de Inecuaciones)
         if (_calculatorMode == 7) {
-          if (_isChoosingIneqSysUnknowns) {
-            _isChoosingIneqSysUnknowns = false;
-            if (_ineqSysUnknowns == 2) {
-              _show2DRegionView = true;
-            }
-            return;
-          }
           if (_activeResolution != null) {
             if (_activeStepIndex < _activeResolution!.steps.length - 1) {
               _activeStepIndex++;
@@ -195,19 +188,6 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
 
       // ENTRADA EN MODO 7 (SISTEMAS DE INECUACIONES)
       if (_calculatorMode == 7) {
-        if (_isChoosingIneqSysUnknowns) {
-          if (effectiveChar == '1') {
-            _ineqSysUnknowns = 1;
-            _isChoosingIneqSysUnknowns = false;
-            return;
-          }
-          if (effectiveChar == '2') {
-            _ineqSysUnknowns = 2;
-            _isChoosingIneqSysUnknowns = false;
-            _show2DRegionView = true;
-            return;
-          }
-        }
         if (_activeResolution != null) {
           _activeResolution = null;
           _activeStepIndex = 0;

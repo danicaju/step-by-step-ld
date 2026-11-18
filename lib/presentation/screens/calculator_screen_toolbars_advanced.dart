@@ -4,7 +4,7 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
   List<Widget> _buildAdvancedModesToolbar() {
     return [
       if (_calculatorMode == 7) ...[
-                  if (!_isChoosingIneqSysUnknowns && _activeResolution != null) ...[
+                  if (_activeResolution != null) ...[
                     const SizedBox(height: 3),
                     Row(
                       children: [

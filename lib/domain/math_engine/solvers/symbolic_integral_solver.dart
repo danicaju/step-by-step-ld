@@ -1,5 +1,6 @@
 import '../core/rational.dart';
 import '../models/step_resolution.dart';
+import 'calculus/calculus_step_texts.dart';
 import 'calculus/sym_build.dart';
 import 'calculus/sym_integrator.dart';
 import 'calculus/sym_latex.dart';
@@ -72,13 +73,8 @@ class SymbolicIntegralSolver {
     final f = parse(raw);
     final r = antiderivative(f);
     final steps = <MathStep>[
-      MathStep(
-        index: 1,
-        shortTitle: 'Identificar el método de integración',
-        latexExpression: '\\int ${_t(f)}\\,dx',
-        pedagogicalNote:
-            'Probamos en orden: integral inmediata (tabla), linealidad, cambio de variable ∫f\'(g)g\'dx y, si hace falta, integración por partes.',
-      ),
+      CalculusStepTexts.prepare(f),
+      CalculusStepTexts.method(f, r.steps),
       for (final s in r.steps)
         MathStep(
           index: 0,
@@ -88,10 +84,16 @@ class SymbolicIntegralSolver {
         ),
       MathStep(
         index: 0,
-        shortTitle: 'Primitiva y constante de integración',
-        latexExpression: 'F(x) = ${_t(r.antiderivative)} + C',
+        shortTitle: '3. Cálculo de la primitiva F(x)',
+        latexExpression: 'F(x) = ${_t(r.antiderivative)}',
+        pedagogicalNote: 'Esta es una primitiva de f(x), antes de añadir la constante. Comprobación: derivando F(x) debe salir f(x).',
+      ),
+      MathStep(
+        index: 0,
+        shortTitle: '4. Cierre: constante de integración + C',
+        latexExpression: '\\int ${_t(f)}\\,dx = ${_t(r.antiderivative)} + C',
         pedagogicalNote:
-            'Añadimos siempre la constante de integración C. Comprobación: F\'(x) debe ser igual a f(x).',
+            'La derivada de una constante es 0, así que si F(x) es una primitiva, F(x) + C también lo es para cualquier C. Por eso la integral indefinida es una familia de funciones.',
         warningTrick: 'Una integral indefinida sin + C es una respuesta incompleta.',
       ),
     ];
@@ -141,13 +143,8 @@ class SymbolicIntegralSolver {
     final symTotal = Sx.collectSum(Sx.rebuild(Sx.sub(subB, subA)));
     final totalLatex = total.isExact ? total.toLatex() : _t(symTotal);
     final steps = <MathStep>[
-      MathStep(
-        index: 0,
-        shortTitle: 'Hallar la primitiva F(x)',
-        latexExpression: 'F(x) = \\int ${_t(f)}\\,dx = ${_t(big)}',
-        pedagogicalNote:
-            'Calculamos una primitiva de f(x). En una integral definida la constante C se cancela al restar.',
-      ),
+      CalculusStepTexts.prepare(f),
+      CalculusStepTexts.method(f, r.steps),
       for (final s in r.steps)
         MathStep(
           index: 0,
@@ -157,16 +154,23 @@ class SymbolicIntegralSolver {
         ),
       MathStep(
         index: 0,
-        shortTitle: 'Regla de Barrow: F(b) - F(a)',
+        shortTitle: '3. Cálculo de la primitiva F(x)',
+        latexExpression: 'F(x) = \\int ${_t(f)}\\,dx = ${_t(big)}',
+        pedagogicalNote:
+            'Calculamos una primitiva de f(x) sin la constante: en una integral definida la C se cancela al restar.',
+      ),
+      MathStep(
+        index: 0,
+        shortTitle: '4. Regla de Barrow: [F(x)] entre a y b',
         latexExpression:
-            '\\left[${_t(big)}\\right]_{$aL}^{$bL} = \\left(${_t(subB)}\\right) - \\left(${_t(subA)}\\right)',
+            '\\left[F(x)\\right]_{$aL}^{$bL} = F($bL) - F($aL) = \\left(${_t(subB)}\\right) - \\left(${_t(subA)}\\right)',
         pedagogicalNote:
             '∫ₐᵇ f(x)dx = F(b) - F(a): sustituimos primero el límite superior y restamos la sustitución del límite inferior.',
         warningTrick: 'Pon F(a) entre paréntesis para no equivocarte con los signos.',
       ),
       MathStep(
         index: 0,
-        shortTitle: 'Operar y simplificar',
+        shortTitle: '5. Operar y simplificar',
         latexExpression:
             'F($bL) - F($aL) = ${_t(symB)} - \\left(${_t(symA)}\\right) = $totalLatex',
         pedagogicalNote: 'Calculamos F(b) y F(a) con valores exactos y restamos.',
