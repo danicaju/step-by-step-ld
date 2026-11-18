@@ -190,7 +190,9 @@ class ProbabilityDistributionSolver {
     if (!rn.isInteger || rn.numerator < 1 || rn.numerator > maxN) {
       throw const ArsenalException('Math ERROR: n debe ser un entero entre 1 y 1000.');
     }
-    if (rp.isNegative || rp.toDouble() > 1) throw const ArsenalException('Math ERROR: p debe estar entre 0 y 1.');
+    if (!rp.isPositive || rp.toDouble() >= 1) {
+      throw const ArsenalException('Math ERROR: p debe cumplir 0 < p < 1.');
+    }
     final nn = rn.numerator;
     if (!rk.isInteger || rk.numerator < 0 || rk.numerator > nn) {
       throw const ArsenalException('Math ERROR: k debe ser un entero entre 0 y n.');

@@ -68,7 +68,7 @@ class NotebookScannerService {
     final model = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-2.5-flash',
       systemInstruction: Content.system(
-        'Eres el Profesor de Matemáticas y Auditor de Cuadernos de una calculadora Casio para ESO/Bachillerato en España. '
+        'Eres el Profesor de Matemáticas y Auditor de Cuadernos de la calculadora STEP-BY-STEP LD para ESO/Bachillerato en España. '
         'Tu tarea es analizar la foto del cuaderno del alumno, transcribir la ecuación o problema matemático y auditar los pasos '
         'escritos a mano para detectar si el alumno cometió algún fallo típico de examen (signos en fracciones, dobles productos, ceros en Ruffini, etc.).\n'
         'Responde estrictamente con estas 5 líneas:\n'

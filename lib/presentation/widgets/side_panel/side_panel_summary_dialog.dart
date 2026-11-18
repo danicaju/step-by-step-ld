@@ -180,14 +180,14 @@ class SidePanelSummaryDialog {
                 final pngBytes = bytes.buffer.asUint8List();
                 if (!kIsWeb) {
                   final dir = await getTemporaryDirectory();
-                  final file = File('${dir.path}/resumen_clase_ld.png');
+                  final file = File('${dir.path}/step_by_step_ld_resumen_clase.png');
                   await file.writeAsBytes(pngBytes);
                   await Share.shareXFiles(
                     [
                       XFile(
                         file.path,
                         mimeType: 'image/png',
-                        name: 'resumen_clase_ld.png',
+                        name: 'step_by_step_ld_resumen_clase.png',
                       ),
                     ],
                     text: 'Resumen de Clase - STEP-BY-STEP LD',
@@ -198,7 +198,7 @@ class SidePanelSummaryDialog {
                       XFile.fromData(
                         pngBytes,
                         mimeType: 'image/png',
-                        name: 'resumen_clase_ld.png',
+                        name: 'step_by_step_ld_resumen_clase.png',
                       ),
                     ],
                     text: 'Resumen de Clase - STEP-BY-STEP LD',

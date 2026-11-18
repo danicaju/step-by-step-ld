@@ -120,7 +120,7 @@ extension _CalculatorScreenChassis on _CalculatorScreenState {
                               _isAlphaActive = false;
                             });
                             if (_calculatorMode == 8) {
-                              _openStatOptionsModal();
+                              // M8 no usa OPTN: la tabla se gestiona en pantalla.
                             } else if (const [1, 9, 10].contains(_calculatorMode)) {
                               updateState(() => _openList('optn'));
                             } else {

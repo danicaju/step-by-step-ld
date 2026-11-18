@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../utils/cell_fraction_editor.dart';
 import '../lcd/lcd_palette.dart';
 import 'expr_key_input.dart';
 import 'form_cell_text.dart';
@@ -26,7 +27,16 @@ class ModeFormState {
   final bool fractionStyle;
 
   int selector = 0;
-  int focus = 0;
+  int _focus = 0;
+
+  /// En un campo numerico con fraccion abierta: `true` edita el numerador, `false` el denominador.
+  bool fracNum = false;
+
+  int get focus => _focus;
+  set focus(int v) {
+    if (v != _focus) fracNum = false;
+    _focus = v;
+  }
 
   ModeFormState({
     this.selectorLabels = const [],
@@ -44,6 +54,15 @@ class ModeFormState {
 
   /// D-Pad. `true` siempre (el formulario consume la pulsacion).
   void dpad(String dir) {
+    // Dentro de una fraccion numerica ▶/▼ van al denominador y ◀/▲ al numerador.
+    final cur = active;
+    if (cur != null && !cur.expr) {
+      final next = CellFractionEditor.dpad(cur.text, fracNum, dir);
+      if (next != null) {
+        fracNum = next;
+        return;
+      }
+    }
     if (fractionStyle) {
       _fractionDpad(dir);
       return;
@@ -114,9 +133,31 @@ class ModeFormState {
   bool key(String k, {bool alpha = false}) {
     final f = active;
     if (f == null) return false;
+    if (!f.expr && _fractionKey(f, k)) return true;
     final next = f.expr ? ExprKeyInput.apply(f.text, k, alpha: alpha) : ExprKeyInput.applyNumber(f.text, k);
     if (next == null) return false;
     f.text = next;
+    return true;
+  }
+
+  /// Teclas de un campo numerico con a/b: se puede abrir la fraccion con el campo vacio.
+  bool _fractionKey(ModeField f, String k) {
+    final isDigitLike = RegExp(r'^[0-9.\-]$').hasMatch(k);
+    if (k == '/') {
+      final (text, num) = CellFractionEditor.slash(f.text, fracNum);
+      f.text = text;
+      fracNum = num;
+      return true;
+    }
+    if (!f.text.contains('/')) return false;
+    if (k == 'DEL') {
+      final (text, num) = CellFractionEditor.backspace(f.text, fracNum);
+      f.text = text;
+      fracNum = num;
+      return true;
+    }
+    if (!isDigitLike) return false;
+    f.text = CellFractionEditor.append(f.text, k, fracNum);
     return true;
   }
 
@@ -138,6 +179,7 @@ class ModeFormState {
     }
     selector = 0;
     focus = 0;
+    fracNum = false;
   }
 }
 
@@ -239,6 +281,7 @@ class ModeFormWidget extends StatelessWidget {
           child: FormCellText(
             text: f.text,
             active: active,
+            fracNumerator: form.fracNum,
             latex: f.expr,
             color: active ? (f.expr ? fg : const Color(0xFFC8D6CD)) : fg,
           ),

@@ -130,7 +130,13 @@ void main() {
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '5'));
       await tester.pumpAndSettle();
 
-      // En Modo 5 con _showGraphView == true, el botón debe decir 'Ver Pasos' con icono format_list
+      // Antes de resolver no hay conmutador de vista (solo Tipo y la plantilla f(x)).
+      expect(find.byKey(const Key('mode5_view_toggle')), findsNothing);
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '5'));
+      await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
+      await tester.pumpAndSettle();
+
+      // Con resultado y _showGraphView == true, el botón debe decir 'Ver Pasos' con icono format_list
       expect(find.text('Ver Pasos'), findsOneWidget);
       expect(find.byIcon(Icons.format_list_numbered_rounded), findsOneWidget);
 

@@ -51,7 +51,7 @@ class ExtraViewsState {
 
   final ModeFormState normal = ModeFormState(
     selectorLabels: const ['P(X ≤ a)', 'P(X ≥ a)', 'P(a ≤ X ≤ b)'],
-    cols: 2,
+    cols: 1,
     layouts: [
       for (var i = 0; i < 3; i++)
         [ModeField('μ'), ModeField('σ'), ModeField('a'), if (i == 2) ModeField('b')],
@@ -60,7 +60,7 @@ class ExtraViewsState {
 
   final ModeFormState bin = ModeFormState(
     selectorLabels: const ['P(X = k)', 'P(X ≤ k)', 'P(X ≥ k)'],
-    cols: 3,
+    cols: 1,
     layouts: [
       for (var i = 0; i < 3; i++) [ModeField('n'), ModeField('p'), ModeField('k')],
     ],

@@ -402,14 +402,8 @@ void main() {
       expect(find.byType(Math), findsWidgets);
       expect(tester.takeException(), isNull);
 
-      // Abrir OPTN -> abrir vista Exportar PNG
-      await tester.tap(find.byKey(const Key('stat_optn_btn')));
-      await tester.pumpAndSettle();
-      expect(find.text('OPTN · Estadística 1-Var (STEP-BY-STEP LD)'), findsOneWidget);
-
-      await tester.tap(find.text('2: Exportar Tabla y Pasos a PNG'));
-      await tester.pumpAndSettle();
-      expect(find.text('Exportar Desarrollo a PNG'), findsOneWidget);
+      // M8 ya no tiene OPTN: la tabla se gestiona en pantalla.
+      expect(find.byKey(const Key('stat_optn_btn')), findsNothing);
       expect(tester.takeException(), isNull);
     });
 

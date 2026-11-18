@@ -5,7 +5,11 @@ extension _CalculatorScreenToolbarsBasic on _CalculatorScreenState {
     return [
                 // Barra interactiva contextual para Modos 2..11
                 // M2, M3, M4 y M6 no tienen barra inferior: x/y/= van por ALPHA y los selectores en la cabecera LCD.
-                if (_calculatorMode == 5) ...[
+                // M5: el conmutador Pasos/Grafica solo existe cuando ya hay un resultado (tras `=`).
+                if (_calculatorMode == 5 &&
+                    _activeResolution != null &&
+                    _lcdErrorKind == null &&
+                    _m5.view == 0) ...[
                   const SizedBox(height: 3),
                   Row(
                     children: [

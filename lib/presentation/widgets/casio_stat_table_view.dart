@@ -9,6 +9,10 @@ class CasioStatTableView extends StatefulWidget {
   final bool isOledDark;
   final void Function(int row, int col)? onCellTap;
 
+  /// Acciones inline bajo la ultima fila: `+ Añadir fila` y `− Quitar fila` (solo con mas de 2).
+  final VoidCallback? onAddRow;
+  final VoidCallback? onRemoveRow;
+
   const CasioStatTableView({
     super.key,
     required this.rows,
@@ -16,6 +20,8 @@ class CasioStatTableView extends StatefulWidget {
     required this.activeCol,
     this.isOledDark = false,
     this.onCellTap,
+    this.onAddRow,
+    this.onRemoveRow,
   });
 
   @override
@@ -137,8 +143,9 @@ class _CasioStatTableViewState extends State<CasioStatTableView> {
             child: ListView.builder(
               controller: _scrollController,
               itemExtent: _rowExtent,
-              itemCount: widget.rows.length,
+              itemCount: widget.rows.length + (widget.onAddRow != null ? 1 : 0),
               itemBuilder: (context, index) {
+                if (index == widget.rows.length) return _buildFooter(borderColor);
                 final row = widget.rows[index];
                 final isXiActive =
                     index == widget.activeRow && widget.activeCol == 0;
@@ -199,6 +206,39 @@ class _CasioStatTableViewState extends State<CasioStatTableView> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Pie de la tabla: acciones discretas para anadir o quitar filas sin menus.
+  Widget _buildFooter(Color borderColor) {
+    final ink = widget.isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF1A2530);
+    final fill = widget.isOledDark ? const Color(0xFF111615) : const Color(0xFFBDCEBE);
+    Widget action(Key key, String label, VoidCallback onTap, {bool amber = false}) => Expanded(
+          child: GestureDetector(
+            key: key,
+            onTap: onTap,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: fill,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: amber ? const Color(0xFFE5A93C) : const Color(0xFF7A8A7E), width: 1.5),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(color: ink, fontSize: 11.5, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        );
+    return Row(
+      key: const Key('stat_table_footer'),
+      children: [
+        action(const Key('stat_add_row_inline'), '+ Añadir fila', widget.onAddRow!, amber: true),
+        if (widget.rows.length > 2 && widget.onRemoveRow != null)
+          action(const Key('stat_remove_row_inline'), '− Quitar fila', widget.onRemoveRow!),
+      ],
     );
   }
 

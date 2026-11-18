@@ -14,7 +14,7 @@ export '../widgets/goodnotes_sticker_canvas.dart';
 /// Servicio de exportación a Goodnotes y portapapeles LaTeX
 class GoodnotesExporter {
   /// Renderiza el widget GoodnotesStickerCanvas a PNG de alta resolución (pixelRatio: 3.0),
-  /// lo guarda en getTemporaryDirectory() como 'resolucion_paso_a_paso.png'
+  /// lo guarda en getTemporaryDirectory() como 'step_by_step_ld_resolucion.png'
   /// y abre el menú nativo de compartir con Share.shareXFiles.
   static Future<void> captureAndShareSticker(
     GlobalKey repaintKey, {
@@ -38,7 +38,7 @@ class GoodnotesExporter {
 
       if (!kIsWeb) {
         final tempDir = await getTemporaryDirectory();
-        final filePath = '${tempDir.path}/resolucion_paso_a_paso.png';
+        final filePath = '${tempDir.path}/step_by_step_ld_resolucion.png';
         final file = File(filePath);
         await file.writeAsBytes(pngBytes);
         await Share.shareXFiles(
@@ -46,10 +46,10 @@ class GoodnotesExporter {
             XFile(
               filePath,
               mimeType: 'image/png',
-              name: 'resolucion_paso_a_paso.png',
+              name: 'step_by_step_ld_resolucion.png',
             ),
           ],
-          text: 'Resolución paso a paso Casio',
+          text: 'Resolución paso a paso - STEP-BY-STEP LD',
         );
       } else {
         await Share.shareXFiles(
@@ -57,10 +57,10 @@ class GoodnotesExporter {
             XFile.fromData(
               pngBytes,
               mimeType: 'image/png',
-              name: 'resolucion_paso_a_paso.png',
+              name: 'step_by_step_ld_resolucion.png',
             ),
           ],
-          text: 'Resolución paso a paso Casio',
+          text: 'Resolución paso a paso - STEP-BY-STEP LD',
         );
       }
     } catch (e) {

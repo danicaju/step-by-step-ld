@@ -172,7 +172,7 @@ class ClassHistoryService {
     buffer.writeln(r'\geometry{margin=2cm}');
     buffer.writeln(r'\usepackage{tcolorbox}');
     buffer.writeln();
-    buffer.writeln(r'\title{\textbf{Resumen de Sesión de Clase: Calculadora Casio Tutor}}');
+    buffer.writeln(r'\title{\textbf{Resumen de Sesión de Clase: STEP-BY-STEP LD}}');
     buffer.writeln(r'\author{Apuntes de Matemáticas ESO / Bachillerato}');
     buffer.writeln(r'\date{\today}');
     buffer.writeln();

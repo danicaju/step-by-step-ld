@@ -32,13 +32,13 @@ class GoodnotesStickerCanvas extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0D9488),
+                  color: const Color(0xFFE5A93C),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
-                  'CASIO CLASSWIZ',
+                  'STEP-BY-STEP LD',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Color(0xFF1A2530),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.0,

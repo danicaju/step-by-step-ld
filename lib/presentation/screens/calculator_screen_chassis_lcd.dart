@@ -104,6 +104,8 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                             _statActiveCol = c;
                                           });
                                         },
+                                        onAddRow: _statAddRow,
+                                        onRemoveRow: _statRemoveRow,
                                       )
                                     : (_calculatorMode == 9
                                         ? CasioMatrixEditorView(

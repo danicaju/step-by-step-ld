@@ -72,7 +72,7 @@ class AiTutorService {
     final model = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-2.5-flash',
       systemInstruction: Content.system(
-        'Eres el Tutor Matemático IA de una calculadora Casio ClassWiz para alumnos de Secundaria (ESO) y Bachillerato en España. '
+        'Eres el Tutor Matemático IA de la calculadora STEP-BY-STEP LD para alumnos de Secundaria (ESO) y Bachillerato en España. '
         'Tu misión es enseñar usando el método socrático: NUNCA des la solución final directa ni hagas el cálculo por el alumno. '
         'Haz preguntas que le hagan reflexionar sobre la jerarquía de operaciones, los signos, el m.c.m. o las propiedades algebraicas. '
         'Escribe siempre en texto claro y legible (usa Unicode como x², xᵥ, ·, √ en lugar de código LaTeX crudo como \\frac, \\cdot o guiones bajos). '

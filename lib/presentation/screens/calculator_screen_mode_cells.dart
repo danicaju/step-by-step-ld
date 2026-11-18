@@ -361,6 +361,26 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
     }
   }
 
+  /// `+ Añadir fila` inline: nueva fila vacia al final y foco en su xi.
+  void _statAddRow() {
+    updateState(() {
+      _activeResolution = null;
+      _statRows.add((xi: '', fi: ''));
+      _statActiveRow = _statRows.length - 1;
+      _statActiveCol = 0;
+    });
+  }
+
+  /// `− Quitar fila` inline: borra la fila activa (siempre quedan 2 como minimo).
+  void _statRemoveRow() {
+    if (_statRows.length <= 2) return;
+    updateState(() {
+      _activeResolution = null;
+      _statRows.removeAt(_statActiveRow.clamp(0, _statRows.length - 1));
+      _statActiveRow = _statActiveRow.clamp(0, _statRows.length - 1);
+    });
+  }
+
   void _statMoveDpad({required int dRow, required int dCol}) {
     if (dCol != 0) {
       _statActiveCol = (_statActiveCol + dCol).clamp(0, 1);

@@ -123,68 +123,6 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
       ],
     );
   }
-
-  void _openStatOptionsModal() {
-    _showOptnBottomSheet(
-      title: 'OPTN · Estadística 1-Var (STEP-BY-STEP LD)',
-      itemsBuilder: (ctx) => [
-        ListTile(
-          leading: const Icon(Icons.calculate_rounded, color: Color(0xFFE5A93C)),
-          title: const Text(
-            '1: Cálculo de 1 variable (CALC STAT)',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
-          subtitle: const Text(
-            'Tabla de frecuencias, x̄, σ², σ, Mo, Me, Q₁, Q₃',
-            style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-          ),
-          onTap: () {
-            Navigator.pop(ctx);
-            _solveCurrentMode();
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.sticky_note_2_rounded, color: Color(0xFFE5A93C)),
-          title: const Text(
-            '2: Exportar Tabla y Pasos a PNG',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
-          onTap: () {
-            Navigator.pop(ctx);
-            _openStickerExport();
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.code_rounded, color: Color(0xFFE5A93C)),
-          title: const Text(
-            '3: Copiar Bloque LaTeX al Portapapeles',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
-          onTap: () {
-            Navigator.pop(ctx);
-            _copyLatexToClipboardShortcut();
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.delete_sweep_rounded, color: Color(0xFFF87171)),
-          title: const Text(
-            '4: Vaciar tabla (AC)',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-          ),
-          onTap: () {
-            Navigator.pop(ctx);
-            updateState(() {
-              _statRows = [(xi: '', fi: '')];
-              _statActiveRow = 0;
-              _statActiveCol = 0;
-              _activeResolution = null;
-              _activeStepIndex = 0;
-            });
-          },
-        ),
-      ],
-    );
-  }
 }
 
 const List<LcdListItem> _ibrItems = [

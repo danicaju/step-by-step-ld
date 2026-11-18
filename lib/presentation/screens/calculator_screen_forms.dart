@@ -21,6 +21,14 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
           ? BoxDivisionInputWidget(form: f, theme: _lcdTheme, onFocus: onFocus)
           : FractionInputWidget(form: f, theme: _lcdTheme, onFocus: onFocus);
     }
+    if (_calculatorMode == 8) {
+      return ProbabilityDistributionWidget(
+        form: f,
+        theme: _lcdTheme,
+        binomial: _x.m8View == 3,
+        onFocus: (i) => updateState(() => f.focus = i),
+      );
+    }
     return ModeFormWidget(
       form: f,
       theme: _lcdTheme,

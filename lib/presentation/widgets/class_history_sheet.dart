@@ -94,7 +94,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
           label: 'Compartir',
           textColor: const Color(0xFFE5A93C),
           onPressed: () {
-            Share.share(tex, subject: 'Resumen de Clase de Matemáticas - Casio Tutor');
+            Share.share(tex, subject: 'Resumen de Clase de Matemáticas - STEP-BY-STEP LD');
           },
         ),
       ),

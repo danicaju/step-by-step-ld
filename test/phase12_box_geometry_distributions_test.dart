@@ -241,10 +241,10 @@ void main() {
       expect((sum - 1).abs() < 1e-12, isTrue);
     });
     test('casos limite y errores', () {
-      expect(bin('1', '1', '1', BinomialOp.eq).probability, 1);
-      expect(bin('5', '0', '0', BinomialOp.eq).probability, 1);
       expect(bin('200', '0.5', '100', BinomialOp.le).probability > 0.5, isTrue);
       for (final bad in [
+        () => bin('1', '1', '1', BinomialOp.eq), // p debe cumplir 0 < p < 1
+        () => bin('5', '0', '0', BinomialOp.eq),
         () => bin('10', '1.5', '3', BinomialOp.eq),
         () => bin('10', '0.5', '11', BinomialOp.eq),
         () => bin('10', '0.5', '2.5', BinomialOp.eq),

@@ -37,41 +37,21 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                       ],
                     ),
                   ],
-                ] else if (_calculatorMode == 8) ...[
+                ] else if (_calculatorMode == 8 && _activeResolution != null) ...[
+                  // Sin OPTN: la fila se anade dentro de la tabla (+ Añadir fila).
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      if (_activeResolution != null)
-                        _buildMethodTab(
-                          key: const Key('stat_edit_btn'),
-                          label: 'Tabla',
-                          selected: false,
-                          onTap: () {
-                            updateState(() {
-                              _activeResolution = null;
-                              _activeStepIndex = 0;
-                            });
-                          },
-                        )
-                      else
-                        _buildMethodTab(
-                          key: const Key('stat_add_row_btn'),
-                          label: '+ Fila',
-                          selected: false,
-                          onTap: () {
-                            updateState(() {
-                              _statRows.add((xi: '', fi: ''));
-                              _statActiveRow = _statRows.length - 1;
-                              _statActiveCol = 0;
-                            });
-                          },
-                        ),
-                      const SizedBox(width: 4),
                       _buildMethodTab(
-                        key: const Key('stat_optn_btn'),
-                        label: 'OPTN',
+                        key: const Key('stat_edit_btn'),
+                        label: 'Tabla',
                         selected: false,
-                        onTap: _openStatOptionsModal,
+                        onTap: () {
+                          updateState(() {
+                            _activeResolution = null;
+                            _activeStepIndex = 0;
+                          });
+                        },
                       ),
                     ],
                   ),
