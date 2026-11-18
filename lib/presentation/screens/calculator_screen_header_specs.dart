@@ -170,8 +170,45 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
               },
             ),
         ];
+      case 8:
+        return [
+          _HeaderSpec(
+            keyName: 'hdr_stat_kind',
+            prefix: 'Tipo',
+            value: _cw.x.m8View,
+            items: const [
+              LcdDropdownItem(value: 0, label: '1 Variable', key: Key('stat_kind_0')),
+              LcdDropdownItem(value: 1, label: '2 Variables / Regresión', key: Key('stat_kind_1')),
+              LcdDropdownItem(value: 2, label: 'Normal N(μ,σ)', key: Key('stat_kind_2')),
+              LcdDropdownItem(value: 3, label: 'Binomial B(n,p)', key: Key('stat_kind_3')),
+            ],
+            onSelect: (v) {
+              _cw.x.m8View = v;
+              _cw.x.clearResults();
+              _lcdErrorKind = null;
+              _resetResolutionView();
+            },
+          ),
+        ];
       case 10:
         return [
+          _HeaderSpec(
+            keyName: 'hdr_vector_view',
+            prefix: 'Vista',
+            value: _cw.x.m10View,
+            items: const [
+              LcdDropdownItem(value: 0, label: 'Vectores 3D', key: Key('vector_view_0')),
+              LcdDropdownItem(value: 1, label: '6 Ecuaciones Recta', key: Key('vector_view_1')),
+              LcdDropdownItem(value: 2, label: 'Triángulos', key: Key('vector_view_2')),
+            ],
+            onSelect: (v) {
+              _cw.x.m10View = v;
+              _cw.x.clearResults();
+              _lcdErrorKind = null;
+              _resetResolutionView();
+            },
+          ),
+          if (_cw.x.m10View == 0)
           _HeaderSpec(
             keyName: 'hdr_vector_dim',
             prefix: 'Dim',
@@ -182,6 +219,7 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
             ],
             onSelect: _setVectorDim,
           ),
+          if (_cw.x.m10View == 0)
           _HeaderSpec(
             keyName: 'hdr_vector_op',
             prefix: 'Operación',
@@ -291,12 +329,17 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
       _HeaderSpec(
         keyName: 'hdr_poly_kind',
         prefix: 'Tipo',
-        value: _polyIsNotableMode ? 1 : 0,
+        value: _cw.x.m4View >= 2 ? _cw.x.m4View : (_polyIsNotableMode ? 1 : 0),
         items: const [
           LcdDropdownItem(value: 0, label: 'Ruffini', key: Key('poly_tab_ruffini')),
           LcdDropdownItem(value: 1, label: 'Notables', key: Key('poly_tab_notables')),
+          LcdDropdownItem(value: 2, label: 'División Caja P(x):Q(x)', key: Key('poly_tab_box')),
+          LcdDropdownItem(value: 3, label: 'Fracciones Algebraicas', key: Key('poly_tab_frac')),
         ],
         onSelect: (v) {
+          _cw.x.m4View = v >= 2 ? v : 0;
+          _cw.x.clearResults();
+          _lcdErrorKind = null;
           _polyIsNotableMode = v == 1;
           _activeResolution = null;
           _activeStepIndex = 0;
@@ -308,7 +351,7 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
           }
         },
       ),
-      if (!_polyIsNotableMode)
+      if (_cw.x.m4View < 2 && !_polyIsNotableMode)
         _HeaderSpec(
           keyName: 'hdr_poly_degree',
           prefix: 'Grado',
@@ -319,7 +362,7 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
           ],
           onSelect: (d) => _setRuffiniDegree(d, enterTemplate: true),
         )
-      else
+      else if (_cw.x.m4View < 2)
         _HeaderSpec(
           keyName: 'hdr_poly_identity',
           prefix: 'Identidad',

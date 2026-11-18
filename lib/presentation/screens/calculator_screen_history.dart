@@ -19,7 +19,8 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
       _calculatorMode == 3 ||
       (_calculatorMode == 4 &&
           !_polyIsNotableMode &&
-          !_isChoosingRuffiniDegree) ||
+          !_isChoosingRuffiniDegree &&
+          _cw.x.m4View < 2) ||
       (_calculatorMode == 5 && !_m5Custom);
 
   /// Modos con celdas estructuradas donde solo entran tokens numéricos (`0-9`, `-`, `/`, `.`).

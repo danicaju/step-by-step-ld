@@ -137,7 +137,34 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
     }
 
 
+  void _solveMode8TwoVar() {
+    try {
+      final pts = <TwoVarPoint>[];
+      for (int i = 0; i < _statRows.length; i++) {
+        final row = _statRows[i];
+        if (row.xi.trim().isEmpty && row.fi.trim().isEmpty) continue;
+        if (row.xi.trim().isEmpty || row.fi.trim().isEmpty) {
+          throw FormatException('Falta x o y en la fila ${i + 1}.');
+        }
+        pts.add(TwoVarPoint(_parseStatRational(row.xi.trim()), _parseStatRational(row.fi.trim())));
+      }
+      final res = StatisticsTwoVarSolver.analyze(pts).resolution;
+      updateState(() {
+        _activeResolution = res;
+      });
+      _recordCurrentResolutionToHistory(res, 'M8: Regresión 2 variables');
+    } on FormatException catch (e) {
+      _showLcdError(e.message);
+    } catch (e) {
+      _showLcdError('Error en Estadística: $e');
+    }
+  }
+
   void _solveMode8() {
+      if (_cw.x.m8View == 1) {
+        _solveMode8TwoVar();
+        return;
+      }
       final points = <StatDataPoint>[];
       try {
         for (int i = 0; i < _statRows.length; i++) {

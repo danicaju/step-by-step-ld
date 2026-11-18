@@ -76,6 +76,8 @@ extension _CalculatorScreenHeaderSelectors on _CalculatorScreenState {
   /// ¿Está el cursor en la primera celda/fila, de modo que ▲ debe subir a la cabecera?
   bool _headerCanEnter() {
     if (_m5FormActive) return _m5.atTop;
+    if (_extraFormActive) return _extraForm!.atTop;
+    if (_calculatorMode == 8) return _statActiveRow == 0 && _activeResolution == null;
     if (_isCoefficientMode) {
       if (_calculatorMode == 3 && _systemDim == 2) return _sysActiveIndex < 3;
       if (_calculatorMode == 3 && _systemDim == 3) return _sys3ActiveIndex < 4;

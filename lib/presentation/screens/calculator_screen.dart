@@ -87,6 +87,7 @@ part 'calculator_screen_memkeys.dart';
 part 'calculator_screen_multistmt.dart';
 part 'calculator_screen_keypress.dart';
 part 'calculator_screen_m5.dart';
+part 'calculator_screen_forms.dart';
 part 'calculator_screen_chassis.dart';
 part 'calculator_screen_chassis_lcd.dart';
 part 'calculator_screen_views.dart';
@@ -136,18 +137,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   List<ClassHistoryEntry> _historyEntries = [];
   int _sidePanelTabIndex = 0; // 0: Historial, 1: Desglose / Pizarra
 
-  // Modos de la Calculadora (Paginados 2x2 en 3 páginas del MENU):
-  // 1: Cálculo simbólico, raíces, trigonometría, logaritmos y FACT
-  // 2: Ecuaciones unificadas (1.º y 2.º grado libres con = central fijo)
-  // 3: Sistemas de ecuaciones (2x2 y 3x3 unificados)
-  // 4: Polinomios (Regla de Ruffini grado 2..6 e Identidades Notables)
-  // 5: Estudio Analítico y Gráfica de Funciones (Parábolas)
-  // 6: Inecuaciones de 1.º y 2.º Grado (<, ≤, >, ≥) con tabla de signos
-  // 7: Estadística 1-Variable (tabla xi, fi editable)
-  // 8: Matrices 2x2 y 3x3 (Sarrus, Inversa, Adjunta, A·B, A+B)
-  // 9: Vectores 2D / 3D (Módulo, u·v, ángulo, u×v)
-  // 10: Números Complejos (Binómica ⬄ Polar)
-  // 11: Derivadas, Tangente e Integrales Definidas (Regla de Barrow)
+  // Los 12 modos (3 paginas de 4) se listan en lcd/lcd_mode_menu.dart.
   int _calculatorMode = 1;
 
   // Estado Modo 1, Modo 4 Notables y Modo 6 Lineal (Expresión con cursor activo y Replay)

@@ -89,7 +89,9 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                         modeLabel: modeLabel,
                         idleHint: _lcdIdleHint,
                         customHeaderTitle: _lcdCustomHeaderTitle,
-                        customBodyView: (_calculatorMode == 7 &&
+                        customBodyView: _extraFormActive
+                            ? _buildExtraForm()
+                            : (_calculatorMode == 7 &&
                                 _isChoosingIneqSysUnknowns)
                             ? _buildIneqSysUnknownsSelector()
                             : (_calculatorMode == 8
@@ -269,8 +271,8 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                             : null,
                         calcValueRaw: _calcValueRaw,
                         headerSelectors: _buildHeaderSelectors(),
-                        supplementaryVisualView:
-                            (_calculatorMode == 6 || _calculatorMode == 7) &&
+                        supplementaryVisualView: _extraVisual() ??
+                            ((_calculatorMode == 6 || _calculatorMode == 7) &&
                                     _activeIneqVisualData != null &&
                                     (_activeResolution == null ||
                                         _activeResolution!.steps.length <= 1 ||
@@ -279,7 +281,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                     data: _activeIneqVisualData!,
                                     isOledDark: _isOledDark,
                                   )
-                                : null,
+                                : null),
                         coefficientView: _m5FormActive
                             ? _buildM5Form()
                             : _isCoefficientMode

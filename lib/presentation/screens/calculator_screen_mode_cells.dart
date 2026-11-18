@@ -317,7 +317,16 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
       _statRows[_statActiveRow] = (xi: cur, fi: row.fi);
     } else {
       String cur = row.fi;
-      if (RegExp(r'^[0-9]$').hasMatch(token)) {
+      if (_cw.x.m8View == 1) {
+        // 2 variables: la columna y admite signo, decimales y fracciones.
+        if (token == '-') {
+          cur = cur.startsWith('-') ? cur.substring(1) : '-$cur';
+        } else if (token == '/' || token == '.') {
+          if (cur.isNotEmpty && cur != '-' && !cur.contains(token)) cur += token;
+        } else if (RegExp(r'^[0-9]$').hasMatch(token)) {
+          cur += token;
+        }
+      } else if (RegExp(r'^[0-9]$').hasMatch(token)) {
         cur += token;
       }
       _statRows[_statActiveRow] = (xi: row.xi, fi: cur);
