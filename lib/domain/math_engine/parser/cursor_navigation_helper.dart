@@ -2,6 +2,7 @@ import 'balanced_scan.dart';
 import 'expression_tokenizer.dart';
 import 'fraction_template.dart';
 import 'nested_fraction_navigator.dart';
+import 'power_exit_helper.dart';
 import 'slash_fraction_converter.dart';
 import 'unwrap_helper.dart';
 
@@ -104,7 +105,9 @@ class CursorNavigationHelper {
       final withBase = '${raw.substring(0, safe)}0$pair${raw.substring(safe)}';
       return (withBase, safe + 1 + token.length);
     }
-    if (token == ')'&& safe < raw.length && raw[safe] == ')') {
+    if (token == ')' && safe < raw.length && raw[safe] == ')') {
+      // Dentro de un exponente o de una fraccion el `)` no cierra la plantilla: solo ▶ / ▼ salen.
+      if (PowerExitHelper.isTemplateClose(raw, safe)) return (raw, safe);
       return (raw, safe + 1);
     }
     final updated = raw.substring(0, safe) + pair + raw.substring(safe);
@@ -163,6 +166,13 @@ class CursorNavigationHelper {
   /// ([isUp] == false). Devuelve `null` si no aplica salto de fracción.
   static int? jumpFractionUpDown(String raw, int currentPos, {required bool isUp}) {
     final safe = currentPos.clamp(0, raw.length);
+    if (!isUp) {
+      // ▼ dentro de un exponente `^( ... )` sin fracciones: sale a la linea base.
+      final out = PowerExitHelper.exitDown(raw, safe);
+      if (out != null && !raw.substring(PowerExitHelper.enclosingPowerOpen(raw, safe)!, out).contains('/')) {
+        return out;
+      }
+    }
     final nested = isUp
         ? NestedFractionNavigator.up(raw, safe)
         : NestedFractionNavigator.down(raw, safe);

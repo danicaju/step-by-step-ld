@@ -30,8 +30,37 @@ void main() {
     ));
     expect(find.text('Math ERROR'), findsOneWidget);
     expect(find.text('No se puede dividir entre cero.'), findsOneWidget);
-    expect(find.text('[ ◀ ] [ ▶ ] : Volver a editar'), findsOneWidget);
-    expect(find.text('[ AC ] : Borrar todo'), findsOneWidget);
+    expect(find.text('[ ◀ ]'), findsOneWidget);
+    expect(find.text('[ ▶ ]'), findsOneWidget);
+    expect(find.text('Volver a editar'), findsOneWidget);
+    expect(find.text('[ AC ]'), findsOneWidget);
+    expect(find.text('Borrar todo'), findsOneWidget);
+    expect(find.textContaining('Cómo solucionarlo'), findsOneWidget);
+  });
+
+  for (final h in [56.0, 90.0, 140.0, 290.0]) {
+    testWidgets('LcdErrorScreen sin overflow con LCD de $h px', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+        home: SizedBox(
+          height: h,
+          child: const LcdErrorScreen(
+            kind: LcdErrorKind.math,
+            message: 'Raíz de índice par de un número negativo (no existe en ℝ).',
+          ),
+        ),
+      ));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  test('LcdErrorText.clean quita prefijos tecnicos de Dart', () {
+    expect(
+      LcdErrorText.clean('Error al evaluar: Invalid argument(s): No se puede dividir.'),
+      'No se puede dividir.',
+    );
+    expect(LcdErrorText.clean('Exception: FormatException: algo raro'), 'algo raro');
+    expect(LcdErrorText.clean('Math ERROR: operación no definida.'), 'operación no definida.');
+    expect(LcdErrorText.clean('Error al evaluar:'), 'Operación no definida.');
   });
 
   for (final arrow in [Icons.arrow_left_rounded, Icons.arrow_right_rounded]) {

@@ -19,7 +19,7 @@ class ExtMath {
   static ExNum nthRoot(Rational r, int n) {
     if (r.isZero) return ExNum.integer(0);
     final neg = r.isNegative;
-    if (neg && n.isEven) throw const ExMathError();
+    if (neg && n.isEven) throw const ExMathError(ExMathError.evenRootNegative);
     var coef = Rational(1);
     var rad = 1;
     _exps(r.abs()).forEach((p, e) {

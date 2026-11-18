@@ -8,6 +8,8 @@ typedef ExKey = (int, int, int);
 
 /// Error matematico (division por cero, raiz de negativo, log de no positivo...).
 class ExMathError extends FormatException {
+  static const String evenRootNegative = 'Raíz de índice par de un número negativo (no existe en ℝ).';
+  static const String divByZero = 'No se puede dividir entre cero.';
   const ExMathError([super.message = 'Math ERROR']);
 }
 

@@ -7,6 +7,7 @@ import 'ext_parser.dart';
 
 export 'ext_expr.dart' show ExtUnsupported;
 export 'exact_number.dart' show ExMathError;
+export '../symbolic/m1_symbolic_solver.dart' show M1SymbolicSolver;
 
 /// M1 extendido: evaluacion exacta + decimal de expresiones combinadas
 /// (radicales, potencias racionales, |x|, n!, nCr, nPr, logs, e, pi y trig inversa).

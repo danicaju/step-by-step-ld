@@ -23,6 +23,14 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
         return;
       }
       try {
+        final symbolic = M1SymbolicSolver.solve(_rawInput, memory: _memory.getAllVariablesWithAns());
+        if (symbolic != null) {
+          updateState(() {
+            _activeResolution = symbolic;
+          });
+          _recordCurrentResolutionToHistory(symbolic, 'M1: ALGEBRA');
+          return;
+        }
         final iberia = CasioIberiaArsenal.routeInput(_rawInput);
         if (iberia != null) {
           updateState(() {
@@ -69,8 +77,8 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
         _recordCurrentResolutionToHistory(res, 'M1: CALCULAR');
       } on ArsenalException catch (e) {
         _showLcdError(e.message);
-      } on ExMathError {
-        _showLcdError('Math ERROR: operación no definida.');
+      } on ExMathError catch (e) {
+        _showLcdError(_mathErrorText(e));
       } on FormatException catch (e) {
         // El motor clasico no entiende la expresion: se reintenta con el extendido.
         final fin = ExpressionParser.finalizeForEvaluation(_rawInput);
@@ -87,18 +95,26 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
             _activeResolution = res;
           });
           _recordCurrentResolutionToHistory(res, 'M1: CALCULAR');
-        } on ExMathError {
-          _showLcdError('Math ERROR: operación no definida.');
+        } on ExMathError catch (m) {
+          _showLcdError(_mathErrorText(m));
         } on FormatException {
           _showLcdError('Sintaxis incompleta: ${e.message}');
         } on ExtUnsupported {
           _showLcdError('Sintaxis incompleta: ${e.message}');
         }
+      } on ArgumentError catch (e) {
+        _showLcdError('Math ERROR: ${e.message ?? 'operación no definida.'}');
+      } on StateError {
+        _showLcdError('Math ERROR: operación no definida.');
       } catch (e) {
-        _showLcdError('Error al evaluar: $e');
+        _showLcdError('Math ERROR: $e');
       }
       return;
     }
+
+  /// Texto limpio de un `ExMathError` (sin el nombre generico `Math ERROR`).
+  String _mathErrorText(ExMathError e) =>
+      e.message == 'Math ERROR' ? 'Math ERROR: operación no definida.' : 'Math ERROR: ${e.message}';
 
   /// Motor exacto extendido de M1; `null` si debe resolverlo el motor clasico.
   StepByStepResolution? _tryExtendedMode1(String input) {

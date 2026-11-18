@@ -1,6 +1,7 @@
 import '../../ast/ast_nodes.dart';
 import '../../core/algebraic_latex_formatter.dart';
 import '../../core/rational.dart';
+import '../exact/exact_number.dart' show ExMathError;
 import '../trig_and_angles_solver.dart';
 
 class EvaluatorBinaryOpHelper {
@@ -193,6 +194,7 @@ class EvaluatorBinaryOpHelper {
             result = Rational.fromDouble(dVal, 1000000);
           }
         } else {
+          if (b.isZero) throw const ExMathError(ExMathError.divByZero);
           result = a / b;
         }
 

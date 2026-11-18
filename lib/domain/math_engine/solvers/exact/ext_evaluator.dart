@@ -106,7 +106,7 @@ class ExtEvaluator {
     if (r != null) {
       out = ExtMath.nthRoot(r, idx);
     } else {
-      if (x.approx < 0 && idx.isEven) throw const ExMathError();
+      if (x.approx < 0 && idx.isEven) throw const ExMathError(ExMathError.evenRootNegative);
       final lat = idx == 2 ? '\\sqrt{${x.toLatex()}}' : '\\sqrt[$idx]{${x.toLatex()}}';
       out = ExNum.opaque(lat, idx.isEven || x.approx >= 0
           ? math.pow(x.approx, 1 / idx).toDouble()

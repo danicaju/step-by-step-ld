@@ -1,76 +1,193 @@
 import 'package:flutter/material.dart';
 
-/// Tipo de error mostrado dentro de la LCD (estilo Casio ClassWiz).
-enum LcdErrorKind { syntax, math }
+import 'lcd_error_text.dart';
 
-/// Pantalla de error nativa de la LCD: `Syntax ERROR` / `Math ERROR`,
-/// explicación en español y pie con las teclas para continuar.
+export 'lcd_error_text.dart';
+
+/// Tipo de error mostrado dentro de la LCD (estilo Casio ClassWiz).
+enum LcdErrorKind { syntax, math, dimension }
+
+/// Pantalla de error nativa de la LCD: cabecera oscura con el tipo de error, tarjeta con
+/// que ha pasado + como solucionarlo y barra de teclas fisicas (keycaps) para recuperarse.
 class LcdErrorScreen extends StatelessWidget {
   final LcdErrorKind kind;
   final String message;
+
+  /// Pista de solucion; si es `null` se deduce del mensaje.
+  final String? hint;
   final bool isOledDark;
 
   const LcdErrorScreen({
     super.key,
     required this.kind,
     required this.message,
+    this.hint,
     this.isOledDark = false,
   });
 
   static const Color _ink = Color(0xFF1A2530);
+  static const Color _lcd = Color(0xFFC8D6CD);
+  static const Color _inset = Color(0xFFBDCEBE);
+  static const Color _border = Color(0xFF7A8A7E);
+  static const Color _shift = Color(0xFFE5A93C);
+  static const Color _alpha = Color(0xFFE05D5D);
+
+  String get _title => switch (kind) {
+        LcdErrorKind.syntax => 'Syntax ERROR',
+        LcdErrorKind.math => 'Math ERROR',
+        LcdErrorKind.dimension => 'Dimension ERROR',
+      };
 
   @override
   Widget build(BuildContext context) {
-    final Color bg = isOledDark ? const Color(0xFF111615) : const Color(0xFFC8D6CD);
+    final Color bg = isOledDark ? const Color(0xFF111615) : _lcd;
     final Color fg = isOledDark ? const Color(0xFFE8F3EE) : _ink;
-    final String title = kind == LcdErrorKind.syntax ? 'Syntax ERROR' : 'Math ERROR';
+    final Color card = isOledDark ? const Color(0xFF1B2421) : _inset;
+    final info = LcdErrorText.info(message, syntax: kind == LcdErrorKind.syntax);
+    final tip = hint ?? info.hint;
     return Container(
       key: const Key('lcd_error_screen'),
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(8.5),
-        border: Border.all(color: const Color(0xFF7A8A7E), width: 1.5),
+        border: Border.all(color: _border, width: 1.5),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            key: const Key('lcd_error_title'),
-            style: TextStyle(
-              color: fg,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              fontFamily: 'monospace',
-            ),
-          ),
-          const SizedBox(height: 6),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Text(
-                message,
-                key: const Key('lcd_error_message'),
-                style: TextStyle(color: fg, fontSize: 13, height: 1.25),
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Divider(height: 1, color: fg.withValues(alpha: 0.4)),
-          const SizedBox(height: 4),
-          Text(
-            '[ ◀ ] [ ▶ ] : Volver a editar',
-            key: const Key('lcd_error_footer_edit'),
-            style: TextStyle(color: fg, fontSize: 11.5, fontWeight: FontWeight.w700),
-          ),
-          Text(
-            '[ AC ] : Borrar todo',
-            key: const Key('lcd_error_footer_clear'),
-            style: TextStyle(color: fg, fontSize: 11.5, fontWeight: FontWeight.w700),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final compact = c.maxHeight.isFinite && c.maxHeight < 120;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _header(compact),
+              SizedBox(height: compact ? 3 : 6),
+              Expanded(child: _card(info.message, tip, fg, card, compact)),
+              SizedBox(height: compact ? 3 : 6),
+              _keyBar(fg, compact),
+            ],
+          );
+        },
       ),
     );
   }
+
+  Widget _header(bool compact) => Container(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: compact ? 1 : 5),
+        decoration: BoxDecoration(color: _ink, borderRadius: BorderRadius.circular(6)),
+        child: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: _shift, size: compact ? 16 : 26),
+            const SizedBox(width: 8),
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  _title,
+                  key: const Key('lcd_error_title'),
+                  style: TextStyle(
+                    color: _lcd,
+                    fontSize: compact ? 16 : 23,
+                    fontWeight: FontWeight.w800,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _card(String msg, String tip, Color fg, Color cardColor, bool compact) => Container(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: compact ? 2 : 6),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: _border, width: 1),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                msg,
+                key: const Key('lcd_error_message'),
+                style: TextStyle(
+                  color: fg,
+                  fontSize: compact ? 12 : 15.5,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
+              ),
+              if (!compact) ...[
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.lightbulb_outline_rounded, color: _shift, size: 18),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        'Cómo solucionarlo: $tip',
+                        key: const Key('lcd_error_hint'),
+                        style: TextStyle(color: fg, fontSize: 13.5, height: 1.2),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+
+  Widget _keyBar(Color fg, bool compact) => Row(
+        key: const Key('lcd_error_keybar'),
+        children: [
+          _keycap('[ ◀ ]', _ink, key: const Key('lcd_error_key_left'), compact: compact),
+          const SizedBox(width: 4),
+          _keycap('[ ▶ ]', _ink, key: const Key('lcd_error_key_right'), compact: compact),
+          const SizedBox(width: 6),
+          Expanded(child: _label('Volver a editar', fg, const Key('lcd_error_footer_edit'), compact)),
+          const SizedBox(width: 6),
+          _keycap('[ AC ]', _alpha, key: const Key('lcd_error_key_ac'), compact: compact),
+          const SizedBox(width: 6),
+          Expanded(child: _label('Borrar todo', fg, const Key('lcd_error_footer_clear'), compact)),
+        ],
+      );
+
+  Widget _label(String text, Color fg, Key key, bool compact) => FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text,
+          key: key,
+          style: TextStyle(color: fg, fontSize: compact ? 9.5 : 12, fontWeight: FontWeight.w700),
+        ),
+      );
+
+  Widget _keycap(String text, Color edge, {required Key key, required bool compact}) => Container(
+        key: key,
+        padding: EdgeInsets.symmetric(horizontal: compact ? 3 : 6, vertical: compact ? 1 : 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2A2F2D),
+          borderRadius: BorderRadius.circular(5),
+          border: Border(
+            top: BorderSide(color: edge, width: 1),
+            left: BorderSide(color: edge, width: 1),
+            right: BorderSide(color: edge, width: 1),
+            bottom: BorderSide(color: edge, width: 3),
+          ),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: const Color(0xFFE8EDE9),
+            fontSize: compact ? 9.5 : 12.5,
+            fontWeight: FontWeight.w800,
+            fontFamily: 'monospace',
+          ),
+        ),
+      );
 }

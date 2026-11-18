@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import '../../ast/ast_nodes.dart';
 import '../../core/rational.dart';
 import '../../models/step_resolution.dart';
+import '../exact/exact_number.dart' show ExMathError;
 import '../radical_and_factor_solver.dart';
 
 class EvaluatorRootsHelper {
@@ -86,15 +87,7 @@ class EvaluatorRootsHelper {
     final radicand = node.radicand;
     if (radicand is IntNode) {
       final n = radicand.value;
-      if (n < 0) {
-        addStep(
-          title: 'Raíz cuadrada de número negativo',
-          latex: '\\sqrt{$n} \\implies \\text{Sin solucion real}',
-          note: 'No existe la raíz cuadrada real de un número negativo.',
-          warning: 'Una raíz cuadrada con radicando negativo no tiene solución real.',
-        );
-        return ResolvedRationalNode(Rational(0));
-      }
+      if (n < 0) throw const ExMathError(ExMathError.evenRootNegative);
       final sqrtInt = math.sqrt(n).toInt();
       if (sqrtInt * sqrtInt == n) {
         addStep(
@@ -114,14 +107,7 @@ class EvaluatorRootsHelper {
       return SqrtNode(reduceNextStep(radicand, fullRoot: fullRoot));
     }
     final val = radicand.value;
-    if (val.numerator < 0) {
-      addStep(
-        title: 'Raíz cuadrada de número negativo',
-        latex: '\\sqrt{${val.toLatex()}} \\implies \\text{Sin solucion real}',
-        note: 'No existe la raíz cuadrada real de un número negativo.',
-      );
-      return ResolvedRationalNode(Rational(0));
-    }
+    if (val.numerator < 0) throw const ExMathError(ExMathError.evenRootNegative);
     if (val.isInteger) {
       final n = val.numerator;
       final sqrtInt = math.sqrt(n).toInt();

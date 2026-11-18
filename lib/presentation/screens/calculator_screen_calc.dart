@@ -2,18 +2,10 @@ part of 'calculator_screen.dart';
 
 /// CALC en M1: pide `x?` (y `y?`), evalua y vuelve a preguntar con `=`.
 extension _CalculatorScreenCalc on _CalculatorScreenState {
-  static final RegExp _fnNames = RegExp(
-    r'sin|cos|tan|log|ln|Abs|ANS|ans|root|mcm|mcd|nCr|nPr|Pol|Rec|RanInt|Ran|arcsin|arccos|arctan|asin|acos|atan|exp',
-  );
-
-  /// Variables `x`/`y` presentes en [expr] (ignora nombres de funcion).
-  List<String> _calcVariablesIn(String expr) {
-    final cleaned = expr.replaceAll(_fnNames, '');
-    return [
-      for (final v in const ['X', 'Y'])
-        if (cleaned.toUpperCase().contains(v)) v,
-    ];
-  }
+  /// Variables algebraicas `x`/`y` (minusculas) presentes en [expr]; las mayusculas son memorias.
+  List<String> _calcVariablesIn(String expr) => [
+        for (final v in M1SymbolicSolver.variablesIn(expr)) v.toUpperCase(),
+      ]..sort();
 
   void _enterCalcPromptSync() {
     if (_calculatorMode != 1) {

@@ -89,7 +89,7 @@ class AlgebraicFractionSolver {
       MathStep(index: i, shortTitle: t, latexExpression: l, pedagogicalNote: n, warningTrick: trick);
 
   /// Simplifica `n/d` y devuelve (n', d', pasos).
-  static (Poly, Poly, List<MathStep>) _reduce(Poly n, Poly d, int start) {
+  static (Poly, Poly, List<MathStep>) reduce(Poly n, Poly d, int start) {
     final steps = <MathStep>[];
     final fn = factor(n), fd = factor(d);
     final common = <String>{
@@ -126,7 +126,7 @@ class AlgebraicFractionSolver {
   static AlgebraicFractionResult simplify(String n, String d) {
     final pn = SpanishBoxDivisionSolver.parsePoly(n, 'el numerador P(x)');
     final pd = SpanishBoxDivisionSolver.parsePoly(d, 'el denominador Q(x)');
-    final (rn, rd, steps) = _reduce(pn, pd, 1);
+    final (rn, rd, steps) = reduce(pn, pd, 1);
     return _wrap(_frac(pn, pd), rn, rd, steps);
   }
 
@@ -196,7 +196,7 @@ class AlgebraicFractionSolver {
       return AlgebraicFractionResult(num, den, StepByStepResolution(
           originalInputLatex: given, steps: steps, exactResultLatex: '0', decimalApproxLatex: ''));
     }
-    final (rn, rd, more) = _reduce(num, den, steps.length + 1);
+    final (rn, rd, more) = reduce(num, den, steps.length + 1);
     steps.addAll(more);
     return _wrap(given, rn, rd, steps);
   }

@@ -11,7 +11,7 @@ extension _CalculatorScreenLcdError on _CalculatorScreenState {
         lower.startsWith('introduce');
     updateState(() {
       _lcdErrorKind = isSyntax ? LcdErrorKind.syntax : LcdErrorKind.math;
-      _lcdErrorMessage = message;
+      _lcdErrorMessage = LcdErrorText.clean(message);
     });
   }
 
