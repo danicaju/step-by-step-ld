@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../theme/theme_controller.dart';
+import '../../theme/calculator_themes.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import '../../../domain/math_engine/models/step_resolution.dart';
 import '../../../domain/math_engine/solvers/function_graph_solver.dart';
@@ -41,8 +44,8 @@ class SidePanelChalkboardView extends StatelessWidget {
                 message: 'EXPORTAR PNG',
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0D9488),
-                    foregroundColor: Colors.white,
+                    backgroundColor: _pnl.panel(const Color(0xFF0D9488)),
+                    foregroundColor: _pnl.panel(Colors.white),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,
@@ -63,8 +66,8 @@ class SidePanelChalkboardView extends StatelessWidget {
                 message: 'COPIAR LaTeX',
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE5A93C),
-                    foregroundColor: const Color(0xFF1A2530),
+                    backgroundColor: _pnl.panel(const Color(0xFFE5A93C)),
+                    foregroundColor: _pnl.panel(const Color(0xFF1A2530)),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,
@@ -84,10 +87,10 @@ class SidePanelChalkboardView extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(color: Color(0xFF252A34), height: 1),
+        Divider(color: _pnl.panel(Color(0xFF252A34)), height: 1),
         Expanded(
           child: resolution == null
-              ? const Center(
+              ? Center(
                   child: Padding(
                     padding: EdgeInsets.all(24.0),
                     child: Column(
@@ -96,14 +99,14 @@ class SidePanelChalkboardView extends StatelessWidget {
                         Icon(
                           Icons.developer_board_rounded,
                           size: 42,
-                          color: Color(0xFF475569),
+                          color: _pnl.panel(Color(0xFF475569)),
                         ),
                         SizedBox(height: 10),
                         Text(
                           'Introduce una expresión o coeficientes en la calculadora y pulsa = para desplegar aquí todos los pasos simultáneamente.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color(0xFF94A3B8),
+                            color: _pnl.panel(Color(0xFF94A3B8)),
                             fontSize: 12.5,
                           ),
                         ),
@@ -118,16 +121,16 @@ class SidePanelChalkboardView extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1D222B),
+                        color: _pnl.panel(const Color(0xFF1D222B)),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFF2D3442)),
+                        border: Border.all(color: _pnl.panel(const Color(0xFF2D3442))),
                       ),
                       child: Row(
                         children: [
-                          const Text(
+                          Text(
                             'ENUNCIADO:',
                             style: TextStyle(
-                              color: Color(0xFF94A3B8),
+                              color: _pnl.panel(Color(0xFF94A3B8)),
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.8,
@@ -141,15 +144,15 @@ class SidePanelChalkboardView extends StatelessWidget {
                                 CasioLcdScreen.sanitizeForMathTex(
                                   resolution!.originalInputLatex,
                                 ),
-                                textStyle: const TextStyle(
-                                  color: Colors.white,
+                                textStyle: TextStyle(
+                                  color: _pnl.panel(Colors.white),
                                   fontSize: 17,
                                   fontWeight: FontWeight.bold,
                                 ),
                                 onErrorFallback: (_) => Text(
                                   resolution!.originalInputLatex,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: _pnl.panel(Colors.white),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -187,25 +190,25 @@ class SidePanelChalkboardView extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF064E3B).withValues(alpha: 0.35),
+                        color: _pnl.panel(const Color(0xFF064E3B)).withValues(alpha: 0.35),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: const Color(0xFF10B981),
+                          color: _pnl.panel(const Color(0xFF10B981)),
                           width: 1.5,
                         ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.check_circle_rounded,
-                            color: Color(0xFF34D399),
+                            color: _pnl.panel(Color(0xFF34D399)),
                             size: 20,
                           ),
                           const SizedBox(width: 8),
-                          const Text(
+                          Text(
                             'Resultado:',
                             style: TextStyle(
-                              color: Color(0xFFA7F3D0),
+                              color: _pnl.panel(Color(0xFFA7F3D0)),
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -218,15 +221,15 @@ class SidePanelChalkboardView extends StatelessWidget {
                                 CasioLcdScreen.sanitizeForMathTex(
                                   '${resolution!.exactResultLatex} \\;\\; (\\approx ${resolution!.decimalApproxLatex})',
                                 ),
-                                textStyle: const TextStyle(
-                                  color: Colors.white,
+                                textStyle: TextStyle(
+                                  color: _pnl.panel(Colors.white),
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                                 onErrorFallback: (_) => Text(
                                   '${resolution!.exactResultLatex} (≈ ${resolution!.decimalApproxLatex})',
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: _pnl.panel(Colors.white),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -264,12 +267,12 @@ class StepBoardTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF1E293B) : const Color(0xFF1B1F27),
+          color: isActive ? _pnl.panel(const Color(0xFF1E293B)) : _pnl.panel(const Color(0xFF1B1F27)),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isActive
-                ? const Color(0xFFE5A93C)
-                : const Color(0xFF2C323E),
+                ? _pnl.panel(const Color(0xFFE5A93C))
+                : _pnl.panel(const Color(0xFF2C323E)),
             width: isActive ? 1.6 : 1.0,
           ),
         ),
@@ -285,14 +288,14 @@ class StepBoardTile extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isActive
-                        ? const Color(0xFFE5A93C)
-                        : const Color(0xFF334155),
+                        ? _pnl.panel(const Color(0xFFE5A93C))
+                        : _pnl.panel(const Color(0xFF334155)),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     'PASO ${step.index}',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: _pnl.panel(Colors.white),
                       fontSize: 9.5,
                       fontWeight: FontWeight.w800,
                     ),
@@ -304,8 +307,8 @@ class StepBoardTile extends StatelessWidget {
                     step.shortTitle,
                     style: TextStyle(
                       color: isActive
-                          ? const Color(0xFFE5A93C)
-                          : const Color(0xFFE2E8F0),
+                          ? _pnl.panel(const Color(0xFFE5A93C))
+                          : _pnl.panel(const Color(0xFFE2E8F0)),
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -318,14 +321,14 @@ class StepBoardTile extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: Math.tex(
                 CasioLcdScreen.sanitizeForMathTex(step.latexExpression),
-                textStyle: const TextStyle(
-                  color: Colors.white,
+                textStyle: TextStyle(
+                  color: _pnl.panel(Colors.white),
                   fontSize: 17,
                 ),
                 onErrorFallback: (_) => Text(
                   step.latexExpression,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: _pnl.panel(Colors.white),
                     fontSize: 14,
                     fontFamily: 'monospace',
                   ),
@@ -335,8 +338,8 @@ class StepBoardTile extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               LatexPlainText.toPlain(step.pedagogicalNote),
-              style: const TextStyle(
-                color: Color(0xFF94A3B8),
+              style: TextStyle(
+                color: _pnl.panel(Color(0xFF94A3B8)),
                 fontSize: 11.5,
                 height: 1.35,
               ),
@@ -349,24 +352,24 @@ class StepBoardTile extends StatelessWidget {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF450A0A),
+                  color: _pnl.panel(const Color(0xFF450A0A)),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFDC2626)),
+                  border: Border.all(color: _pnl.panel(const Color(0xFFDC2626))),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.warning_amber_rounded,
-                      color: Color(0xFFEF4444),
+                      color: _pnl.panel(Color(0xFFEF4444)),
                       size: 14,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         LatexPlainText.toPlain(step.warningTrick!),
-                        style: const TextStyle(
-                          color: Color(0xFFFCA5A5),
+                        style: TextStyle(
+                          color: _pnl.panel(Color(0xFFFCA5A5)),
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -382,3 +385,5 @@ class StepBoardTile extends StatelessWidget {
     );
   }
 }
+
+CalculatorHardwareTheme get _pnl => ThemeController.current;

@@ -17,9 +17,10 @@
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="STEP-BY-STEP LD: calculadora científica con resolución paso a paso e IA pedagógica.">
-  <meta name="theme-color" content="#181A1E">
+  <meta name="theme-color" content="#121418">
 
   <!-- iOS meta tags & icons (PWA Safari 'Añadir a pantalla de inicio') -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -32,6 +33,16 @@
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>STEP-BY-STEP LD</title>
+  <style>
+    /* Sin bordes blancos arriba/abajo en movil: el color lo sincroniza el tema de hardware. */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background-color: #121418;
+      overscroll-behavior: none;
+    }
+  </style>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>

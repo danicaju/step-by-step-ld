@@ -7,6 +7,8 @@ import 'lcd/lcd_status_bar.dart';
 import 'lcd/lcd_mode_menu.dart';
 import 'lcd/lcd_setup_and_submenus.dart';
 import 'lcd/lcd_pedagogical_box.dart';
+import '../utils/latex_plain_text.dart';
+import 'lcd/lcd_copyable_result.dart';
 import 'lcd/lcd_palette.dart';
 import 'lcd/lcd_blink.dart';
 
@@ -39,6 +41,7 @@ class CasioLcdScreen extends StatelessWidget {
   final String? modeLabel;
   final VoidCallback? onToggleTheme;
   final VoidCallback? onToggleSound;
+  final VoidCallback? onUndo;
   final Widget? coefficientView;
   final Widget? customBodyView;
   final String? idleHint;
@@ -84,6 +87,7 @@ class CasioLcdScreen extends StatelessWidget {
     this.modeLabel,
     this.onToggleTheme,
     this.onToggleSound,
+    this.onUndo,
     this.coefficientView,
     this.customBodyView,
     this.idleHint,
@@ -271,6 +275,7 @@ class CasioLcdScreen extends StatelessWidget {
                         isSoundMuted: isSoundMuted,
                         onToggleSound: onToggleSound,
                         onToggleTheme: onToggleTheme,
+                        onUndo: onUndo,
                       ),
                       if (headerSelectors != null && !visualFirst) headerSelectors!,
           // 2. Expresión de entrada original pequeña arriba a la izquierda (como en Casio reales)
@@ -365,7 +370,15 @@ class CasioLcdScreen extends StatelessWidget {
                           },
                         )
                       else
-                        Align(
+                        LcdCopyableResult(
+                          enabled: hasSteps && activeStepIndex == currentResolution!.steps.length - 1,
+                          copyText: LatexPlainText.toPlain(
+                              showDecimalApprox && currentResolution != null
+                                  ? currentResolution!.decimalApproxLatex
+                                  : (currentResolution?.exactResultLatex ?? '')),
+                          ink: formulaColor,
+                          background: backgroundColor,
+                          child: Align(
                           alignment: isMultiLineLatex
                               ? Alignment.center
                               : Alignment.centerRight,
@@ -404,7 +417,7 @@ class CasioLcdScreen extends StatelessWidget {
                               );
                             },
                           ),
-                        ),
+                        )),
                     ],
                   ),
           ),

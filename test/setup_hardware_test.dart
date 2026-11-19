@@ -70,17 +70,17 @@ void main() {
   });
 
   group('SETUP en la LCD', () {
-    testWidgets('abre con SHIFT+MODE, pagina 1/3 y D-Pad pasa a pagina 2/3', (tester) async {
+    testWidgets('abre con SHIFT+MODE, pagina 1/4 y D-Pad pasa a pagina 2/4', (tester) async {
       await _boot(tester);
       await _openSetup(tester);
-      expect(find.text('SETUP  1/3'), findsOneWidget);
+      expect(find.text('SETUP  1/4'), findsOneWidget);
       await tester.tap(find.byIcon(Icons.arrow_drop_down_rounded).first);
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.arrow_drop_down_rounded).first);
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.arrow_drop_down_rounded).first);
       await tester.pumpAndSettle();
-      expect(find.text('SETUP  2/3'), findsOneWidget);
+      expect(find.text('SETUP  2/4'), findsOneWidget);
     });
 
     testWidgets('1 -> 3 elige GRA y el indicador lo muestra', (tester) async {

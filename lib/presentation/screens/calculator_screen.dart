@@ -24,7 +24,15 @@ import '../../domain/math_engine/solvers/step_evaluator.dart';
 import '../../domain/math_engine/solvers/trig_and_angles_solver.dart';
 import '../../domain/math_engine/solvers/vector_solver.dart';
 import '../../domain/services/class_history_service.dart';
+import '../../core/audio/hardware_sound_synthesizer.dart';
+import '../../core/editor/editor_undo_stack.dart';
+import '../../core/editor/ghost_parentheses_helper.dart';
+import '../../core/input/physical_keyboard_handler.dart';
+import '../theme/calculator_themes.dart';
+import '../theme/theme_controller.dart';
 import '../utils/expr_cursor_nav.dart';
+import '../widgets/calculator_app_bar.dart';
+import '../widgets/theme_picker_card.dart';
 import '../utils/goodnotes_exporter.dart';
 import '../utils/key_click_sound.dart';
 import '../widgets/ai_tutor_sheet.dart';
@@ -59,7 +67,6 @@ import '../widgets/modes/calculator_method_tab.dart';
 import '../widgets/modes/probability_distribution_widget.dart';
 import '../widgets/modes/inequality_system_editor_view.dart';
 import 'classwiz_state.dart';
-import '../widgets/solar_panel.dart';
 import '../utils/cell_fraction_editor.dart';
 import '../../domain/math_engine/solvers/systems_2x2/system_2x2_fractions.dart';
 import '../../domain/math_engine/solvers/ruffini_division.dart';
@@ -100,6 +107,8 @@ part 'calculator_screen_forms.dart';
 part 'calculator_screen_chassis.dart';
 part 'calculator_screen_chassis_lcd.dart';
 part 'calculator_screen_views.dart';
+part 'calculator_screen_theme.dart';
+part 'calculator_screen_editing.dart';
 
 class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
@@ -124,6 +133,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   LcdTheme _lcdTheme = LcdTheme.classic;
   bool get _isOledDark => _lcdTheme == LcdTheme.night;
   bool _isSoundMuted = KeyClickSound.isMuted;
+  final EditorUndoStack _undo = EditorUndoStack();
+  bool _undoPillVisible = false;
   bool _isMenuOpen = false;
   bool _isPoweredOff = false;
   bool _isInsertMode = true;
@@ -276,11 +287,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   void initState() {
     super.initState();
     _loadHistoryFromStorage();
+    ThemeController.instance.addListener(_onThemeChanged);
     // Arranca limpia en 0, sin evaluar resoluciones precargadas
   }
 
   @override
   void dispose() {
+    ThemeController.instance.removeListener(_onThemeChanged);
     _menuOneTimer?.cancel();
     super.dispose();
   }
@@ -319,86 +332,32 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     } else if (_calculatorMode == 1 ||
         (_calculatorMode == 4 && _polyIsNotableMode) ||
         _calculatorMode == 6) {
+      final pal = LcdPalette.of(_lcdTheme);
       liveLatex = ExpressionParser.rawToLiveLatex(
-        _rawInput,
-        cursorPos: showLiveCursor ? _cursorPos : null,
-        overwrite: !_isInsertMode,
-      );
+            _rawInput,
+            cursorPos: showLiveCursor ? _cursorPos : null,
+            overwrite: !_isInsertMode,
+          ) +
+          (showLiveCursor
+              ? GhostParenthesesHelper.ghostLatex(_rawInput, ink: pal.formula, background: pal.background)
+              : '');
     } else {
       liveLatex = _rawInput;
     }
 
     final modeLabel = _modeLabelText();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF121418),
-      appBar: AppBar(
-        toolbarHeight: 46,
-        titleSpacing: 12,
-        backgroundColor: const Color(0xFF141619),
-        title: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SolarPanel(),
-              const SizedBox(width: 10),
-              Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'STEP-BY-STEP LD',
-                style: TextStyle(
-                  color: Color(0xFFF1F5F9),
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.4,
-                  fontSize: 15,
-                ),
-              ),
-              SizedBox(height: 1),
-              Text(
-                'NATURAL-V.P.A.M. // STEP ENGINE',
-                style: TextStyle(
-                  color: Color(0xFFE5A93C),
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
-                  fontSize: 8.5,
-                ),
-              ),
-            ],
-          ),
-            ],
-          ),
-        ),
-        actions: [
-          HeaderBezelButton(
-            key: const Key('appbar_export_png'),
-            label: 'PNG',
-            tooltip: 'EXPORTAR PNG',
-            accentColor: const Color(0xFF94A3B8),
-            onPressed: _openStickerExport,
-          ),
-          const SizedBox(width: 6),
-          HeaderBezelButton(
-            key: const Key('appbar_copy_latex'),
-            label: 'TEX',
-            tooltip: 'COPIAR LaTeX',
-            accentColor: const Color(0xFF94A3B8),
-            onPressed: _copyLatexToClipboardShortcut,
-          ),
-          const SizedBox(width: 6),
-          HeaderBezelButton(
-            key: const Key('appbar_history'),
-            label: 'HIST',
-            tooltip: 'HISTORIAL',
-            accentColor: const Color(0xFFE5A93C),
-            onPressed: _openHistorySheet,
-          ),
-          const SizedBox(width: 10),
-        ],
-        elevation: 0,
+    return PhysicalKeyboardHandler(
+      onKey: _handleKeyPress,
+      onDpad: _handlePhysicalDpad,
+      onUndo: _undoEdit,
+      child: Scaffold(
+      backgroundColor: ThemeController.current.outerBg,
+      appBar: buildCalculatorAppBar(
+        onTheme: _openThemePicker,
+        onPng: _openStickerExport,
+        onTex: _copyLatexToClipboardShortcut,
+        onHistory: _openHistorySheet,
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -485,7 +444,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           },
         ),
       ),
-    );
+    ));
   }
-
 }

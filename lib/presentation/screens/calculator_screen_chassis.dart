@@ -5,31 +5,29 @@ extension _CalculatorScreenChassis on _CalculatorScreenState {
     required String liveLatex,
     required String modeLabel,
   }) {
+    final hw = ThemeController.current;
+    final bool light = hw.chassisMid.computeLuminance() > 0.4;
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1E22),
-        gradient: const LinearGradient(
+        color: hw.chassisMid,
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF22252C),
-            Color(0xFF1C1E22),
-            Color(0xFF16181C),
-          ],
+          colors: [hw.chassisTop, hw.chassisMid, hw.chassisBottom],
         ),
         borderRadius: BorderRadius.circular(26),
         border: Border.all(
-          color: const Color(0xFF252830),
+          color: hw.chassisBorder,
           width: 3.5,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0xCC000000),
-            offset: Offset(0, 14),
+            color: light ? const Color(0x55000000) : const Color(0xCC000000),
+            offset: const Offset(0, 14),
             blurRadius: 28,
             spreadRadius: 2,
           ),
-          BoxShadow(
+          const BoxShadow(
             color: Color(0x1EFFFFFF),
             offset: Offset(0, -1),
             blurRadius: 1,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../utils/key_click_sound.dart';
+import '../theme/theme_controller.dart';
+import 'dpad_morphology.dart';
 import 'repeat_press.dart';
 
 /// D-Pad circular/ovalado ergonómico de estilo Casio ClassWiz (108x84 px).
@@ -38,41 +40,17 @@ class CasioReplayPad extends StatelessWidget {
     final double ringW = width * 0.88;
     final double ringH = height * 0.85;
 
+    final hw = ThemeController.current;
+    final backdrop = DPadMorphologyStyle.backdrop(hw);
     return Container(
       width: width,
       height: height,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2E37),
-        borderRadius: BorderRadius.circular(height / 2),
-        border: Border.all(
-          color: const Color(0xFF474E5D),
-          width: 1.8,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0xB3000000),
-            offset: Offset(0, 4),
-            blurRadius: 6.0,
-          ),
-          BoxShadow(
-            color: Color(0x26FFFFFF),
-            offset: Offset(0, -1),
-            blurRadius: 1.0,
-          ),
-        ],
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF333844),
-            Color(0xFF2A2E37),
-            Color(0xFF1B1E24),
-          ],
-        ),
-      ),
+      decoration: DPadMorphologyStyle.outer(hw, height),
       child: Stack(
         children: [
+          if (backdrop != null) backdrop,
           // Anillo interior grabado sutil (estética metálica ClassWiz)
+          if (DPadMorphologyStyle.showRing(hw))
           IgnorePointer(
             child: Center(
               child: Container(
@@ -81,7 +59,7 @@ class CasioReplayPad extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(ringH / 2),
                   border: Border.all(
-                    color: const Color(0xFF3E4554).withValues(alpha: 0.6),
+                    color: DPadMorphologyStyle.ringColor(hw),
                     width: 1.0,
                   ),
                 ),
@@ -264,7 +242,7 @@ class _DPadDirectionButtonState extends State<_DPadDirectionButton> {
           if (widget.onTap != null) {
             setState(() => _isPressed = true);
             HapticFeedback.lightImpact();
-            KeyClickSound.playControl();
+            KeyClickSound.playDpad();
             _repeat.start(widget.onTap!);
           }
         },
@@ -287,7 +265,7 @@ class _DPadDirectionButtonState extends State<_DPadDirectionButton> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             color: _isPressed
-                ? const Color(0xFFE5A93C).withValues(alpha: 0.14)
+                ? DPadMorphologyStyle.accent(ThemeController.current).withValues(alpha: 0.14)
                 : Colors.transparent,
           ),
           child: Icon(
@@ -296,8 +274,8 @@ class _DPadDirectionButtonState extends State<_DPadDirectionButton> {
             color: widget.onTap == null
                 ? const Color(0xFF475569)
                 : (_isPressed
-                    ? const Color(0xFFE5A93C)
-                    : const Color(0xFFE2E8F0)),
+                    ? DPadMorphologyStyle.accent(ThemeController.current)
+                    : DPadMorphologyStyle.icon(ThemeController.current)),
           ),
         ),
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/theme_controller.dart';
+
 /// Temas de la LCD (SETUP 5).
 enum LcdTheme { classic, paper, night }
 
@@ -57,8 +59,22 @@ class LcdPalette {
   );
 
   static LcdPalette of(LcdTheme t) => switch (t) {
-        LcdTheme.classic => classic,
+        LcdTheme.classic => _classicForHardware(),
         LcdTheme.paper => paper,
         LcdTheme.night => night,
       };
+
+  /// Paleta clasica con el LCD del tema de hardware activo (`Predeterminado` = original).
+  static LcdPalette _classicForHardware() {
+    final hw = ThemeController.current;
+    if (hw.isDefault) return classic;
+    return LcdPalette(
+      background: hw.lcdBackground,
+      inset: hw.lcdInset,
+      border: classic.border,
+      formula: classic.formula,
+      original: classic.original,
+      title: classic.title,
+    );
+  }
 }

@@ -12,6 +12,8 @@ const List<String> kSetupRowTitles = [
   'Salida por Defecto',
   'Separador Dígitos',
   'Inicializar / Reset',
+  'Tema Hardware',
+  'Sonido Teclas',
 ];
 
 /// Opciones de cada fila del SETUP.
@@ -24,9 +26,11 @@ const List<List<String>> kSetupRowOptions = [
   ['MathI/MathO (Exacta)', 'MathI/DecimalO (Decimal)'],
   ['Desactivado', 'Activado (1 234,5)'],
   ['Limpiar Memorias (A-Y, M, ANS)', 'Restaurar Config'],
+  ['Predeterminado', 'Rosa Soft-Touch', 'Arena Retro 80s', 'Menta Salvia', 'Blanco Perla'],
+  ['Segun tema', 'Original', 'Silicona Suave', 'Retro Mecanico', 'Chiclet', 'Estudio'],
 ];
 
-/// Menú SETUP de la LCD (SHIFT + MODE): 3 páginas, filas 1-8, sub-opciones y dígitos Fix/Sci.
+/// Menú SETUP de la LCD (SHIFT + MODE): 4 páginas, filas 1-9 y 0 (=10), sub-opciones y dígitos Fix/Sci.
 class LcdSetupMenuView extends StatelessWidget {
   final LcdTheme theme;
   final int focusRow;
@@ -112,8 +116,8 @@ class LcdSetupMenuView extends StatelessWidget {
     }
 
     final List<Widget> body;
-    String title = 'SETUP  ${page + 1}/3';
-    String hint = '▲▼ mover · 1-8 o = elegir · AC salir';
+    String title = 'SETUP  ${page + 1}/4';
+    String hint = '▲▼ mover · 1-9, 0 o = elegir · AC salir';
     if (digitsPrompt != null) {
       title = '$digitsPrompt  (0-9)';
       hint = 'Pulsa 0-9 · AC volver';

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../theme/theme_controller.dart';
+import '../theme/calculator_themes.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:share_plus/share_plus.dart';
@@ -76,9 +79,9 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
     final entriesToExport = _filteredEntries.isNotEmpty ? _filteredEntries : _entries;
     if (entriesToExport.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('No hay ejercicios en el historial para exportar.'),
-          backgroundColor: Color(0xFFB91C1C),
+          backgroundColor: _pnl.panel(Color(0xFFB91C1C)),
         ),
       );
       return;
@@ -92,7 +95,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
         content: Text('¡Resumen LaTeX de ${entriesToExport.length} ejercicios copiado al portapapeles!'),
         action: SnackBarAction(
           label: 'Compartir',
-          textColor: const Color(0xFFE5A93C),
+          textColor: _pnl.panel(const Color(0xFFE5A93C)),
           onPressed: () {
             Share.share(tex, subject: 'Resumen de Clase de Matemáticas - STEP-BY-STEP LD');
           },
@@ -105,21 +108,21 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('¿Borrar historial de clase?', style: TextStyle(color: Colors.white)),
-        content: const Text(
+        backgroundColor: _pnl.panel(const Color(0xFF1E293B)),
+        title: Text('¿Borrar historial de clase?', style: TextStyle(color: _pnl.panel(Colors.white))),
+        content: Text(
           'Se eliminarán todos los ejercicios resueltos de la memoria permanente.',
-          style: TextStyle(color: Color(0xFFCBD5E1)),
+          style: TextStyle(color: _pnl.panel(Color(0xFFCBD5E1))),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar', style: TextStyle(color: Color(0xFF94A3B8))),
+            child: Text('Cancelar', style: TextStyle(color: _pnl.panel(Color(0xFF94A3B8)))),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            style: ElevatedButton.styleFrom(backgroundColor: _pnl.panel(const Color(0xFFDC2626))),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Borrar Todo', style: TextStyle(color: Colors.white)),
+            child: Text('Borrar Todo', style: TextStyle(color: _pnl.panel(Colors.white))),
           ),
         ],
       ),
@@ -139,8 +142,8 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
       maxChildSize: 0.95,
       builder: (ctx, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF0F172A),
+          decoration: BoxDecoration(
+            color: _pnl.panel(Color(0xFF0F172A)),
             borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
           ),
           child: Column(
@@ -151,7 +154,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                 width: 44,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF334155),
+                  color: _pnl.panel(const Color(0xFF334155)),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -164,28 +167,28 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE5A93C).withValues(alpha: 0.18),
+                        color: _pnl.panel(const Color(0xFFE5A93C)).withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.history_edu_rounded, color: Color(0xFFE5A93C), size: 22),
+                      child: Icon(Icons.history_edu_rounded, color: _pnl.panel(Color(0xFFE5A93C)), size: 22),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Historial de Sesión de Clase',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: _pnl.panel(Colors.white),
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
                             '$_todayCount ejercicios resueltos hoy',
-                            style: const TextStyle(
-                              color: Color(0xFF94A3B8),
+                            style: TextStyle(
+                              color: _pnl.panel(Color(0xFF94A3B8)),
                               fontSize: 12,
                             ),
                           ),
@@ -194,12 +197,12 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                     ),
                     IconButton(
                       tooltip: 'Exportar Resumen .TEX',
-                      icon: const Icon(Icons.download_rounded, color: Color(0xFFE5A93C)),
+                      icon: Icon(Icons.download_rounded, color: _pnl.panel(Color(0xFFE5A93C))),
                       onPressed: _exportTexSummary,
                     ),
                     IconButton(
                       tooltip: 'Limpiar Historial',
-                      icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444)),
+                      icon: Icon(Icons.delete_outline_rounded, color: _pnl.panel(Color(0xFFEF4444))),
                       onPressed: _entries.isEmpty ? null : _confirmClearHistory,
                     ),
                   ],
@@ -220,11 +223,11 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                         child: ChoiceChip(
                           label: Text(filter),
                           selected: _selectedFilter == filter,
-                          selectedColor: const Color(0xFFE5A93C),
-                          checkmarkColor: const Color(0xFF1A2530),
-                          backgroundColor: const Color(0xFF1A2530),
+                          selectedColor: _pnl.panel(const Color(0xFFE5A93C)),
+                          checkmarkColor: _pnl.panel(const Color(0xFF1A2530)),
+                          backgroundColor: _pnl.panel(const Color(0xFF1A2530)),
                           labelStyle: TextStyle(
-                            color: _selectedFilter == filter ? const Color(0xFF1A2530) : const Color(0xFFC8D6CD),
+                            color: _selectedFilter == filter ? _pnl.panel(const Color(0xFF1A2530)) : _pnl.panel(const Color(0xFFC8D6CD)),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -241,27 +244,27 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                 ),
               ),
 
-              const Divider(color: Color(0xFF1E293B), height: 20),
+              Divider(color: _pnl.panel(Color(0xFF1E293B)), height: 20),
 
               // Lista de ejercicios
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: Color(0xFFE5A93C)))
+                    ? Center(child: CircularProgressIndicator(color: _pnl.panel(Color(0xFFE5A93C))))
                     : _filteredEntries.isEmpty
                         ? Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.menu_book_rounded, size: 48, color: const Color(0xFF475569)),
+                                Icon(Icons.menu_book_rounded, size: 48, color: _pnl.panel(const Color(0xFF475569))),
                                 const SizedBox(height: 12),
-                                const Text(
+                                Text(
                                   'No hay ejercicios en esta categoría',
-                                  style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                                  style: TextStyle(color: _pnl.panel(Color(0xFF94A3B8)), fontSize: 14),
                                 ),
                                 const SizedBox(height: 4),
-                                const Text(
+                                Text(
                                   'Cada vez que pulses = se guardará aquí el ejercicio.',
-                                  style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                                  style: TextStyle(color: _pnl.panel(Color(0xFF64748B)), fontSize: 12),
                                 ),
                               ],
                             ),
@@ -285,12 +288,12 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                 child: Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF1E293B),
+                                    color: _pnl.panel(const Color(0xFF1E293B)),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                       color: entry.isFavorite
-                                          ? const Color(0xFFF59E0B)
-                                          : const Color(0xFF334155),
+                                          ? _pnl.panel(const Color(0xFFF59E0B))
+                                          : _pnl.panel(const Color(0xFF334155)),
                                       width: entry.isFavorite ? 1.5 : 1.0,
                                     ),
                                   ),
@@ -303,13 +306,13 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF0F766E),
+                                              color: _pnl.panel(const Color(0xFF0F766E)),
                                               borderRadius: BorderRadius.circular(4),
                                             ),
                                             child: Text(
                                               entry.modeName,
-                                              style: const TextStyle(
-                                                color: Colors.white,
+                                              style: TextStyle(
+                                                color: _pnl.panel(Colors.white),
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.bold,
                                               ),
@@ -319,13 +322,13 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF334155),
+                                              color: _pnl.panel(const Color(0xFF334155)),
                                               borderRadius: BorderRadius.circular(4),
                                             ),
                                             child: Text(
                                               entry.studentTag,
-                                              style: const TextStyle(
-                                                color: Color(0xFFCBD5E1),
+                                              style: TextStyle(
+                                                color: _pnl.panel(Color(0xFFCBD5E1)),
                                                 fontSize: 10,
                                               ),
                                             ),
@@ -333,7 +336,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                           const Spacer(),
                                           Text(
                                             timeStr,
-                                            style: const TextStyle(color: Color(0xFF64748B), fontSize: 11),
+                                            style: TextStyle(color: _pnl.panel(Color(0xFF64748B)), fontSize: 11),
                                           ),
                                           const SizedBox(width: 4),
                                           IconButton(
@@ -343,8 +346,8 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                             icon: Icon(
                                               entry.isFavorite ? Icons.star_rounded : Icons.star_border_rounded,
                                               color: entry.isFavorite
-                                                  ? const Color(0xFFF59E0B)
-                                                  : const Color(0xFF64748B),
+                                                  ? _pnl.panel(const Color(0xFFF59E0B))
+                                                  : _pnl.panel(const Color(0xFF64748B)),
                                               size: 20,
                                             ),
                                             onPressed: () async {
@@ -357,9 +360,9 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                             visualDensity: VisualDensity.compact,
                                             padding: EdgeInsets.zero,
                                             constraints: const BoxConstraints(),
-                                            icon: const Icon(
+                                            icon: Icon(
                                               Icons.close_rounded,
-                                              color: Color(0xFF64748B),
+                                              color: _pnl.panel(Color(0xFF64748B)),
                                               size: 18,
                                             ),
                                             onPressed: () async {
@@ -376,14 +379,14 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                         scrollDirection: Axis.horizontal,
                                         child: Math.tex(
                                           CasioLcdScreen.sanitizeForMathTex(entry.resolution.originalInputLatex),
-                                          textStyle: const TextStyle(
-                                            color: Colors.white,
+                                          textStyle: TextStyle(
+                                            color: _pnl.panel(Colors.white),
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                           ),
                                           onErrorFallback: (err) => Text(
                                             entry.resolution.originalInputLatex,
-                                            style: const TextStyle(color: Colors.white, fontSize: 13),
+                                            style: TextStyle(color: _pnl.panel(Colors.white), fontSize: 13),
                                           ),
                                         ),
                                       ),
@@ -402,24 +405,24 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                                 child: Row(
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: [
-                                                    const Text(
+                                                    Text(
                                                       '= ',
                                                       style: TextStyle(
-                                                        color: Color(0xFFE5A93C),
+                                                        color: _pnl.panel(Color(0xFFE5A93C)),
                                                         fontSize: 14,
                                                         fontWeight: FontWeight.bold,
                                                       ),
                                                     ),
                                                     Math.tex(
                                                       CasioLcdScreen.sanitizeForMathTex(entry.resolution.exactResultLatex),
-                                                      textStyle: const TextStyle(
-                                                        color: Color(0xFFE5A93C),
+                                                      textStyle: TextStyle(
+                                                        color: _pnl.panel(Color(0xFFE5A93C)),
                                                         fontSize: 14,
                                                         fontWeight: FontWeight.bold,
                                                       ),
                                                       onErrorFallback: (err) => Text(
                                                         entry.resolution.exactResultLatex,
-                                                        style: const TextStyle(color: Color(0xFFE5A93C), fontSize: 13, fontWeight: FontWeight.bold),
+                                                        style: TextStyle(color: _pnl.panel(Color(0xFFE5A93C)), fontSize: 13, fontWeight: FontWeight.bold),
                                                       ),
                                                     ),
                                                   ],
@@ -430,8 +433,8 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                           const SizedBox(width: 8),
                                           Text(
                                             '${entry.resolution.steps.length} pasos pedagógicos ▶',
-                                            style: const TextStyle(
-                                              color: Color(0xFF94A3B8),
+                                            style: TextStyle(
+                                              color: _pnl.panel(Color(0xFF94A3B8)),
                                               fontSize: 11,
                                             ),
                                           ),
@@ -451,3 +454,5 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
     );
   }
 }
+
+CalculatorHardwareTheme get _pnl => ThemeController.current;

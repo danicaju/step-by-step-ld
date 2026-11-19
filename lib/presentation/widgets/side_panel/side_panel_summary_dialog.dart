@@ -2,6 +2,9 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import '../../theme/theme_controller.dart';
+import '../../theme/calculator_themes.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
@@ -17,9 +20,9 @@ class SidePanelSummaryDialog {
   }) {
     if (entries.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('No hay ejercicios en el historial para exportar.'),
-          backgroundColor: Color(0xFFB91C1C),
+          backgroundColor: _pnl.panel(Color(0xFFB91C1C)),
           duration: Duration(seconds: 2),
         ),
       );
@@ -31,15 +34,15 @@ class SidePanelSummaryDialog {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Row(
+        backgroundColor: _pnl.panel(_pnl.panel(Color(0xFF1E293B))),
+        title: Row(
           children: [
-            Icon(Icons.summarize_rounded, color: Color(0xFFE5A93C), size: 22),
+            Icon(Icons.summarize_rounded, color: _pnl.panel(Color(0xFFE5A93C)), size: 22),
             SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Exportar Resumen de Clase',
-                style: TextStyle(color: Colors.white, fontSize: 16),
+                style: TextStyle(color: _pnl.panel(Colors.white), fontSize: 16),
               ),
             ),
           ],
@@ -55,19 +58,19 @@ class SidePanelSummaryDialog {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: _pnl.panel(_pnl.panel(Color(0xFFF8FAFC))),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Row(
+                        Row(
                           children: [
                             Text(
                               'STEP-BY-STEP LD',
                               style: TextStyle(
-                                color: Color(0xFF0F172A),
+                                color: _pnl.panel(Color(0xFF0F172A)),
                                 fontWeight: FontWeight.w900,
                                 fontSize: 13,
                               ),
@@ -76,14 +79,14 @@ class SidePanelSummaryDialog {
                             Text(
                               'Resumen de Clase',
                               style: TextStyle(
-                                color: Color(0xFF475569),
+                                color: _pnl.panel(Color(0xFF475569)),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
-                        const Divider(color: Color(0xFFCBD5E1)),
+                        Divider(color: _pnl.panel(Color(0xFFCBD5E1))),
                         for (int i = 0; i < entries.length && i < 6; i++) ...[
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
@@ -92,8 +95,8 @@ class SidePanelSummaryDialog {
                               children: [
                                 Text(
                                   '${i + 1}. ${entries[i].modeName}',
-                                  style: const TextStyle(
-                                    color: Color(0xFFE5A93C),
+                                  style: TextStyle(
+                                    color: _pnl.panel(Color(0xFFE5A93C)),
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -105,14 +108,14 @@ class SidePanelSummaryDialog {
                                     CasioLcdScreen.sanitizeForMathTex(
                                       '${entries[i].resolution.originalInputLatex} = ${entries[i].resolution.exactResultLatex}',
                                     ),
-                                    textStyle: const TextStyle(
-                                      color: Color(0xFF0F172A),
+                                    textStyle: TextStyle(
+                                      color: _pnl.panel(Color(0xFF0F172A)),
                                       fontSize: 13,
                                     ),
                                     onErrorFallback: (_) => Text(
                                       '${entries[i].resolution.originalInputLatex} = ${entries[i].resolution.exactResultLatex}',
-                                      style: const TextStyle(
-                                        color: Color(0xFF0F172A),
+                                      style: TextStyle(
+                                        color: _pnl.panel(Color(0xFF0F172A)),
                                         fontSize: 12,
                                       ),
                                     ),
@@ -133,15 +136,15 @@ class SidePanelSummaryDialog {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
+            child: Text(
               'Cerrar',
-              style: TextStyle(color: Color(0xFF94A3B8)),
+              style: TextStyle(color: _pnl.panel(Color(0xFF94A3B8))),
             ),
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE5A93C),
-              foregroundColor: const Color(0xFF1A2530),
+              backgroundColor: _pnl.panel(const Color(0xFFE5A93C)),
+              foregroundColor: _pnl.panel(const Color(0xFF1A2530)),
             ),
             icon: const Icon(Icons.code_rounded, size: 16),
             label: const Text('Copiar .TEX'),
@@ -162,8 +165,8 @@ class SidePanelSummaryDialog {
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2F5D50),
-              foregroundColor: Colors.white,
+              backgroundColor: _pnl.panel(const Color(0xFF2F5D50)),
+              foregroundColor: _pnl.panel(Colors.white),
             ),
             icon: const Icon(Icons.image_rounded, size: 16),
             label: const Text('Compartir PNG'),
@@ -210,7 +213,7 @@ class SidePanelSummaryDialog {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('No se pudo exportar PNG: $e'),
-                      backgroundColor: const Color(0xFFB91C1C),
+                      backgroundColor: _pnl.panel(const Color(0xFFB91C1C)),
                     ),
                   );
                 }
@@ -222,3 +225,5 @@ class SidePanelSummaryDialog {
     );
   }
 }
+
+CalculatorHardwareTheme get _pnl => ThemeController.current;

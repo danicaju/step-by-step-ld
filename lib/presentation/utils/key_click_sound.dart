@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/audio/hardware_sound_synthesizer.dart';
+
 import 'key_click_sound_stub.dart'
     if (dart.library.io) 'key_click_sound_io.dart'
     if (dart.library.js_interop) 'key_click_sound_web.dart' as platform;
@@ -90,11 +92,34 @@ abstract final class KeyClickSound {
 
   /// Reproduce el clic mecánico correspondiente a [label] si no está silenciado.
   static void playForLabel(String label) {
+    if (_useThemeProfile) {
+      HardwareSoundSynthesizer.playForLabel(label, muted: _mutedNotifier.value);
+      return;
+    }
     play(resolveToneForLabel(label));
   }
 
+  /// `true` si el perfil efectivo (tema o SETUP) no es el sonido original.
+  static bool get _useThemeProfile =>
+      HardwareSoundSynthesizer.effective != KeySoundProfile.defaultOriginal;
+
+  /// Pulsacion del D-Pad (misma ruta que `playControl`, con su categoria propia en los temas).
+  static void playDpad() {
+    if (_useThemeProfile) {
+      HardwareSoundSynthesizer.playCategory(SoundCategory.dpad, muted: _mutedNotifier.value);
+      return;
+    }
+    play(KeyClickTone.control);
+  }
+
   /// Reproduce un clic mecánico de tecla de control (~180 Hz).
-  static void playControl() => play(KeyClickTone.control);
+  static void playControl() {
+    if (_useThemeProfile) {
+      HardwareSoundSynthesizer.playCategory(SoundCategory.control, muted: _mutedNotifier.value);
+      return;
+    }
+    play(KeyClickTone.control);
+  }
 
   /// Reproduce un clic mecánico de tecla numérica o científica (~320 Hz).
   static void playStandard() => play(KeyClickTone.standard);

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../theme/calculator_themes.dart';
+import '../theme/theme_controller.dart';
 import '../utils/key_click_sound.dart';
 import 'repeat_press.dart';
 
@@ -56,7 +58,9 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = widget.backgroundColor ?? const Color(0xFF3B4049);
+    final hw = ThemeController.current;
+    final style = hw.keyStyle(widget.label, widget.backgroundColor, widget.textColor);
+    final bgColor = style.background;
 
     final bool showShiftFace = widget.isShiftActive &&
         widget.shiftLabel != null &&
@@ -70,10 +74,8 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
         : (showAlphaFace ? widget.alphaLabel! : widget.label);
 
     final Color effectiveTextColor = showShiftFace
-        ? const Color(0xFFE5A93C)
-        : (showAlphaFace
-            ? const Color(0xFFE05D5D)
-            : (widget.textColor ?? Colors.white));
+        ? hw.legendShift
+        : (showAlphaFace ? hw.legendAlpha : style.text);
 
     return Expanded(
       flex: widget.flex,
@@ -95,10 +97,11 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
                       child: Text(
                         widget.shiftLabel ?? '',
                         maxLines: 1,
-                        style: const TextStyle(
-                          color: Color(0xFFE5A93C),
+                        style: TextStyle(
+                          color: hw.legendShift,
                           fontSize: 8.5,
                           fontWeight: FontWeight.w700,
+                          fontFamily: style.mono ? 'monospace' : null,
                         ),
                       ),
                     ),
@@ -110,10 +113,11 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
                       child: Text(
                         widget.alphaLabel ?? '',
                         maxLines: 1,
-                        style: const TextStyle(
-                          color: Color(0xFFE05D5D),
+                        style: TextStyle(
+                          color: hw.legendAlpha,
                           fontSize: 8.5,
                           fontWeight: FontWeight.w700,
+                          fontFamily: style.mono ? 'monospace' : null,
                         ),
                       ),
                     ),
@@ -153,20 +157,22 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
                   ),
                   decoration: BoxDecoration(
                     color: bgColor,
-                    borderRadius: BorderRadius.circular(6.0),
+                    borderRadius: BorderRadius.circular(style.stadium ? 999.0 : style.radius),
                     border: Border.all(
-                      color: _isPressed
-                          ? const Color(0xFF141619)
-                          : const Color(0xFF494E5B),
-                      width: 1.0,
+                      color: _isPressed ? const Color(0xFF141619) : style.border,
+                      width: hw.keyShape == KeyCapShape.flatChiclet ? 0.8 : 1.0,
                     ),
                     boxShadow: _isPressed
                         ? const []
                         : [
                             BoxShadow(
-                              color: const Color(0xAA000000),
-                              offset: Offset(0, widget.relief ?? (bgColor.computeLuminance() < 0.03 ? 1.5 : 3.5)),
-                              blurRadius: 1.0,
+                              color: hw.isDefault
+                                  ? const Color(0xAA000000)
+                                  : (hw.keyShape == KeyCapShape.retroWedge
+                                      ? Color.lerp(bgColor, Colors.black, 0.5)!
+                                      : const Color(0x55000000)),
+                              offset: Offset(0, hw.isDefault ? (widget.relief ?? style.relief) : style.relief),
+                              blurRadius: hw.keyShape == KeyCapShape.retroWedge ? 0.0 : 1.0,
                             ),
                           ],
                   ),
@@ -183,6 +189,7 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
                               color: effectiveTextColor,
                               fontSize: (showShiftFace || showAlphaFace) ? 12.0 : 13.0,
                               fontWeight: FontWeight.bold,
+                              fontFamily: style.mono ? 'monospace' : null,
                             ),
                           ),
                   ),

@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'presentation/screens/calculator_screen.dart';
+import 'presentation/theme/theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,8 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('Firebase no configurado o sin credenciales nativas ($e). Operando en modo local.');
   }
+
+  await ThemeController.instance.load();
 
   runApp(const ProviderScope(child: CasioCalculatorApp()));
 }

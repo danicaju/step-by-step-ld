@@ -1,0 +1,1 @@
+void syncWebTheme(String hex) {}

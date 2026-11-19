@@ -27,6 +27,9 @@ class LcdStatusBar extends StatelessWidget {
   final VoidCallback? onToggleSound;
   final VoidCallback? onToggleTheme;
 
+  /// Pastilla `[ DESHACER ]` visible justo tras pulsar AC.
+  final VoidCallback? onUndo;
+
   const LcdStatusBar({
     super.key,
     required this.isShiftActive,
@@ -49,6 +52,7 @@ class LcdStatusBar extends StatelessWidget {
     this.isSoundMuted = false,
     this.onToggleSound,
     this.onToggleTheme,
+    this.onUndo,
   });
 
   @override
@@ -212,6 +216,29 @@ class LcdStatusBar extends StatelessWidget {
             ),
           ),
         ),
+        if (onUndo != null) ...[
+          const SizedBox(width: 6),
+          GestureDetector(
+            key: const Key('lcd_undo_pill'),
+            onTap: onUndo,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(color: isOledDark ? const Color(0xFFC8D6CD) : const Color(0xFF1A2530), width: 1.2),
+              ),
+              child: Text(
+                '[ DESHACER ]',
+                style: TextStyle(
+                  color: isOledDark ? const Color(0xFFC8D6CD) : const Color(0xFF1A2530),
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ),
+          ),
+        ],
         if (onToggleSound != null) ...[
           const SizedBox(width: 6),
           Tooltip(

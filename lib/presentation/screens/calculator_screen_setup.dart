@@ -20,6 +20,8 @@ extension _CalculatorScreenSetup on _CalculatorScreenState {
         CalculatorSettings.mathOutput == MathOutputMode.mathO ? 'MathO' : 'DecimalO',
         CalculatorSettings.digitSeparator ? 'Sí' : 'No',
         '',
+        ThemeController.current.name,
+        kKeySoundOptionLabels[HardwareSoundSynthesizer.overrideIndex],
       ];
 
   int _setupCurrentOption(int row) => switch (row) {
@@ -30,6 +32,8 @@ extension _CalculatorScreenSetup on _CalculatorScreenState {
         4 => _lcdTheme.index,
         5 => CalculatorSettings.mathOutput.index,
         6 => CalculatorSettings.digitSeparator ? 1 : 0,
+        8 => HardwareThemes.all.indexWhere((t) => t.id == ThemeController.current.id),
+        9 => HardwareSoundSynthesizer.overrideIndex,
         _ => 0,
       };
 
@@ -92,7 +96,13 @@ extension _CalculatorScreenSetup on _CalculatorScreenState {
           CalculatorSettings.reset();
           _angleUnit = AngleUnit.deg;
           _lcdTheme = LcdTheme.classic;
+          ThemeController.instance.select(HardwareThemes.defaultTheme);
+          ThemeController.instance.setSoundOverride(0);
         }
+      case 8:
+        ThemeController.instance.select(HardwareThemes.all[idx]);
+      case 9:
+        ThemeController.instance.setSoundOverride(idx);
     }
     _activeResolution = null;
     _closeSetup();
@@ -126,8 +136,8 @@ extension _CalculatorScreenSetup on _CalculatorScreenState {
       _closeSetup();
     } else if (key == '=') {
       _setupSubCursor = _setupCurrentOption(_setupRow);
-    } else if (n != null && n >= 1 && n <= 8) {
-      _setupRow = n - 1;
+    } else if (n != null && n >= 0 && n <= 9) {
+      _setupRow = n == 0 ? 9 : n - 1;
       _setupSubCursor = _setupCurrentOption(_setupRow);
     }
     return true;
@@ -145,10 +155,10 @@ extension _CalculatorScreenSetup on _CalculatorScreenState {
       return;
     }
     if (vertical) {
-      _setupRow = (_setupRow + step + 8) % 8;
+      _setupRow = (_setupRow + step + kSetupRowTitles.length) % kSetupRowTitles.length;
     } else {
-      final next = ((_setupRow ~/ 3 + step + 3) % 3) * 3 + _setupRow % 3;
-      _setupRow = next < 8 ? next : 7;
+      final next = ((_setupRow ~/ 3 + step + 4) % 4) * 3 + _setupRow % 3;
+      _setupRow = next < kSetupRowTitles.length ? next : kSetupRowTitles.length - 1;
     }
   }
 

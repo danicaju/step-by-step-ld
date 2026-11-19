@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../theme/theme_controller.dart';
+import '../theme/calculator_themes.dart';
+
 import '../../domain/math_engine/models/step_resolution.dart';
 import '../../domain/math_engine/solvers/function_graph_solver.dart';
 import '../../domain/services/class_history_service.dart';
@@ -45,15 +48,15 @@ class WindowsSidePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF16191E),
+        color: _pnl.panel(const Color(0xFF16191E)),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: const Color(0xFF252830),
+          color: _pnl.panel(const Color(0xFF252830)),
           width: 2.0,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x88000000),
+            color: _pnl.panel(Color(0x88000000)),
             offset: Offset(0, 12),
             blurRadius: 24,
           ),
@@ -65,11 +68,11 @@ class WindowsSidePanel extends StatelessWidget {
           // Barra superior de pestañas
           Container(
             padding: const EdgeInsets.all(6),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1E222A),
+            decoration: BoxDecoration(
+              color: _pnl.panel(Color(0xFF1E222A)),
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               border: Border(
-                bottom: BorderSide(color: Color(0xFF2C323E), width: 1),
+                bottom: BorderSide(color: _pnl.panel(Color(0xFF2C323E)), width: 1),
               ),
             ),
             child: Row(
@@ -81,7 +84,7 @@ class WindowsSidePanel extends StatelessWidget {
                         ? '${activeResolution!.steps.length}'
                         : null,
                     selected: activeTabIndex == 1,
-                    accentColor: const Color(0xFFE5A93C),
+                    accentColor: _pnl.panel(const Color(0xFFE5A93C)),
                     onTap: () => onTabChanged(1),
                   ),
                 ),
@@ -91,7 +94,7 @@ class WindowsSidePanel extends StatelessWidget {
                     label: 'HISTORIAL',
                     badgeText: '${historyEntries.length}',
                     selected: activeTabIndex == 0,
-                    accentColor: const Color(0xFFE5A93C),
+                    accentColor: _pnl.panel(const Color(0xFFE5A93C)),
                     onTap: () => onTabChanged(0),
                   ),
                 ),
@@ -148,7 +151,7 @@ class _DockTabButton extends StatelessWidget {
         duration: const Duration(milliseconds: 140),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF252A34) : Colors.transparent,
+          color: selected ? _pnl.panel(const Color(0xFF252A34)) : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected ? accentColor : Colors.transparent,
@@ -164,7 +167,7 @@ class _DockTabButton extends StatelessWidget {
                 child: Text(
                   label,
                   style: TextStyle(
-                    color: selected ? Colors.white : const Color(0xFF94A3B8),
+                    color: selected ? _pnl.panel(Colors.white) : _pnl.panel(const Color(0xFF94A3B8)),
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.4,
@@ -179,15 +182,15 @@ class _DockTabButton extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: selected
                       ? accentColor
-                      : const Color(0xFF334155),
+                      : _pnl.panel(const Color(0xFF334155)),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   badgeText!,
                   style: TextStyle(
-                    color: selected && accentColor == const Color(0xFFE5A93C)
+                    color: selected && accentColor == _pnl.panel(const Color(0xFFE5A93C))
                         ? Colors.black
-                        : Colors.white,
+                        : _pnl.panel(Colors.white),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -200,3 +203,5 @@ class _DockTabButton extends StatelessWidget {
     );
   }
 }
+
+CalculatorHardwareTheme get _pnl => ThemeController.current;

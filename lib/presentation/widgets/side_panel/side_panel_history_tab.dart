@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../theme/theme_controller.dart';
+import '../../theme/calculator_themes.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import '../../../domain/services/class_history_service.dart';
 import '../casio_lcd_screen.dart';
@@ -44,8 +47,8 @@ class SidePanelHistoryTab extends StatelessWidget {
                 child: Text(
                   '${entries.length} ejercicios en sesión',
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF94A3B8),
+                  style: TextStyle(
+                    color: _pnl.panel(Color(0xFF94A3B8)),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -60,8 +63,8 @@ class SidePanelHistoryTab extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE5A93C),
-                        foregroundColor: const Color(0xFF1A2530),
+                        backgroundColor: _pnl.panel(const Color(0xFFE5A93C)),
+                        foregroundColor: _pnl.panel(const Color(0xFF1A2530)),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 8,
@@ -86,10 +89,10 @@ class SidePanelHistoryTab extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(color: Color(0xFF252A34), height: 1),
+        Divider(color: _pnl.panel(Color(0xFF252A34)), height: 1),
         Expanded(
           child: entries.isEmpty
-              ? const Center(
+              ? Center(
                   child: Padding(
                     padding: EdgeInsets.all(24.0),
                     child: Column(
@@ -98,14 +101,14 @@ class SidePanelHistoryTab extends StatelessWidget {
                         Icon(
                           Icons.history_edu_rounded,
                           size: 42,
-                          color: Color(0xFF475569),
+                          color: _pnl.panel(Color(0xFF475569)),
                         ),
                         SizedBox(height: 10),
                         Text(
                           'Tu historial de clase aparecerá aquí automáticamente al pulsar =',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color(0xFF94A3B8),
+                            color: _pnl.panel(Color(0xFF94A3B8)),
                             fontSize: 12.5,
                           ),
                         ),
@@ -127,12 +130,12 @@ class SidePanelHistoryTab extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1D222B),
+                          color: _pnl.panel(const Color(0xFF1D222B)),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: entry.isFavorite
-                                ? const Color(0xFFE5A93C)
-                                : const Color(0xFF2D3442),
+                                ? _pnl.panel(const Color(0xFFE5A93C))
+                                : _pnl.panel(const Color(0xFF2D3442)),
                           ),
                         ),
                         child: Column(
@@ -147,14 +150,14 @@ class SidePanelHistoryTab extends StatelessWidget {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0F766E),
+                                      color: _pnl.panel(const Color(0xFF0F766E)),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
                                       entry.modeName,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      style: TextStyle(
+                                        color: _pnl.panel(Colors.white),
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -164,8 +167,8 @@ class SidePanelHistoryTab extends StatelessWidget {
                                 const SizedBox(width: 6),
                                 Text(
                                   timeStr,
-                                  style: const TextStyle(
-                                    color: Color(0xFF64748B),
+                                  style: TextStyle(
+                                    color: _pnl.panel(Color(0xFF64748B)),
                                     fontSize: 11,
                                   ),
                                 ),
@@ -179,8 +182,8 @@ class SidePanelHistoryTab extends StatelessWidget {
                                         ? Icons.star_rounded
                                         : Icons.star_border_rounded,
                                     color: entry.isFavorite
-                                        ? const Color(0xFFE5A93C)
-                                        : const Color(0xFF64748B),
+                                        ? _pnl.panel(const Color(0xFFE5A93C))
+                                        : _pnl.panel(const Color(0xFF64748B)),
                                     size: 18,
                                   ),
                                   onPressed: () => onToggleFavorite(entry.id),
@@ -190,9 +193,9 @@ class SidePanelHistoryTab extends StatelessWidget {
                                   visualDensity: VisualDensity.compact,
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.close_rounded,
-                                    color: Color(0xFF64748B),
+                                    color: _pnl.panel(Color(0xFF64748B)),
                                     size: 16,
                                   ),
                                   onPressed: () => onDeleteEntry(entry.id),
@@ -206,15 +209,15 @@ class SidePanelHistoryTab extends StatelessWidget {
                                 CasioLcdScreen.sanitizeForMathTex(
                                   entry.resolution.originalInputLatex,
                                 ),
-                                textStyle: const TextStyle(
-                                  color: Colors.white,
+                                textStyle: TextStyle(
+                                  color: _pnl.panel(Colors.white),
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                 ),
                                 onErrorFallback: (_) => Text(
                                   entry.resolution.originalInputLatex,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: _pnl.panel(Colors.white),
                                     fontSize: 13,
                                   ),
                                 ),
@@ -223,10 +226,10 @@ class SidePanelHistoryTab extends StatelessWidget {
                             const SizedBox(height: 6),
                             Row(
                               children: [
-                                const Text(
+                                Text(
                                   '= ',
                                   style: TextStyle(
-                                    color: Color(0xFFE5A93C),
+                                    color: _pnl.panel(Color(0xFFE5A93C)),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -238,15 +241,15 @@ class SidePanelHistoryTab extends StatelessWidget {
                                       CasioLcdScreen.sanitizeForMathTex(
                                         entry.resolution.exactResultLatex,
                                       ),
-                                      textStyle: const TextStyle(
-                                        color: Color(0xFFE5A93C),
+                                      textStyle: TextStyle(
+                                        color: _pnl.panel(Color(0xFFE5A93C)),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
                                       ),
                                       onErrorFallback: (_) => Text(
                                         entry.resolution.exactResultLatex,
-                                        style: const TextStyle(
-                                          color: Color(0xFFE5A93C),
+                                        style: TextStyle(
+                                          color: _pnl.panel(Color(0xFFE5A93C)),
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
                                         ),
@@ -267,3 +270,5 @@ class SidePanelHistoryTab extends StatelessWidget {
     );
   }
 }
+
+CalculatorHardwareTheme get _pnl => ThemeController.current;
