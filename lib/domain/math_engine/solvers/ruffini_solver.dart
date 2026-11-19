@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../../core/formatting/step_note_formatter.dart';
 import '../core/algebraic_latex_formatter.dart';
 import '../core/rational.dart';
 import '../models/step_resolution.dart';
@@ -426,7 +427,7 @@ class RuffiniSolver {
   }
 
   static String _plain(List<int> coeffs) {
-    final latex = polynomialToLatex(coeffs);
-    return '(${latex.replaceAll(RegExp(r'\^\{(\d+)\}'), r'^$1')})';
+    // Texto plano para notas (Text nativo): `x^{2}` -> `x²`, nunca `$1` literal.
+    return '(${StepNoteFormatter.toPlain(polynomialToLatex(coeffs))})';
   }
 }

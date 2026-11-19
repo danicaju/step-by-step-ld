@@ -1,8 +1,8 @@
+import '../../../core/editor/exponent_navigation_helper.dart';
 import 'balanced_scan.dart';
 import 'expression_tokenizer.dart';
 import 'fraction_template.dart';
 import 'nested_fraction_navigator.dart';
-import 'power_exit_helper.dart';
 import 'slash_fraction_converter.dart';
 import 'unwrap_helper.dart';
 
@@ -107,7 +107,7 @@ class CursorNavigationHelper {
     }
     if (token == ')' && safe < raw.length && raw[safe] == ')') {
       // Dentro de un exponente o de una fraccion el `)` no cierra la plantilla: solo ▶ / ▼ salen.
-      if (PowerExitHelper.isTemplateClose(raw, safe)) return (raw, safe);
+      if (ExponentNavigationHelper.isTemplateClose(raw, safe)) return (raw, safe);
       return (raw, safe + 1);
     }
     final updated = raw.substring(0, safe) + pair + raw.substring(safe);
@@ -128,6 +128,13 @@ class CursorNavigationHelper {
     if (safe <= 0) {
       return (raw, 0);
     }
+    // Borde de un exponente: tras `^(..)|` entra y borra; en `^(|..)` lo desenvuelve.
+    final border = ExponentNavigationHelper.deleteAtBorder(
+      raw,
+      safe,
+      (r, p) => deleteAtCursor(r, p, emptyResult: emptyResult, emptyCursor: emptyCursor),
+    );
+    if (border != null) return border.$1.isEmpty ? (emptyResult, emptyCursor) : border;
     final fracDel = FractionTemplate.delete(raw, safe);
     if (fracDel != null) {
       return fracDel.$1.isEmpty ? (emptyResult, emptyCursor) : fracDel;
@@ -168,8 +175,8 @@ class CursorNavigationHelper {
     final safe = currentPos.clamp(0, raw.length);
     if (!isUp) {
       // ▼ dentro de un exponente `^( ... )` sin fracciones: sale a la linea base.
-      final out = PowerExitHelper.exitDown(raw, safe);
-      if (out != null && !raw.substring(PowerExitHelper.enclosingPowerOpen(raw, safe)!, out).contains('/')) {
+      final out = ExponentNavigationHelper.exitDown(raw, safe);
+      if (out != null && !raw.substring(ExponentNavigationHelper.enclosingOpen(raw, safe)!, out).contains('/')) {
         return out;
       }
     }

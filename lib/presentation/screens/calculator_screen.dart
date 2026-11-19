@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/editor/exponent_navigation_helper.dart';
 import '../../core/editor/lcd_cursor_tokens.dart';
 import '../../domain/math_engine/core/calculator_memory.dart';
 import '../../domain/math_engine/core/rational.dart';
@@ -349,6 +350,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             _rawInput,
             cursorPos: showLiveCursor ? _cursorPos : null,
             overwrite: !_isInsertMode,
+            ghostClosers: showLiveCursor,
           ) +
           (showLiveCursor
               ? GhostParenthesesHelper.ghostLatex(_rawInput, ink: pal.formula, background: pal.background)

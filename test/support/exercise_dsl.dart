@@ -1,3 +1,4 @@
+import 'package:casio_tutor_calc/core/formatting/step_note_formatter.dart';
 import 'package:casio_tutor_calc/domain/math_engine/models/step_resolution.dart';
 import 'package:casio_tutor_calc/presentation/widgets/casio_lcd_screen.dart';
 import 'package:flutter/material.dart';
@@ -120,9 +121,30 @@ StepByStepResolution res(WidgetTester t) {
   return r!;
 }
 
+/// Blindaje global de notas: `shortTitle`, `pedagogicalNote` y `warningTrick` de cada paso no
+/// llevan grupos regex literales (dolar-1, barra-1), valores corruptos (`null`, `NaN`...) ni, una vez
+/// pasados por [StepNoteFormatter.toPlain] (como hace la UI), LaTeX crudo (frac, left, `^{`...).
+void expectCleanNotes(StepByStepResolution r) {
+  for (var i = 0; i < r.steps.length; i++) {
+    final s = r.steps[i];
+    for (final (field, text) in [
+      ('shortTitle', s.shortTitle),
+      ('pedagogicalNote', s.pedagogicalNote),
+      ('warningTrick', s.warningTrick ?? ''),
+    ]) {
+      final rawLeak = StepNoteFormatter.findLeak(text, raw: true);
+      expect(rawLeak, isNull, reason: 'paso ${i + 1} $field con "$rawLeak" en: $text');
+      final plain = StepNoteFormatter.toPlain(text);
+      final leak = StepNoteFormatter.findLeak(plain);
+      expect(leak, isNull, reason: 'paso ${i + 1} $field con "$leak" tras formatear: $plain');
+    }
+  }
+}
+
 /// Pizarra: cada paso con LaTeX valido (llaves balanceadas, sin tildes/enes en `\text{}`/`\mathrm{}`,
 /// sin `\r` suelto), titulo y nota no vacios y sin pasos repetidos consecutivos.
 void expectLesson(StepByStepResolution r, {int minSteps = 1}) {
+  expectCleanNotes(r);
   expect(r.steps.length >= minSteps, isTrue, reason: 'solo ${r.steps.length} pasos (minimo $minSteps)');
   final all = [r.originalInputLatex, r.exactResultLatex, ...r.steps.map((s) => s.latexExpression)];
   for (final tex in all) {

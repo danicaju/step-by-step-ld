@@ -1,3 +1,4 @@
+import '../../../core/editor/exponent_navigation_helper.dart';
 import '../models/step_resolution.dart';
 import '../models/inequality_models.dart';
 import 'linear_equation_solver.dart';
@@ -55,7 +56,7 @@ class InequalitySolver {
     String rawInput, {
     InequalitySign? fallbackSign,
   }) {
-    final cleaned = _absToBars(rawInput)
+    final cleaned = _absToBars(ExponentNavigationHelper.flattenSimplePowers(rawInput))
         .replaceAll(' ', '')
         .replaceAll(r'\cdot', '*')
         .replaceAll(r'\times', '*')

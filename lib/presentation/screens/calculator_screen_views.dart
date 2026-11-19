@@ -1,7 +1,22 @@
 part of 'calculator_screen.dart';
 
 extension _CalculatorScreenViews on _CalculatorScreenState {
-  String? get _lcdIdleHint {
+  /// Pista discreta en la LCD mientras el cursor esta dentro de un exponente `^( ... )`.
+  bool get _cursorInExponent {
+    if (_activeResolution != null) return false;
+    final (raw, pos) = switch (_calculatorMode) {
+      2 => _eqActiveSide == 0 ? (_eqLeftRaw, _eqLeftCursorPos) : (_eqRightRaw, _eqRightCursorPos),
+      7 => (_ineqSysRowInputs[_ineqSysActiveRow], _ineqSysRowCursors[_ineqSysActiveRow]),
+      12 when _calculusActiveField == 0 => (_calculusExprRaw, _calculusCursorPos),
+      12 => ('', 0),
+      _ => (_rawInput, _cursorPos),
+    };
+    return ExponentNavigationHelper.isInsideExponent(raw, pos);
+  }
+
+  String? get _lcdIdleHint => _cursorInExponent ? '▶ salir del exponente' : _baseIdleHint;
+
+  String? get _baseIdleHint {
     if (_calculatorMode == 2) {
       const hints = [
         'Ej: 3x - 5 = 7 - x',

@@ -69,7 +69,7 @@ void main() {
     bothSizes('1. caja: (x^4 - 3x^2 + 2x - 5):(x^2 - x + 1) -> C = x^2 + x - 3, R = -2x - 2', (t) async {
       await seq(t, 'mode:4 pick:hdr_poly_kind:poly_tab_box');
       expect(find.byKey(const Key('box_input_vline')), findsOneWidget);
-      await seq(t, 'x S:pow 4 - 3 x sq + 2 x - 5');
+      await seq(t, 'x S:pow 4 > - 3 x sq + 2 x - 5'); // ▶ sale del exponente
       // El exponente se ve como LaTeX (nada de x^4 literal).
       expect(find.descendant(of: find.byKey(const Key('xform_cell_0')), matching: find.byType(Math)), findsOneWidget);
       await seq(t, '= x sq - x + 1 =');
@@ -84,7 +84,7 @@ void main() {
     });
 
     bothSizes('2. caja exacta grado 4 entre grado 2 -> C = x^2 + x - 2, R = 0', (t) async {
-      await seq(t, 'mode:4 pick:hdr_poly_kind:poly_tab_box 2 x S:pow 4 + x A:x² - 8 x sq - x + 6 = 2 x sq - x - 3 =');
+      await seq(t, 'mode:4 pick:hdr_poly_kind:poly_tab_box 2 x S:pow 4 > + x A:x² - 8 x sq - x + 6 = 2 x sq - x - 3 =');
       final r = res(t);
       expect(norm(r.exactResultLatex), r'C(x)=x^{2}+x-2,R(x)=0');
       expectLesson(r, minSteps: 6);

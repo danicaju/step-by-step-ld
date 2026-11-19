@@ -14,9 +14,9 @@ class ExprKeyInput {
     'log': 'log(',
     'ln': 'ln(',
     '√': '√(',
-    '^2': '^2',
-    '^3': '^3',
-    '^': '^',
+    '^2': '^(2)',
+    '^3': '^(3)',
+    '^': '^(',
     '^(': '^(',
     '/': '/',
     '*': '*',
@@ -29,6 +29,9 @@ class ExprKeyInput {
     'X': 'x',
   };
 
+  /// Edicion lineal (sin cursor interno): el exponente se anade plano, sin par `^()`.
+  static const Map<String, String> _linear = {'^2': '^2', '^3': '^3', '^': '^', '^(': '^('};
+
   /// Texto resultante de aplicar [key] sobre [cur]; `null` si la tecla no edita expresiones.
   static String? apply(String cur, String key, {bool alpha = false}) {
     if (key == 'DEL') {
@@ -39,7 +42,7 @@ class ExprKeyInput {
     }
     if (alpha && key == ')') return '${cur}x';
     if (RegExp(r'^[0-9]$').hasMatch(key)) return '$cur$key';
-    final t = _tokens[key];
+    final t = _linear[key] ?? _tokens[key];
     return t == null ? null : '$cur$t';
   }
 

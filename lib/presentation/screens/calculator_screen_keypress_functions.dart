@@ -69,7 +69,7 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
               _cursorPos = _rawInput.length;
               _calculusCursorPos = _calculusExprRaw.length;
             }
-            _applyRawInsertion('^(', keepLeadingZero: false);
+            _applyRawInsertion(ExponentNavigationHelper.open, keepLeadingZero: false);
           }
           return true;
         }
@@ -82,7 +82,7 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
               _cursorPos = _rawInput.length;
               _calculusCursorPos = _calculusExprRaw.length;
             }
-            _applyRawInsertion('^3', keepLeadingZero: false);
+            _applyRawInsertion(ExponentNavigationHelper.cube, keepLeadingZero: false);
           }
           return true;
         }
@@ -93,7 +93,7 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
             _cursorPos = _rawInput.length;
             _calculusCursorPos = _calculusExprRaw.length;
           }
-          _applyRawInsertion('^2', keepLeadingZero: false);
+          _applyRawInsertion(ExponentNavigationHelper.square, keepLeadingZero: false);
           return true;
         }
       }

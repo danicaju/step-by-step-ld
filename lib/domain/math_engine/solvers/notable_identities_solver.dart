@@ -1,3 +1,4 @@
+import '../../../core/editor/exponent_navigation_helper.dart';
 import 'dart:math' as math;
 import '../models/step_resolution.dart';
 import 'notable_identities_extra.dart';
@@ -193,7 +194,7 @@ class NotableIdentitiesSolver {
   /// Parsea y resuelve una expresión de identidad notable:
   /// (ax + b)², (ax - b)², (ax + b)(ax - b), (ax - b)(ax + b)
   static StepByStepResolution solveExpressionString(String expression) {
-    String s = expression.replaceAll(' ', '');
+    String s = ExponentNavigationHelper.flattenSimplePowers(expression.replaceAll(' ', ''));
     if (s.isEmpty || s == '0') {
       throw const FormatException('Expresión de identidad notable vacía');
     }
