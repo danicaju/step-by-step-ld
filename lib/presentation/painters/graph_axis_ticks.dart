@@ -24,8 +24,10 @@ class GraphAxisTicks {
   static String _fmt(double v) =>
       (v - v.roundToDouble()).abs() < 1e-9 ? v.round().toString() : v.toStringAsFixed(1).replaceAll('.', ',');
 
-  static void paint(Canvas canvas, Size size, GraphWindow w,
+  /// Pinta la rejilla y devuelve los rectangulos ocupados por los numeros de los ejes.
+  static List<Rect> paint(Canvas canvas, Size size, GraphWindow w,
       {required bool trig, required bool degrees}) {
+    final used = <Rect>[];
     Offset px(double x, double y) =>
         Offset((x - w.xMin) / w.width * size.width, size.height - (y - w.yMin) / w.height * size.height);
     final grid = Paint()
@@ -40,15 +42,16 @@ class GraphAxisTicks {
     final labelY = (w.yMin < 0 && w.yMax > 0) ? 0.0 : w.yMin;
     for (final (x, text) in xs) {
       canvas.drawLine(px(x, w.yMin), px(x, w.yMax), x.abs() < 1e-9 ? axis : grid);
-      if (x.abs() > 1e-9) _text(canvas, size, text, px(x, labelY) + const Offset(-6, 2));
+      if (x.abs() > 1e-9) used.add(_text(canvas, size, text, px(x, labelY) + const Offset(-6, 2)));
     }
     for (var y = (w.yMin / sy).ceil() * sy; y <= w.yMax; y += sy) {
       canvas.drawLine(px(w.xMin, y), px(w.xMax, y), y.abs() < 1e-9 ? axis : grid);
-      if (y.abs() > 1e-9) _text(canvas, size, _fmt(y), px((w.xMin < 0 && w.xMax > 0) ? 0 : w.xMin, y) + const Offset(2, -11));
+      if (y.abs() > 1e-9) used.add(_text(canvas, size, _fmt(y), px((w.xMin < 0 && w.xMax > 0) ? 0 : w.xMin, y) + const Offset(2, -11)));
     }
+    return used;
   }
 
-  static void _text(Canvas canvas, Size size, String text, Offset at) {
+  static Rect _text(Canvas canvas, Size size, String text, Offset at) {
     final tp = TextPainter(
       text: TextSpan(text: text, style: const TextStyle(color: Color(0xFF3F4F48), fontSize: 8.5, fontWeight: FontWeight.w600)),
       textDirection: TextDirection.ltr,
@@ -56,5 +59,6 @@ class GraphAxisTicks {
     final x = at.dx.clamp(1.0, math.max(1.0, size.width - tp.width - 1)).toDouble();
     final y = at.dy.clamp(1.0, math.max(1.0, size.height - tp.height - 1)).toDouble();
     tp.paint(canvas, Offset(x, y));
+    return Rect.fromLTWH(x, y, tp.width, tp.height);
   }
 }

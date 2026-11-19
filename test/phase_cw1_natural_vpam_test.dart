@@ -41,21 +41,17 @@ void main() {
     });
   });
 
-  group('CW-1.2 Replay M1', () {
-    testWidgets('arriba/abajo recorre calculos previos y recalcula', (t) async {
+  group('CW-1.2 Sin Replay por D-Pad', () {
+    testWidgets('arriba/abajo ya no cargan calculos previos', (t) async {
       await boot(t);
       await keys(t, ['1', '+', '1', '=', 'AC', '2', '+', '2', '=', 'AC', '3', '+', '3', '=', 'AC']);
-      await pad(t, 'up');
-      expect(live(t), '3+3');
-      await pad(t, 'up');
-      expect(live(t), '2+2');
-      await pad(t, 'down');
-      expect(live(t), '3+3');
-      await pad(t, 'up');
-      await pad(t, 'up');
-      expect(live(t), '1+1');
-      await key(t, '=');
-      expect(result(t), '2');
+      final empty = live(t);
+      for (var i = 0; i < 4; i++) {
+        await pad(t, 'up');
+        await pad(t, 'down');
+      }
+      expect(live(t), empty);
+      expect(live(t).contains('3'), isFalse);
     });
   });
 

@@ -42,14 +42,6 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
       if (_activeResolution != null) {
         if (_activeStepIndex > 0) {
           _activeStepIndex = 0;
-        } else if (_supportsExpressionInput &&
-            _calculatorMode != 11 &&
-            _historyEntries.isNotEmpty) {
-          // Casio Replay rápido desde el paso 1
-          _activeResolution = null;
-          _activeStepIndex = 0;
-          _replayIndex = -1;
-          _cycleHistoryReplayUp();
         }
         return;
       }
@@ -108,12 +100,10 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
           } else {
             _eqRightCursorPos = jumped;
           }
-        } else {
-          _cycleHistoryReplayUp();
         }
         return;
       }
-      // Modo escritura libre: saltar denominador -> numerador, ciclar desigualdad o Replay
+      // Modo escritura libre: saltar denominador -> numerador, ciclar desigualdad (M6); sin Replay de historial
       final jumped = ExpressionParser.jumpFractionUpDown(
         _rawInput,
         _cursorPos,
@@ -121,10 +111,8 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
       );
       if (jumped != null) {
         _cursorPos = jumped;
-      } else if (_calculatorMode == 6 && _replayIndex == -1) {
+      } else if (_calculatorMode == 6) {
         _cycleInequalitySign(backwards: true);
-      } else {
-        _cycleHistoryReplayUp();
       }
     });
   }
@@ -226,12 +214,10 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
           } else {
             _eqRightCursorPos = jumped;
           }
-        } else {
-          _cycleHistoryReplayDown();
         }
         return;
       }
-      // Modo escritura libre: saltar numerador -> denominador, ciclar desigualdad o Replay
+      // Modo escritura libre: saltar numerador -> denominador, ciclar desigualdad (M6); sin Replay de historial
       final jumped = ExpressionParser.jumpFractionUpDown(
         _rawInput,
         _cursorPos,
@@ -239,10 +225,8 @@ extension _CalculatorScreenDpadVertical on _CalculatorScreenState {
       );
       if (jumped != null) {
         _cursorPos = jumped;
-      } else if (_calculatorMode == 6 && _replayIndex == -1) {
+      } else if (_calculatorMode == 6) {
         _cycleInequalitySign();
-      } else {
-        _cycleHistoryReplayDown();
       }
     });
   }

@@ -29,7 +29,6 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
     _isShiftActive = false;
     _isAlphaActive = false;
     _activeResolution = null;
-    _replayIndex = -1;
     _isMenuOpen = false;
     _isSetupOpen = false;
     _isCalcPromptActive = false;
@@ -39,7 +38,6 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
     // Al cambiar de modo, arranca 100 % limpio como en una Casio real
     _rawInput = '0';
     _cursorPos = 1;
-    _draftBeforeReplay = '0';
 
     _eqLeftRaw = '';
     _eqLeftCursorPos = 0;

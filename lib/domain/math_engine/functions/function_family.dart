@@ -37,7 +37,7 @@ enum FunctionFamily {
 
 /// Nombre didactico de cada tipo del desplegable (indice 0..7 = teclas 1..8).
 const List<String> kM5KindLabels = [
-  'Función libre f(x)',
+  'Auto (f(x) libre)',
   'Constante / Lineal',
   'Cuadrática',
   'Cúbica',

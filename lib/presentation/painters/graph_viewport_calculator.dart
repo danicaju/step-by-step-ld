@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import '../../domain/math_engine/calculus/limits_asymptotes_solver.dart';
 import '../../domain/math_engine/functions/angle_format.dart';
 import '../../domain/math_engine/functions/function_family.dart';
+import 'graph_smart_viewport.dart';
 
 /// Ventana matematica visible del visor.
 class GraphWindow {
@@ -29,30 +30,14 @@ class GraphViewportCalculator {
   const GraphViewportCalculator._();
 
   /// Ventana para [f] segun su [info] (familia y coeficientes).
-  static GraphWindow window(FunctionModel f, AsymptoteSet asym, {FamilyInfo? info, bool deg = false}) {
+  static GraphWindow window(FunctionModel f, AsymptoteSet asym,
+      {FamilyInfo? info, bool deg = false, double aspect = 0.6}) {
     final fam = info?.family ?? FunctionFamily.unknown;
-    switch (fam) {
-      case FunctionFamily.sine || FunctionFamily.cosine:
-        return _trig(info!, deg, tan: false);
-      case FunctionFamily.tangent:
-        return _trig(info!, deg, tan: true);
-      case FunctionFamily.radicalEven || FunctionFamily.logarithmic:
-        return _startAt(f, info!, asym);
-      case FunctionFamily.radicalOdd || FunctionFamily.exponential:
-        return _around(f, -info!.c.toDouble() / info.b.toDouble(), half: 5, extra: asym);
-      case FunctionFamily.rational:
-        if (asym.vertical.length == 1 && asym.horizontal.length == 1 && asym.oblique.isEmpty) {
-          return _hyperbola(f, asym.vertical.first.x, asym.horizontal.first.n);
-        }
-        return _keys(f, [for (final v in asym.vertical) v.x], extra: asym);
-      case FunctionFamily.constant:
-        final k = f.at(0) ?? 0;
-        return GraphWindow(-6, 6, k - 4, k + 4);
-      case FunctionFamily.linear || FunctionFamily.quadratic || FunctionFamily.cubic:
-        return _keys(f, _polyKeys(info!));
-      case FunctionFamily.unknown:
-        return generic(f, asym);
+    if (fam == FunctionFamily.constant) {
+      final k = f.at(0) ?? 0;
+      return GraphWindow(-6, 6, k - 4, k + 4);
     }
+    return computeSmartViewport(f, asym, info: info, deg: deg, aspect: aspect);
   }
 
   /// Ventana generica: x en [-halfX, halfX]; y por percentiles de los valores finitos.
@@ -91,33 +76,6 @@ class GraphViewportCalculator {
     return GraphWindow(x0, x1, lo - pad, hi + pad);
   }
 
-  /// Puntos x clave de un polinomio: cortes, vertice / extremos / inflexion y 0.
-  static List<double> _polyKeys(FamilyInfo i) {
-    final p = i.poly;
-    final keys = <double>[0];
-    final deg = p.keys.fold(0, math.max);
-    double co(int k) => p[k]?.toDouble() ?? 0;
-    if (deg == 1) keys.add(-co(0) / co(1));
-    if (deg == 2) keys.add(-co(1) / (2 * co(2)));
-    if (deg == 3) keys.add(-co(2) / (3 * co(3)));
-    return keys;
-  }
-
-  /// Ventana que abarca las x clave [xs] (mas los cortes con OX numericos) con margen.
-  static GraphWindow _keys(FunctionModel f, List<double> xs, {AsymptoteSet? extra}) {
-    final all = [...xs, ..._zeros(f)];
-    var lo = all.reduce(math.min), hi = all.reduce(math.max);
-    final pad = math.max(2.5, (hi - lo) * 0.45);
-    lo -= pad;
-    hi += pad;
-    if (hi - lo < 8) {
-      final mid = (hi + lo) / 2;
-      lo = mid - 4;
-      hi = mid + 4;
-    }
-    return _fit(f, lo, hi, extra: extra);
-  }
-
   /// Cortes con OX numericos (cambios de signo) en [-60, 60].
   static List<double> _zeros(FunctionModel f) {
     final out = <double>[];
@@ -148,19 +106,6 @@ class GraphViewportCalculator {
     return out.where((z) => z.abs() <= 60).take(6).toList();
   }
 
-  static GraphWindow _around(FunctionModel f, double cx, {required double half, AsymptoteSet? extra}) =>
-      _fit(f, cx - half, cx + half, extra: extra, mustY: [f.at(cx) ?? 0]);
-
-  /// Radicales / logaritmos: arranca un margen (x0 - 1) antes del inicio del dominio.
-  static GraphWindow _startAt(FunctionModel f, FamilyInfo i, AsymptoteSet asym) {
-    final x0 = -i.c.toDouble() / i.b.toDouble();
-    final right = i.b.isPositive;
-    final lo = right ? x0 - 1 : x0 - 9;
-    final hi = right ? x0 + 9 : x0 + 1;
-    final w = _fit(f, lo, hi, extra: asym, mustY: [i.d.toDouble()]);
-    return w;
-  }
-
   /// Hiperbola: ventana centrada en (AV, AH) que deja ver ambos cortes con los ejes.
   static GraphWindow _hyperbola(FunctionModel f, double cx, double cy) {
     var hx = math.max(5.0, cx.abs() + 2);
@@ -174,7 +119,7 @@ class GraphViewportCalculator {
   }
 
   /// Trigonometricas: al menos [-2pi, 2pi] (o [-360, 360] en DEG) y dos periodos.
-  static GraphWindow _trig(FamilyInfo i, bool deg, {required bool tan}) {
+  static GraphWindow trigWindow(FamilyInfo i, bool deg, {required bool tan}) {
     final turn = AngleFormat.turn(deg);
     final period = (tan ? turn / 2 : turn) / i.b.toDouble().abs();
     final half = math.max(turn, period);

@@ -72,7 +72,6 @@ extension _CalculatorScreenKeypressHelpers on _CalculatorScreenState {
 
   void _applyRawInsertion(String token, {bool keepLeadingZero = false}) {
     if (_calculatorMode == 7) {
-      _replayIndex = -1;
       var cur = _ineqSysRowInputs[_ineqSysActiveRow];
       var pos = _ineqSysRowCursors[_ineqSysActiveRow];
       final isOperator = '+-*/:=<>≤≥'.contains(token);
@@ -95,7 +94,6 @@ extension _CalculatorScreenKeypressHelpers on _CalculatorScreenState {
       return;
     }
     if (_calculatorMode == 2) {
-      _replayIndex = -1;
       final isOperator = '+-*/:=<>≤≥'.contains(token);
       if (_eqActiveSide == 0) {
         var raw = _eqLeftRaw;
@@ -151,7 +149,6 @@ extension _CalculatorScreenKeypressHelpers on _CalculatorScreenState {
       _calculusCursorPos = nextPos;
       return;
     }
-    _replayIndex = -1;
     final isOperator = '+-*/:=<>≤≥'.contains(token);
     if (isOperator && _cursorPos == _rawInput.length && !_rawInput.endsWith(' ')) {
       final isFractionEnd = RegExp(r'/[0-9a-zA-Zπ.]+$').hasMatch(_rawInput);

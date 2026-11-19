@@ -34,15 +34,14 @@ extension _CalculatorScreenToolbarsBasic on _CalculatorScreenState {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 5),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E293B),
+                              color: ThemeController.current.isDefault ? const Color(0xFF1E293B) : ThemeController.current.funcKey,
                               borderRadius: BorderRadius.circular(6),
-                              border:
-                                  Border.all(color: const Color(0xFFE5A93C)),
+                              border: Border.all(color: ThemeController.current.legendShift),
                             ),
                             child: Text(
                               '${_selectedGraphPoint!.label}: (${_selectedGraphPoint!.x % 1 == 0 ? _selectedGraphPoint!.x.toInt() : _selectedGraphPoint!.x.toStringAsFixed(1)}, ${_selectedGraphPoint!.y % 1 == 0 ? _selectedGraphPoint!.y.toInt() : _selectedGraphPoint!.y.toStringAsFixed(1)})',
-                              style: const TextStyle(
-                                color: Color(0xFFE5A93C),
+                              style: TextStyle(
+                                color: ThemeController.current.isDefault ? const Color(0xFFE5A93C) : ThemeController.current.funcKeyText,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),

@@ -1,5 +1,6 @@
 import '../../domain/math_engine/calculus/limits_asymptotes_solver.dart';
 import '../../domain/math_engine/functions/function_family.dart';
+import '../painters/graph_viewport_controller.dart';
 import '../widgets/modes/function_table_widget.dart';
 import '../widgets/modes/limit_form_widget.dart';
 
@@ -18,8 +19,8 @@ class M5State {
   FamilyInfo? info;
   bool deg = false;
 
-  /// Desplazamiento del visor con el D-Pad, en fracciones de ventana.
-  double panX = 0, panY = 0;
+  /// Camara del visor: arrastre, zoom, D-Pad y recentrado.
+  final GraphViewportController viewport = GraphViewportController();
 
   bool get isForm => view != 0;
 
@@ -32,6 +33,6 @@ class M5State {
     table.clear();
     study = null;
     info = null;
-    panX = panY = 0;
+    viewport.invalidate();
   }
 }

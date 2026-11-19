@@ -20,7 +20,6 @@ extension _CalculatorScreenKeypressAns on _CalculatorScreenState {
     _activeResolution = null;
     _activeStepIndex = 0;
     _showDecimalApprox = false;
-    _replayIndex = -1;
     if (binary) {
       _rawInput = 'ANS';
       _cursorPos = 3;

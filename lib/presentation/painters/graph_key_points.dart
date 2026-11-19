@@ -58,19 +58,26 @@ class GraphKeyPoints {
     return out;
   }
 
-  static String _num(double v) =>
-      (v - v.roundToDouble()).abs() < 1e-9 ? v.round().toString() : v.toStringAsFixed(2).replaceAll('.', ',');
+  /// Numero con punto decimal, hasta 2 decimales y sin ceros sobrantes (`2.2`, `3`, `-0.5`).
+  static String formatCoord(double v) {
+    var t = v.toStringAsFixed(2);
+    if (t.contains('.')) t = t.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+    return t == '-0' ? '0' : t;
+  }
+
+  /// `(x, y)` con punto decimal y `, ` como unico separador de coordenadas.
+  static String coordLabel(String x, String y) => '($x, $y)';
 
   /// Puntos a marcar dentro de [w].
   static List<KeyPoint> of(FunctionModel f, GraphWindow w, {FamilyInfo? info, bool deg = false}) {
     final trig = info?.family.isTrig ?? false;
     final period = trig ? AngleFormat.turn(deg) / info!.b.toDouble().abs() : 0.0;
-    String fx(double x) => trig ? AngleFormat.plain(x, deg) : _num(x);
+    String fx(double x) => trig ? AngleFormat.plain(x, deg) : formatCoord(x);
     final pts = <KeyPoint>[];
     void add(double x, double y) {
       if (x < w.xMin || x > w.xMax || y < w.yMin || y > w.yMax) return;
       if (pts.any((p) => (p.x - x).abs() < w.width * 0.01 && (p.y - y).abs() < w.height * 0.01)) return;
-      pts.add(KeyPoint(x, y, '(${fx(x)}, ${_num(y)})', labeled: !trig || (x > -1e-9 && x <= period + 1e-9)));
+      pts.add(KeyPoint(x, y, coordLabel(fx(x), formatCoord(y)), labeled: !trig || (x > -1e-9 && x <= period + 1e-9)));
     }
 
     if (info != null) _special(f, info, deg, add);

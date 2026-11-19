@@ -45,8 +45,7 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
       asymptotes: st.asymptotes,
       info: _m5.info,
       degrees: _m5.deg,
-      panX: _m5.panX,
-      panY: _m5.panY,
+      controller: _m5.viewport,
     );
   }
 
@@ -58,13 +57,13 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
       const step = 0.15;
       switch (dir) {
         case 'left':
-          _m5.panX = (_m5.panX - step).clamp(-20.0, 20.0);
+          _m5.viewport.panByFraction(-step, 0);
         case 'right':
-          _m5.panX = (_m5.panX + step).clamp(-20.0, 20.0);
+          _m5.viewport.panByFraction(step, 0);
         case 'up':
-          _m5.panY = (_m5.panY + step).clamp(-20.0, 20.0);
+          _m5.viewport.panByFraction(0, step);
         default:
-          _m5.panY = (_m5.panY - step).clamp(-20.0, 20.0);
+          _m5.viewport.panByFraction(0, -step);
       }
       return true;
     }
@@ -186,7 +185,7 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
         _m5.study = st;
         _m5.info = fs.info;
         _m5.deg = fs.degrees;
-        _m5.panX = _m5.panY = 0;
+        _m5.viewport.invalidate();
         _currentGraphAnalysis = null;
         _selectedGraphPoint = null;
         _activeResolution = st.resolution;

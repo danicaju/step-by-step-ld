@@ -7,6 +7,7 @@ import 'package:casio_tutor_calc/domain/math_engine/calculus/limits_asymptotes_s
 import 'package:casio_tutor_calc/domain/math_engine/functions/function_family_study_solver.dart';
 import 'package:casio_tutor_calc/domain/math_engine/models/step_resolution.dart';
 import 'package:casio_tutor_calc/presentation/painters/graph_viewport_calculator.dart';
+import 'package:casio_tutor_calc/presentation/painters/graph_viewport_controller.dart';
 import 'package:casio_tutor_calc/presentation/painters/universal_function_painter.dart';
 import 'support/e2e_helpers.dart';
 import 'support/header_select.dart';
@@ -145,8 +146,9 @@ void main() {
     test('encuadre centrado en (AV, AH) con las dos ramas', () {
       final s = _study('(2x+1)/(x-3)');
       final w = _win(s);
-      expect((w.xMin + w.xMax) / 2, closeTo(3, 1e-9));
-      expect((w.yMin + w.yMax) / 2, closeTo(2, 1e-9));
+      // El encuadre inteligente abarca el corte con OX, el corte con OY y el cruce de asintotas (3, 2).
+      expect(w.xMin < -0.5 && w.xMax > 3, isTrue);
+      expect(w.yMin < -0.33 && w.yMax > 2, isTrue);
       final br = UniversalFunctionPainter.branchesFor(s.result.model, s.result.asymptotes, w);
       expect(br.length, 2);
       final k = _study('3/x');
@@ -174,7 +176,8 @@ void main() {
       expect(_titles(s.result.resolution), contains('Punto de simetría'));
       expect(s.result.model.at(-8), closeTo(-2, 1e-9));
       final e = _study('sqrt(x-2)');
-      expect(_win(e).xMin, closeTo(1, 1e-9));
+      final we = _win(e);
+      expect(we.xMin <= 2 && we.xMax >= 2, isTrue, reason: 'el inicio del dominio (2, 0) esta en la ventana');
     });
   });
 
@@ -197,7 +200,8 @@ void main() {
       expect(s.result.asymptotes.vertical.single.x, 0);
       expect(s.result.model.at(0), isNull);
       expect(s.result.model.at(-3), isNull);
-      expect(_win(s).xMin, closeTo(-1, 1e-9));
+      final wl = _win(s);
+      expect(wl.xMin <= 0 && wl.xMax >= 1, isTrue, reason: 'la ventana incluye la AV x=0 y el corte (1, 0)');
     });
   });
 
@@ -258,7 +262,7 @@ void main() {
             child: SizedBox(
               width: 300,
               height: 180,
-              child: UniversalGraphView(model: s.result.model, asymptotes: s.result.asymptotes, info: s.info, panX: 0.3, panY: -0.2),
+              child: UniversalGraphView(model: s.result.model, asymptotes: s.result.asymptotes, info: s.info, controller: GraphViewportController()..panByFraction(0.3, -0.2)),
             ),
           ),
         ));
@@ -296,9 +300,9 @@ void main() {
       await alphaKey(t, ')');
       await keys(t, ['+', '3', '=']);
       expect(find.byKey(const Key('universal_graph_clip')), findsOneWidget);
-      final before = t.widget<UniversalGraphView>(find.byType(UniversalGraphView)).panX;
+      final before = t.widget<UniversalGraphView>(find.byType(UniversalGraphView)).controller!.window.xMin;
       await pad(t, 'right');
-      final after = t.widget<UniversalGraphView>(find.byType(UniversalGraphView)).panX;
+      final after = t.widget<UniversalGraphView>(find.byType(UniversalGraphView)).controller!.window.xMin;
       expect(after > before, isTrue);
       expect(t.takeException(), isNull);
     });

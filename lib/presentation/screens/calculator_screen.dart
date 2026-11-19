@@ -96,7 +96,7 @@ part 'calculator_screen_keypress_helpers.dart';
 part 'calculator_screen_keypress_control.dart';
 part 'calculator_screen_keypress_functions.dart';
 part 'calculator_screen_keypress_ans.dart';
-part 'calculator_screen_replay.dart';
+part 'calculator_screen_edge_arrows.dart';
 part 'calculator_screen_classwiz.dart';
 part 'calculator_screen_calc.dart';
 part 'calculator_screen_memkeys.dart';
@@ -167,8 +167,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   // Arranca limpia en '0' como una Casio física recién encendida (PROHIBIDO presets)
   String _rawInput = '0';
   int _cursorPos = 1;
-  int _replayIndex = -1;
-  String _draftBeforeReplay = '0';
 
   // Estado Modo 2 (Ecuaciones libres 1.º y 2.º Grado con signo = central fijo)
   String _eqLeftRaw = '';

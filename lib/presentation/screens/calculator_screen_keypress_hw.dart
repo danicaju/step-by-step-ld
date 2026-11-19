@@ -31,7 +31,6 @@ extension _CalculatorScreenKeypressHw on _CalculatorScreenState {
       case '-':
         if (_calculatorMode != 1) return false;
         _isShiftActive = false;
-        _replayIndex = -1;
         _applyRawInsertion(key == '+' ? 'Pol(' : 'Rec(', keepLeadingZero: false);
         return true;
     }
@@ -54,7 +53,6 @@ extension _CalculatorScreenKeypressHw on _CalculatorScreenState {
     _lcdErrorKind = null;
     _rawInput = '0';
     _cursorPos = 1;
-    _replayIndex = -1;
   }
 
   /// SHIFT + `=` (≈): resuelve y muestra directamente la aproximación decimal.

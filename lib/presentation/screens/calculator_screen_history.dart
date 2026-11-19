@@ -8,6 +8,11 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
       if (mounted) {
         updateState(() {
           _historyEntries = entries;
+          if (entries.isEmpty) {
+            // Historial vacio: no queda ningun rastro recuperable en memoria.
+            _undo.clear();
+            _undoPillVisible = false;
+          }
         });
       }
     } catch (_) {
@@ -319,7 +324,6 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
           }
         }
       }
-      _replayIndex = -1;
     });
 
     // Re-evaluar con el motor y vistas visuales actualizadas de la app
@@ -386,11 +390,13 @@ extension _CalculatorScreenHistory on _CalculatorScreenState {
     }
   }
 
-  void _openHistorySheet() {
-    ClassHistorySheet.show(
+  /// Abre HIST y, al cerrarlo, resincroniza la lista en memoria (borrados y "Borrar Todo").
+  Future<void> _openHistorySheet() async {
+    await ClassHistorySheet.show(
       context,
       historyService: _historyService,
       onSelectEntry: _selectHistoryEntry,
     );
+    if (mounted) await _loadHistoryFromStorage();
   }
 }

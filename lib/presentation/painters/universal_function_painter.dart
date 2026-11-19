@@ -5,11 +5,12 @@ import 'package:flutter/material.dart';
 
 import '../../domain/math_engine/calculus/function_numeric.dart';
 import '../../domain/math_engine/calculus/limit_models.dart';
-import '../../domain/math_engine/functions/function_family.dart';
 import 'graph_axis_ticks.dart';
+import 'graph_label_layout.dart';
 import 'graph_key_points.dart';
 import 'graph_viewport_calculator.dart';
 
+export '../widgets/universal_graph_view.dart';
 export 'graph_key_points.dart' show KeyPoint;
 export 'graph_viewport_calculator.dart' show GraphWindow;
 
@@ -28,13 +29,17 @@ class UniversalFunctionPainter extends CustomPainter {
   final bool degrees;
   final bool trig;
 
-  const UniversalFunctionPainter({
+  /// Fondo de la LCD del tema activo (pastillas de las etiquetas) .
+  final Color background;
+
+  UniversalFunctionPainter({
     required this.model,
     required this.asymptotes,
     required this.window,
     this.keyPoints = const [],
     this.degrees = false,
     this.trig = false,
+    this.background = const Color(0xFFC8D6CD),
   });
 
   /// Ventana automatica generica: x en [-halfX, halfX]; y por percentiles.
@@ -72,6 +77,8 @@ class UniversalFunctionPainter extends CustomPainter {
         .replaceAll(r'\', '');
   }
 
+  List<Rect> _tickRects = const [];
+
   Offset _px(Size s, double x, double y) => Offset(
         (x - window.xMin) / (window.xMax - window.xMin) * s.width,
         s.height - (y - window.yMin) / (window.yMax - window.yMin) * s.height,
@@ -82,7 +89,7 @@ class UniversalFunctionPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.clipRect(Offset.zero & size);
-    GraphAxisTicks.paint(canvas, size, window, trig: trig, degrees: degrees);
+    _tickRects = GraphAxisTicks.paint(canvas, size, window, trig: trig, degrees: degrees);
     for (final v in asymptotes.vertical.where((v) => _inX(v.x))) {
       _dashed(canvas, _px(size, v.x, window.yMin), _px(size, v.x, window.yMax), vColor, const [10, 5]);
       _label(canvas, size, plainLabel(v.latex), _px(size, v.x, window.yMax) + const Offset(4, 4), vColor);
@@ -127,18 +134,39 @@ class UniversalFunctionPainter extends CustomPainter {
     }
   }
 
-  /// Cortes, vertices y puntos clave (marcados y rotulados).
+  /// Cortes, vertices y puntos clave: marcador + etiqueta sin colisiones con ejes ni entre si.
   void _points(Canvas canvas, Size size) {
     final dot = Paint()..color = vColor;
     final ring = Paint()
       ..color = ink
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4;
+    final layout = GraphLabelLayout(size, occupied: _tickRects);
+    final y0 = _px(size, window.xMin, 0).dy, x0 = _px(size, 0, window.yMin).dx;
+    if (y0 >= 0 && y0 <= size.height) layout.reserve(Rect.fromLTWH(0, y0 - 2, size.width, 4));
+    if (x0 >= 0 && x0 <= size.width) layout.reserve(Rect.fromLTWH(x0 - 2, 0, 4, size.height));
+    for (final k in keyPoints) {
+      layout.reserve(Rect.fromCircle(center: _px(size, k.x, k.y), radius: 5));
+    }
+    final pill = Paint()..color = background.withValues(alpha: 0.88);
+    final pillBorder = Paint()
+      ..color = ink.withValues(alpha: 0.35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
     for (final k in keyPoints) {
       final c = _px(size, k.x, k.y);
       canvas.drawCircle(c, 4, dot);
       canvas.drawCircle(c, 4, ring);
-      if (k.labeled) _label(canvas, size, k.label, c + const Offset(6, 4), ink);
+      if (!k.labeled) continue;
+      final tp = TextPainter(
+        text: TextSpan(text: k.label, style: const TextStyle(color: ink, fontSize: 10, fontWeight: FontWeight.w700)),
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: size.width * 0.6);
+      final box = layout.place(c, Size(tp.width + 6, tp.height + 3));
+      final rr = RRect.fromRectAndRadius(box, const Radius.circular(3));
+      canvas.drawRRect(rr, pill);
+      canvas.drawRRect(rr, pillBorder);
+      tp.paint(canvas, box.topLeft + const Offset(3, 1.5));
     }
   }
 
@@ -178,57 +206,6 @@ class UniversalFunctionPainter extends CustomPainter {
       old.window != window ||
       old.degrees != degrees ||
       old.trig != trig ||
+      old.background != background ||
       !listEquals(old.keyPoints, keyPoints);
-}
-
-/// Visor con `ClipRRect` estricto: nada se dibuja fuera del marco LCD.
-///
-/// [panX]/[panY] desplazan la ventana (D-Pad) en fracciones del ancho/alto visible.
-class UniversalGraphView extends StatelessWidget {
-  final FunctionModel model;
-  final AsymptoteSet asymptotes;
-  final FamilyInfo? info;
-  final bool degrees;
-  final double panX;
-  final double panY;
-
-  const UniversalGraphView({
-    super.key,
-    required this.model,
-    required this.asymptotes,
-    this.info,
-    this.degrees = false,
-    this.panX = 0,
-    this.panY = 0,
-  });
-
-  /// Ventana final (auto-encuadre + desplazamiento).
-  GraphWindow get window =>
-      GraphViewportCalculator.window(model, asymptotes, info: info, deg: degrees).panned(panX, panY);
-
-  @override
-  Widget build(BuildContext context) {
-    final w = window;
-    return ClipRRect(
-      key: const Key('universal_graph_clip'),
-      borderRadius: BorderRadius.circular(8.5),
-      child: Container(
-        color: const Color(0xFFC8D6CD),
-        child: LayoutBuilder(
-          builder: (context, c) => RepaintBoundary(child: CustomPaint(
-            key: const Key('universal_graph_paint'),
-            size: Size(c.maxWidth.isFinite ? c.maxWidth : 300, c.maxHeight.isFinite ? c.maxHeight : 200),
-            painter: UniversalFunctionPainter(
-              model: model,
-              asymptotes: asymptotes,
-              window: w,
-              keyPoints: GraphKeyPoints.of(model, w, info: info, deg: degrees),
-              degrees: degrees,
-              trig: info?.family.isTrig ?? false,
-            ),
-          )),
-        ),
-      ),
-    );
-  }
 }

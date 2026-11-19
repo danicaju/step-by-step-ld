@@ -114,14 +114,11 @@ void main() {
       expect(find.text('SCI'), findsOneWidget);
     });
 
-    testWidgets('flechas de borde segun historial y repeticion', (t) async {
+    testWidgets('las flechas ▲▼ de borde ya no dependen del historial', (t) async {
       await boot(t);
-      expect(find.byKey(const Key('edge_up')), findsNothing);
       await keys(t, ['1', '+', '1', '=', 'AC']);
-      expect(find.byKey(const Key('edge_up')), findsOneWidget);
+      expect(find.byKey(const Key('edge_up')), findsNothing);
       await pad(t, 'up');
-      expect(find.byKey(const Key('edge_down')), findsOneWidget);
-      await pad(t, 'down');
       expect(find.byKey(const Key('edge_down')), findsNothing);
     });
 

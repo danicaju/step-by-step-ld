@@ -127,7 +127,6 @@ extension _CalculatorScreenKeypressControl on _CalculatorScreenState {
         _isShiftActive = false;
         _isAlphaActive = false;
         _showDecimalApprox = false;
-        _replayIndex = -1;
 
         if (_calculatorMode == 2) {
           _eqLeftRaw = '';
@@ -288,7 +287,6 @@ extension _CalculatorScreenKeypressControl on _CalculatorScreenState {
               _eqRightCursorPos = nextPos;
             }
           }
-          _replayIndex = -1;
           return true;
         }
 
@@ -297,7 +295,6 @@ extension _CalculatorScreenKeypressControl on _CalculatorScreenState {
             ExpressionParser.deleteAtCursor(_rawInput, _cursorPos);
         _rawInput = nextRaw;
         _cursorPos = nextPos;
-        _replayIndex = -1;
         return true;
       }
 

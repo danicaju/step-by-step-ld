@@ -430,15 +430,14 @@ void main() {
       // Verificar en Pizarra lateral que el resultado contiene 24
       expect(tester.takeException(), isNull);
 
-      // Probar Replay con ▲ después de pulsar AC
+      // Tras AC, ▲ ya no recupera la operacion anterior: '=' no resuelve nada.
       await tester.tap(find.widgetWithText(CasioPhysicalKey, 'AC'));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('replay_up')));
       await tester.pumpAndSettle();
-      // Volver a pulsar '=' debe re-evaluar '21+3'
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '='));
       await tester.pumpAndSettle();
-      expect(find.textContaining('PASO 1/'), findsOneWidget);
+      expect(find.textContaining('PASO 1/'), findsNothing);
     });
 
     testWidgets('D-Pad ◀ ▶ ▲ ▼ navega entre celdas en Modos por Coeficientes y en pasos activos', (tester) async {

@@ -283,7 +283,6 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
               _eqRightRaw = mcmDot.$1;
               _eqRightCursorPos = mcmDot.$2;
             }
-            _replayIndex = -1;
             return;
           }
           if (effectiveChar == ',') return;
@@ -295,7 +294,6 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
           if (mcmDot != null) {
             _rawInput = mcmDot.$1;
             _cursorPos = mcmDot.$2;
-            _replayIndex = -1;
             return;
           }
           if (effectiveChar == ',') return;
@@ -315,7 +313,6 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
               _eqRightRaw = mcmClose.$1;
               _eqRightCursorPos = mcmClose.$2;
             }
-            _replayIndex = -1;
             return;
           }
         } else {
@@ -326,7 +323,6 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
           if (mcmClose != null) {
             _rawInput = mcmClose.$1;
             _cursorPos = mcmClose.$2;
-            _replayIndex = -1;
             return;
           }
         }

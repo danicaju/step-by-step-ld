@@ -246,7 +246,6 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
             _eqRightRaw = fracRight.$1;
             _eqRightCursorPos = fracRight.$2;
           }
-          _replayIndex = -1;
           return;
         }
         final mcmRight = ExpressionParser.handleMcmMcdRightArrow(sideRaw, sideCur);
@@ -260,7 +259,6 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
             _eqRightRaw = blockRight.$1;
             _eqRightCursorPos = blockRight.$2;
           }
-          _replayIndex = -1;
         } else if (_eqActiveSide == 0 && _eqLeftCursorPos >= _eqLeftRaw.length) {
           _eqActiveSide = 1;
           _eqRightCursorPos = 0;
@@ -285,7 +283,6 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
       if (fracRight != null) {
         _rawInput = fracRight.$1;
         _cursorPos = fracRight.$2;
-        _replayIndex = -1;
       } else {
         final mcmRight = ExpressionParser.handleMcmMcdRightArrow(
           _rawInput,
@@ -294,7 +291,6 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
       if (mcmRight != null) {
         _rawInput = mcmRight.$1;
         _cursorPos = mcmRight.$2;
-        _replayIndex = -1;
       } else {
         final slotRight = ExpressionParser.handleTwoSlotRightArrow(
           _rawInput,
@@ -303,7 +299,6 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         if (slotRight != null) {
           _rawInput = slotRight.$1;
           _cursorPos = slotRight.$2;
-          _replayIndex = -1;
         } else {
           final blockRight = ExpressionParser.handleStructuredBlockRightArrow(
             _rawInput,
@@ -312,7 +307,6 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
           if (blockRight != null) {
             _rawInput = blockRight.$1;
             _cursorPos = blockRight.$2;
-            _replayIndex = -1;
           } else {
             _cursorPos = ExpressionParser.stepCursorRight(_rawInput, _cursorPos);
           }

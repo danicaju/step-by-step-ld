@@ -344,7 +344,6 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
             _identityType = NotableIdentityType.squareOfSum;
             _rawInput = '( + )^2';
             _cursorPos = 1;
-            _replayIndex = -1;
           }
         },
       ),
@@ -374,7 +373,6 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
             _activeStepIndex = 0;
             _rawInput = _identityTemplate(_identityType);
             _cursorPos = _rawInput.isEmpty ? 0 : 1;
-            _replayIndex = -1;
           },
         ),
     ];

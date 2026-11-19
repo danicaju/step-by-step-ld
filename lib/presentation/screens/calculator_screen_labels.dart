@@ -14,7 +14,7 @@ extension _CalculatorScreenLabels on _CalculatorScreenState {
           : (_isChoosingRuffiniDegree
               ? 'M4: RUFFINI'
               : 'M4: RUFFINI ($_ruffiniDegree.º)'),
-      5: 'M5: ${const ['f(x) LIBRE', 'LINEAL', 'PARÁBOLA', 'CÚBICA', 'RACIONAL', 'RADICAL', 'EXP / LOG', 'TRIGONOM.'][_graphKind.clamp(0, 7)]}',
+      5: 'M5: ${const ['AUTO f(x)', 'LINEAL', 'PARÁBOLA', 'CÚBICA', 'RACIONAL', 'RADICAL', 'EXP / LOG', 'TRIGONOM.'][_graphKind.clamp(0, 7)]}',
       6: switch (_ineqDegree) {
         1 => 'M6: INEC. 1°',
         2 => 'M6: INEC. 2°',

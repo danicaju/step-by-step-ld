@@ -189,7 +189,6 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
         if (_activeResolution != null) {
           _clearActiveResolutionCursor();
         }
-        _replayIndex = -1;
         if (_calculatorMode == 2) {
           if (_eqActiveSide == 0 && _eqLeftRaw == '0') {
             _eqLeftRaw = '';
