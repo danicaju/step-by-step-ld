@@ -170,7 +170,7 @@ void main() {
   });
 
   group('Integracion en la calculadora', () {
-    testWidgets('M6: flecha arriba enfoca la cabecera, = abre y 2 elige 2.º grado', (t) async {
+    testWidgets('M6: flecha arriba NO enfoca la cabecera; el desplegable se abre con el puntero', (t) async {
       await boot(t, size: const Size(360, 800));
       await tapF(t, find.text('MODE'));
       for (var g = 0; g < 4 && find.byKey(const Key('menu_mode_6')).evaluate().isEmpty; g++) {
@@ -178,9 +178,10 @@ void main() {
       }
       await tapF(t, find.byKey(const Key('menu_mode_6')));
       await pad(t, 'up');
-      await key(t, '=');
-      expect(find.byKey(const Key('lcd_dropdown_panel')), findsOneWidget);
-      await key(t, '2');
+      await pad(t, 'left');
+      expect(find.byKey(const Key('lcd_dropdown_panel')), findsNothing);
+      expect(find.textContaining('2.º Grado'), findsNothing);
+      await pickHeader(t, 'hdr_ineq_kind', 'ineq_deg_2');
       expect(find.byKey(const Key('lcd_dropdown_panel')), findsNothing);
       expect(find.textContaining('2.º Grado'), findsWidgets);
       expect(t.takeException(), isNull);

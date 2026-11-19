@@ -303,7 +303,7 @@ void main() {
       expect(live(t), '19234');
     });
 
-    testWidgets('parpadeo del cursor cada 500 ms', (t) async {
+    testWidgets('parpadeo del cursor cada 530 ms', (t) async {
       LcdBlink.enabled = true;
       addTearDown(() => LcdBlink.enabled = false);
       final seen = <bool>[];
@@ -314,9 +314,9 @@ void main() {
         }),
       ));
       expect(find.text('true'), findsOneWidget);
-      await t.pump(const Duration(milliseconds: 500));
+      await t.pump(const Duration(milliseconds: 530));
       expect(find.text('false'), findsOneWidget);
-      await t.pump(const Duration(milliseconds: 500));
+      await t.pump(const Duration(milliseconds: 530));
       expect(find.text('true'), findsOneWidget);
     });
 

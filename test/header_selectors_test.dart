@@ -33,14 +33,14 @@ void main() {
     expect(find.text('3 Ecuaciones'), findsWidgets);
   });
 
-  testWidgets('M3: D-Pad sube a la cabecera y cambia el tamano con la flecha derecha', (tester) async {
+  testWidgets('M3: el D-Pad nunca salta a la cabecera (el tamano solo cambia con el puntero)', (tester) async {
     await _boot(tester);
     await _openMode(tester, 3);
     await tester.tap(find.byIcon(Icons.arrow_drop_up_rounded).first);
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.arrow_right_rounded).first);
     await tester.pumpAndSettle();
-    expect(find.text('3 Ecuaciones'), findsWidgets);
+    expect(find.text('3 Ecuaciones'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

@@ -2,6 +2,7 @@ part of 'calculator_screen.dart';
 
 extension _CalculatorScreenDpad on _CalculatorScreenState {
   void _handleDpadLeft() {
+    LcdBlink.markActivity();
     if (LcdDropdownController.active?.handleDpad('left') ?? false) return;
     updateState(() {
       if (_lcdErrorDpadGuard(dismiss: true)) return;
@@ -30,7 +31,6 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         _menuCursorIndex = menuMove(_menuCursorIndex, 'left');
         return;
       }
-      if (_headerDpad('left')) return;
       if (_m5Dpad('left')) return;
       if (_extraDpad('left')) return;
       if (_calculatorMode == 4 &&
@@ -130,6 +130,7 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
   }
 
   void _handleDpadRight() {
+    LcdBlink.markActivity();
     if (LcdDropdownController.active?.handleDpad('right') ?? false) return;
     updateState(() {
       if (_lcdErrorDpadGuard(dismiss: true)) return;
@@ -157,7 +158,6 @@ extension _CalculatorScreenDpad on _CalculatorScreenState {
         _menuCursorIndex = menuMove(_menuCursorIndex, 'right');
         return;
       }
-      if (_headerDpad('right')) return;
       if (_m5Dpad('right')) return;
       if (_extraDpad('right')) return;
       if (_calculatorMode == 4 &&

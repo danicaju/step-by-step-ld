@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter_math_fork/flutter_math.dart' show MathStyle;
-
 import 'casio_cell_value_text.dart';
+import 'lcd/lcd_input_box.dart';
 
 class CasioCoefficientView extends StatelessWidget {
   final int mode; // 3 (Sist 2x2/3x3), 4 (Ruffini), 5 (Gráficas), 6 (Inecuaciones 2.º)
@@ -39,69 +38,30 @@ class CasioCoefficientView extends StatelessWidget {
     final String val = index < cellValues.length ? cellValues[index] : '';
     final String label = index < cellLabels.length ? cellLabels[index] : '';
 
-    final Color activeBg = isOledDark ? const Color(0xFF1A2530) : const Color(0xFF141A17);
-    final Color activeText = isOledDark ? const Color(0xFFF8FAFC) : const Color(0xFFFFFBEB);
-    final Color inactiveBg = isOledDark ? const Color(0xFF1E2824) : const Color(0xFFC7D3C9);
-    final Color inactiveText = isOledDark
-        ? (val.isNotEmpty ? const Color(0xFFE8F3EE) : const Color(0xFF64748B))
-        : (val.isNotEmpty ? const Color(0xFF0F172A) : const Color(0xFF64748B));
-    final Color inactiveBorderColor =
-        isOledDark ? const Color(0xFF3B4D46) : const Color(0xFF88998E);
-    final Color activeBorderColor =
-        isOledDark ? const Color(0xFFE5A93C) : const Color(0xFFE5A93C);
-
-    final box = AnimatedContainer(
-      key: Key('coeff_cell_$index'),
-      duration: const Duration(milliseconds: 120),
-      constraints: BoxConstraints(
+    final bool isFraction = val.trim().contains('/');
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: compact ? 1.5 : 2),
+      child: LcdInputBox(
+        key: Key('coeff_cell_$index'),
+        active: isActive,
+        dark: isOledDark,
+        latex: isFraction
+            ? CasioCellValueText.fractionTex(
+                val,
+                activePart: isActive ? (fractionNumeratorActive ? 0 : 1) : null,
+                coloredCursor: true,
+              )
+            : null,
+        text: isFraction ? null : val,
+        placeholder: label,
+        fontSize: compact ? 13 : 16,
         minWidth: compact ? 26 : 34,
         minHeight: compact ? 22 : 28,
+        expandable: true,
+        alignment: Alignment.center,
+        padding: EdgeInsets.symmetric(horizontal: compact ? 5 : 7, vertical: compact ? 1 : 2),
+        onTap: onCellTap == null ? null : () => onCellTap!(index),
       ),
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 5 : 7,
-        vertical: compact ? 1 : 2,
-      ),
-      margin: EdgeInsets.symmetric(horizontal: compact ? 1.5 : 2),
-      decoration: BoxDecoration(
-        color: isActive ? activeBg : inactiveBg,
-        borderRadius: BorderRadius.circular(5.0),
-        border: Border.all(
-          color: isActive ? activeBorderColor : inactiveBorderColor,
-          width: isActive ? 2.2 : 1.0,
-        ),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: const Color(0xFFE5A93C).withValues(alpha: 0.45),
-                  blurRadius: 6.0,
-                  spreadRadius: 0.5,
-                ),
-                BoxShadow(
-                  color: const Color(0xFFE5A93C).withValues(alpha: 0.35),
-                  blurRadius: 3.0,
-                ),
-              ]
-            : null,
-      ),
-      alignment: Alignment.center,
-      child: CasioCellValueText(
-        value: val,
-        emptyFallback: label,
-        fractionPart: isActive ? (fractionNumeratorActive ? 0 : 1) : null,
-        mathStyle: MathStyle.display,
-        style: TextStyle(
-          color: isActive ? activeText : inactiveText,
-          fontSize: compact ? 13 : 16,
-          fontWeight: FontWeight.bold,
-          fontFamily: 'monospace',
-        ),
-      ),
-    );
-
-    if (onCellTap == null) return box;
-    return GestureDetector(
-      onTap: () => onCellTap!(index),
-      child: box,
     );
   }
 

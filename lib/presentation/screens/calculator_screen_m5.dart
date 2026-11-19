@@ -79,7 +79,7 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
 
   /// Teclado fisico en los formularios de M5. `true` si consumio la pulsacion.
   bool _handleM5Key(String key) {
-    if (!_m5FormActive || _headerFocus >= 0 || _lcdErrorKind != null) return false;
+    if (!_m5FormActive || _lcdErrorKind != null) return false;
     final m = _m5;
     if (_isShiftActive) {
       // SHIFT + x² = exponente libre; el resto de SHIFT+tecla sigue su camino normal.

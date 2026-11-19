@@ -1,65 +1,6 @@
 part of 'calculator_screen.dart';
 
 extension _CalculatorScreenModeCells on _CalculatorScreenState {
-  void _matrixInsertToken(String token) {
-    if (_matrixActiveTarget == 2) {
-      _matrixScalarK = _appendTokenToNumericCell(_matrixScalarK, token);
-      return;
-    }
-    final cells = _matrixActiveTarget == 1 ? _matrixCellsB : _matrixCellsA;
-    final idx = _matrixActiveRow * 5 + _matrixActiveCol;
-    cells[idx] = _appendTokenToNumericCell(cells[idx], token);
-  }
-
-  void _matrixBackspace() {
-    if (_matrixActiveTarget == 2) {
-      if (_matrixScalarK.isNotEmpty) {
-        _matrixScalarK = _matrixScalarK.substring(0, _matrixScalarK.length - 1);
-      }
-      return;
-    }
-    final cells = _matrixActiveTarget == 1 ? _matrixCellsB : _matrixCellsA;
-    final idx = _matrixActiveRow * 5 + _matrixActiveCol;
-    if (cells[idx].isNotEmpty) {
-      cells[idx] = cells[idx].substring(0, cells[idx].length - 1);
-    }
-  }
-
-
-
-  void _matrixMoveDpad({required int dRow, required int dCol}) {
-    final curRows = _matrixActiveTarget == 0 ? _matrixRowsA : _matrixRowsB;
-    final curCols = _matrixActiveTarget == 0 ? _matrixColsA : _matrixColsB;
-    if (_matrixActiveTarget == 2) {
-      if (dRow > 0 || dCol != 0) {
-        _matrixActiveTarget = 0;
-        _matrixActiveRow = 0;
-        _matrixActiveCol = 0;
-      }
-      return;
-    }
-    if (dCol < 0) {
-      if (_matrixActiveCol > 0) {
-        _matrixActiveCol--;
-      } else if (_matrixActiveRow > 0) {
-        _matrixActiveRow--;
-        _matrixActiveCol = curCols - 1;
-      }
-    } else if (dCol > 0) {
-      if (_matrixActiveCol < curCols - 1) {
-        _matrixActiveCol++;
-      } else if (_matrixActiveRow < curRows - 1) {
-        _matrixActiveRow++;
-        _matrixActiveCol = 0;
-      }
-    }
-    if (dRow < 0 && _matrixActiveRow > 0) {
-      _matrixActiveRow--;
-    } else if (dRow > 0 && _matrixActiveRow < curRows - 1) {
-      _matrixActiveRow++;
-    }
-  }
-
   int _vectorRowCount(VectorOperation op) =>
       op.needsThirdVector ? 3 : (op.needsSecondVector ? 2 : 1);
 
@@ -264,32 +205,21 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
 
   void _calculusMoveDpad({required int dRow, required int dCol}) {
     if (_calculusActiveField == 0) {
-      if (dCol < 0) {
-        final fl = ExpressionParser.handleTwoSlotLeftArrow(
-            _calculusExprRaw, _calculusCursorPos);
-        _calculusCursorPos = fl != null
-            ? fl.$2
-            : ExpressionParser.stepCursorLeft(_calculusExprRaw, _calculusCursorPos);
-      } else if (dCol > 0) {
-        final fr = ExpressionParser.handleFractionRightArrow(
-            _calculusExprRaw, _calculusCursorPos);
-        if (fr != null) {
-          _calculusExprRaw = fr.$1;
-          _calculusCursorPos = fr.$2;
-        } else {
-          _calculusCursorPos = ExpressionParser.stepCursorRight(
-              _calculusExprRaw, _calculusCursorPos);
+      if (dCol != 0) {
+        final (raw, pos) = dCol < 0
+            ? ExprCursorNav.left(_calculusExprRaw, _calculusCursorPos)
+            : ExprCursorNav.right(_calculusExprRaw, _calculusCursorPos);
+        _calculusExprRaw = raw;
+        _calculusCursorPos = pos;
+      } else if (dRow != 0) {
+        final jumped = ExprCursorNav.vertical(_calculusExprRaw, _calculusCursorPos, up: dRow < 0);
+        if (jumped != null) {
+          _calculusCursorPos = jumped;
+        } else if (dRow > 0 &&
+            (_calculusOp == CalculusOperation.tangentLine ||
+                _calculusOp == CalculusOperation.definiteIntegral)) {
+          _calculusActiveField = 1;
         }
-      } else if (dRow != 0 &&
-          ExpressionParser.jumpFractionUpDown(
-                  _calculusExprRaw, _calculusCursorPos, isUp: dRow < 0) !=
-              null) {
-        _calculusCursorPos = ExpressionParser.jumpFractionUpDown(
-            _calculusExprRaw, _calculusCursorPos, isUp: dRow < 0)!;
-      } else if (dRow > 0 &&
-          (_calculusOp == CalculusOperation.tangentLine ||
-              _calculusOp == CalculusOperation.definiteIntegral)) {
-        _calculusActiveField = 1;
       }
       return;
     }

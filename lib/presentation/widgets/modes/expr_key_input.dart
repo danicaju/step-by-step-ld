@@ -43,6 +43,13 @@ class ExprKeyInput {
     return t == null ? null : '$cur$t';
   }
 
+  /// Texto que inserta [key] en una expresion (con cursor); `null` si no edita expresiones.
+  static String? tokenFor(String key, {bool alpha = false}) {
+    if (alpha && key == ')') return 'x';
+    if (RegExp(r'^[0-9]$').hasMatch(key)) return key;
+    return _tokens[key];
+  }
+
   /// Variante numerica (celdas `a`, Inicio, Fin, Paso): `0-9 . - /`.
   static String? applyNumber(String cur, String key) {
     if (key == 'DEL') return cur.isEmpty ? cur : cur.substring(0, cur.length - 1);

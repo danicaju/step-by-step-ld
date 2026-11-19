@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../lcd/lcd_dropdown_selector.dart';
+import '../lcd/lcd_input_box.dart';
 import '../lcd/lcd_palette.dart';
 import 'form_cell_box.dart';
 import 'mode_form.dart';
@@ -8,10 +10,15 @@ import 'mode_form.dart';
 ///
 /// Simplificar: una fraccion. Suma/Resta/Producto/Cociente: dos fracciones separadas por
 /// el operador. Foco: 0 = operador/selector, luego P1, Q1 (y P2, Q2) del [ModeFormState].
+/// El operador es un selector compacto estilo LCD (`[ Simplificar ▾ ]`, `[ + ▾ ]`...) de 36 px,
+/// alineado con la barra de fraccion; las casillas son [LcdInputBox] amplias y auto-expandibles.
 class FractionInputWidget extends StatelessWidget {
   final ModeFormState form;
   final LcdTheme theme;
   final ValueChanged<int> onFocus;
+
+  /// Pulsacion directa sobre el desplegable: elige la operacion.
+  final ValueChanged<int>? onSelector;
   final String keyPrefix;
 
   const FractionInputWidget({
@@ -19,65 +26,68 @@ class FractionInputWidget extends StatelessWidget {
     required this.form,
     required this.theme,
     required this.onFocus,
+    this.onSelector,
     this.keyPrefix = 'xform',
   });
 
-  static const List<String> operatorSymbols = ['', '+', '−', '·', '÷'];
+  static const List<String> operatorSymbols = ['', '+', '−', '×', '÷'];
+  static const double selectorHeight = 36;
+  static const double boxMinWidth = 190;
 
   @override
   Widget build(BuildContext context) {
     final pal = LcdPalette.of(theme);
-    final fg = theme == LcdTheme.night ? const Color(0xFFE8F3EE) : FormCellBox.ink;
+    final night = theme == LcdTheme.night;
+    final fg = night ? const Color(0xFFE8F3EE) : FormCellBox.ink;
     final two = form.selector != 0;
     final selActive = form.focus == 0;
-    final selector = GestureDetector(
-      onTap: () => onFocus(0),
-      child: Container(
-        key: Key('${keyPrefix}_selector'),
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: selActive ? FormCellBox.ink : pal.inset,
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(
-            color: selActive ? FormCellBox.amber : FormCellBox.border,
-            width: selActive ? 2.2 : 1,
-          ),
-        ),
-        child: Text(
-          two ? '[ ${operatorSymbols[form.selector]} ]' : form.selectorLabels[0],
-          style: TextStyle(
-            color: selActive ? const Color(0xFFC8D6CD) : fg,
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+    final labels = ['Simplificar', ...operatorSymbols.skip(1)];
+
+    // Operador: el foco del D-Pad se marca con un aro ambar (sin bloque oscuro).
+    final selector = Container(
+      key: Key('${keyPrefix}_selector'),
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: selActive ? LcdInputBox.amber : Colors.transparent, width: 2),
+      ),
+      child: LcdDropdownSelector<int>(
+        widgetKey: Key('${keyPrefix}_selector_dropdown'),
+        value: form.selector,
+        items: [
+          for (var i = 0; i < labels.length; i++)
+            LcdDropdownItem(value: i, label: labels[i], key: Key('${keyPrefix}_op_$i')),
+        ],
+        isOledDark: night,
+        height: selectorHeight,
+        fontSize: 14,
+        columns: 1,
+        onChanged: (v) => onSelector?.call(v),
       ),
     );
-    Widget fraction(int num, int den, String n, String d) => Column(mainAxisSize: MainAxisSize.min, children: [
-          FormCellBox(
-            field: form.fields[num],
-            active: form.focus == num + form.base,
-            cellKey: Key('${keyPrefix}_cell_$num'),
-            onTap: () => onFocus(num + form.base),
-            fg: fg,
-            pal: pal,
-            minWidth: 92,
-            caption: n,
-          ),
-          Container(key: Key('${keyPrefix}_bar_$num'), height: 2, width: 104, color: FormCellBox.ink,
-              margin: const EdgeInsets.symmetric(vertical: 3)),
-          FormCellBox(
-            field: form.fields[den],
-            active: form.focus == den + form.base,
-            cellKey: Key('${keyPrefix}_cell_$den'),
-            onTap: () => onFocus(den + form.base),
-            fg: fg,
-            pal: pal,
-            minWidth: 92,
-            caption: d,
-          ),
-        ]);
+
+    Widget box(int i, String caption) => FormCellBox(
+          field: form.fields[i],
+          active: form.focus == i + form.base,
+          cellKey: Key('${keyPrefix}_cell_$i'),
+          onTap: () => onFocus(i + form.base),
+          fg: fg,
+          pal: pal,
+          minWidth: boxMinWidth,
+          caption: caption,
+        );
+    Widget fraction(int num, int den, String n, String d) => IntrinsicWidth(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: [
+            box(num, n),
+            Container(
+                key: Key('${keyPrefix}_bar_$num'),
+                height: 2,
+                color: night ? fg : LcdInputBox.ink,
+                margin: const EdgeInsets.symmetric(vertical: 4)),
+            box(den, d),
+          ]),
+        );
     return Container(
       key: Key('${keyPrefix}_widget'),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

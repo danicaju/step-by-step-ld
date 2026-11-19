@@ -5,6 +5,7 @@ import '../../domain/math_engine/parser/expression_parser.dart';
 import '../../domain/math_engine/solvers/calculus_solver.dart';
 import 'casio_cell_value_text.dart';
 import 'casio_lcd_screen.dart';
+import 'lcd/lcd_input_box.dart';
 
 /// Editor LCD interactivo para el Modo 11 (Derivadas, Recta Tangente e Integral por Barrow).
 class CasioCalculusEditorView extends StatelessWidget {
@@ -57,8 +58,9 @@ class CasioCalculusEditorView extends StatelessWidget {
       CalculusOperation.definiteIntegral => r')\,dx',
     };
 
-    final bodyLatex = expressionRaw.isEmpty
-        ? (activeField == 0 ? r'\textcolor{#1A2530}{\blacksquare}' : '0')
+    // Vacia: sin LaTeX (la casilla muestra la barra parpadeante si esta activa, o un 0 tenue).
+    final String? bodyLatex = expressionRaw.isEmpty
+        ? null
         : ExpressionParser.rawToLiveLatex(
             expressionRaw,
             cursorPos: activeField == 0 ? expressionCursorPos : null,
@@ -105,57 +107,34 @@ class CasioCalculusEditorView extends StatelessWidget {
         ),
         const SizedBox(height: 5),
 
-        // Caja editable de f(x) con Natural Display (100% teclado físico)
+        // Caja editable de f(x) con Natural Display (100% teclado físico): \int [ f(x) ] dx
         Expanded(
-          child: GestureDetector(
-            key: const Key('calculus_expr_box'),
-            onTap: () => onSelectField?.call(0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isOledDark
-                    ? const Color(0xFF151E1B)
-                    : const Color(0xFFCFDAD2),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: activeField == 0
-                      ? (isOledDark
-                          ? const Color(0xFFE5A93C)
-                          : const Color(0xFF0F172A))
-                      : (isOledDark
-                          ? const Color(0xFF334155)
-                          : const Color(0xFF8C9B91)),
-                  width: activeField == 0 ? 1.8 : 1.0,
-                ),
-              ),
-              child: LayoutBuilder(
-                builder: (context, constraints) => ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: constraints.maxWidth,
-                    maxHeight: constraints.maxHeight,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  tex(prefixLatex, 'f(x) ='),
+                  const SizedBox(width: 4),
+                  LcdInputBox(
+                    key: const Key('calculus_expr_box'),
+                    active: activeField == 0,
+                    dark: isOledDark,
+                    latex: bodyLatex,
+                    text: '',
+                    placeholder: '0',
+                    fontSize: 18,
+                    minWidth: 150,
+                    minHeight: 44,
+                    expandable: true,
+                    onTap: () => onSelectField?.call(0),
                   ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          tex(prefixLatex, 'f(x) ='),
-                          KeyedSubtree(
-                            key: const Key('calculus_body_tex'),
-                            child: tex(
-                              bodyLatex,
-                              expressionRaw.isEmpty ? '0' : expressionRaw,
-                            ),
-                          ),
-                          if (suffixLatex.isNotEmpty) tex(suffixLatex, ')'),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                  const SizedBox(width: 4),
+                  if (suffixLatex.isNotEmpty) tex(suffixLatex, ')'),
+                ],
               ),
             ),
           ),
@@ -164,25 +143,29 @@ class CasioCalculusEditorView extends StatelessWidget {
         // Fila auxiliar de x₀ (Tangente) o límites [a, b] (Integral definida Barrow)
         if (selectedOperation == CalculusOperation.tangentLine) ...[
           const SizedBox(height: 5),
-          Row(
-            children: [
-              Text(
-                'Punto de tangencia:',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: mutedColor,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              children: [
+                Text(
+                  'Punto de tangencia:',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: mutedColor,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              _buildAuxCell(
-                key: const Key('calculus_x0_box'),
-                prefix: 'x₀ =',
-                value: x0Raw,
-                isActive: activeField == 1,
-                onTap: () => onSelectField?.call(1),
-              ),
-            ],
+                const SizedBox(width: 6),
+                _buildAuxCell(
+                  key: const Key('calculus_x0_box'),
+                  prefix: 'x₀ =',
+                  value: x0Raw,
+                  isActive: activeField == 1,
+                  onTap: () => onSelectField?.call(1),
+                ),
+              ],
+            ),
           ),
         ] else if (selectedOperation == CalculusOperation.definiteIntegral) ...[
           const SizedBox(height: 5),
@@ -245,59 +228,39 @@ class CasioCalculusEditorView extends StatelessWidget {
     required bool isActive,
     required VoidCallback onTap,
   }) {
-    final activeBg =
-        isOledDark ? const Color(0xFFE5A93C) : const Color(0xFF0F172A);
-    final activeFg = isOledDark ? Colors.black : Colors.white;
-    final idleBg =
-        isOledDark ? const Color(0xFF1A2421) : const Color(0xFFCAD6CE);
-    final idleFg =
-        isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF0F172A);
-
-    return GestureDetector(
-      key: key,
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 110),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: isActive ? activeBg : idleBg,
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(
-            color: isActive
-                ? (isOledDark ? Colors.white : const Color(0xFF0F172A))
-                : (isOledDark
-                    ? const Color(0xFF334155)
-                    : const Color(0xFF7D8C82)),
-            width: isActive ? 1.6 : 1.0,
+    final trimmed = value.trim();
+    final isFraction = trimmed.contains('/');
+    final labelColor = isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF1A2530);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$prefix ',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            fontFamily: 'monospace',
+            color: labelColor.withValues(alpha: 0.8),
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$prefix ',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'monospace',
-                color: (isActive ? activeFg : idleFg).withValues(alpha: 0.75),
-              ),
-            ),
-            CasioCellValueText(
-              value: value,
-              emptyFallback: '0',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'monospace',
-                color: isActive
-                    ? activeFg
-                    : (value.isEmpty ? idleFg.withValues(alpha: 0.45) : idleFg),
-              ),
-            ),
-          ],
+        LcdInputBox(
+          key: key,
+          active: isActive,
+          dark: isOledDark,
+          // Los digitos nuevos van siempre a la ultima parte: el cursor esta en el denominador.
+          latex: isFraction
+              ? CasioCellValueText.fractionTex(trimmed, activePart: isActive ? 1 : null, coloredCursor: true)
+              : null,
+          text: isFraction ? null : value,
+          placeholder: '0',
+          fontSize: 15,
+          minWidth: 64,
+          minHeight: 34,
+          expandable: true,
+          alignment: Alignment.center,
+          onTap: onTap,
         ),
-      ),
+      ],
     );
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_math_fork/flutter_math.dart';
 
 import '../../domain/math_engine/solvers/complex_solver.dart';
 import 'casio_cell_value_text.dart';
+import 'lcd/lcd_input_box.dart';
 
 /// Editor LCD interactivo para el Modo 10 (Números Complejos: Binómica a+bi ⬄ Polar r_α).
 class CasioComplexEditorView extends StatelessWidget {
@@ -232,59 +233,33 @@ class CasioComplexEditorView extends StatelessWidget {
   }) {
     final bool isActive = activeIndex == index;
     final String value = index < cells.length ? cells[index] : '';
-    final activeBg =
-        isOledDark ? const Color(0xFFE5A93C) : const Color(0xFF0F172A);
-    final activeFg = isOledDark ? Colors.black : Colors.white;
-    final idleBg =
-        isOledDark ? const Color(0xFF1A2421) : const Color(0xFFCAD6CE);
-    final idleFg =
-        isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF0F172A);
-
-    return GestureDetector(
-      key: Key('complex_cell_$index'),
-      onTap: () => onCellTap?.call(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 110),
-        constraints: const BoxConstraints(minWidth: 52, minHeight: 28),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: isActive ? activeBg : idleBg,
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(
-            color: isActive
-                ? (isOledDark ? Colors.white : const Color(0xFF0F172A))
-                : (isOledDark
-                    ? const Color(0xFF334155)
-                    : const Color(0xFF7D8C82)),
-            width: isActive ? 1.8 : 1.0,
-          ),
+    final idleFg = isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF1A2530);
+    final trimmed = value.trim();
+    final isFraction = trimmed.contains('/');
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        LcdInputBox(
+          key: Key('complex_cell_$index'),
+          active: isActive,
+          dark: isOledDark,
+          latex: isFraction
+              ? CasioCellValueText.fractionTex(trimmed, activePart: isActive ? 1 : null, coloredCursor: true)
+              : null,
+          text: isFraction ? null : value,
+          placeholder: '0',
+          fontSize: 14,
+          minWidth: 56,
+          minHeight: 30,
+          expandable: true,
+          alignment: Alignment.center,
+          onTap: () => onCellTap?.call(index),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CasioCellValueText(
-              value: value,
-              emptyFallback: '0',
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w800,
-                fontFamily: 'monospace',
-                color: isActive
-                    ? activeFg
-                    : (value.isEmpty ? idleFg.withValues(alpha: 0.45) : idleFg),
-              ),
-            ),
-            Text(
-              hint,
-              style: TextStyle(
-                fontSize: 7.5,
-                fontWeight: FontWeight.w700,
-                color: (isActive ? activeFg : idleFg).withValues(alpha: 0.65),
-              ),
-            ),
-          ],
+        Text(
+          hint,
+          style: TextStyle(fontSize: 7.5, fontWeight: FontWeight.w700, color: idleFg.withValues(alpha: 0.65)),
         ),
-      ),
+      ],
     );
   }
 

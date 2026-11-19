@@ -33,14 +33,17 @@ class CasioCellValueText extends StatelessWidget {
   });
 
   /// `\frac{n}{d}` con huecos `\square` y cursor en la parte activa.
-  static String fractionTex(String value, {int? activePart}) {
+  /// Con [coloredCursor] el cursor lleva el color `#1A2530` (parpadea con `LcdBlink`).
+  static String fractionTex(String value, {int? activePart, bool coloredCursor = false}) {
     final parts = CellFractionEditor.parts(value.trim());
     if (parts == null) return ExpressionParser.rawToLiveLatex(value.trim());
+    final bar = coloredCursor ? '\\textcolor{#1A2530}{\\mid}' : '\\mid';
+    final box = coloredCursor ? '\\textcolor{#1A2530}{\\blacksquare}' : '\\blacksquare';
     String part(String t, bool active) {
       if (t.isEmpty || t == '-') {
-        return active ? '$t\\blacksquare' : '$t\\square';
+        return active ? '$t$box' : '$t\\square';
       }
-      return active ? '$t\\mid' : t;
+      return active ? '$t$bar' : t;
     }
 
     return '\\frac{${part(parts.$1, activePart == 0)}}{${part(parts.$2, activePart == 1)}}';

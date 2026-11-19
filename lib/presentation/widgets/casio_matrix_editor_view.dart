@@ -1,8 +1,10 @@
+import 'dart:ui' show PointerDeviceKind;
+
 import 'package:flutter/material.dart';
 
 import '../../domain/math_engine/solvers/matrix_solver.dart';
-import 'casio_cell_value_text.dart';
 import 'matrix/matrix_bracket.dart';
+import 'matrix/matrix_cell_box.dart';
 import 'matrix/matrix_editor_chips.dart';
 
 /// Cuadrícula matricial editable integrada dentro de la LCD Casio ClassWiz
@@ -20,6 +22,9 @@ class CasioMatrixEditorView extends StatelessWidget {
   final int activeRow;
   final int activeCol;
   final bool isOledDark;
+
+  /// Celda activa con fraccion: `true` = cursor en el numerador.
+  final bool fractionNumeratorActive;
   final void Function(int row, int col)? onCellTap;
   final ValueChanged<int>? onSwitchMatrixTarget;
   final void Function(int target, int rows, int cols)? onUpdateDimensions;
@@ -42,12 +47,15 @@ class CasioMatrixEditorView extends StatelessWidget {
     required this.activeRow,
     required this.activeCol,
     this.isOledDark = false,
+    this.fractionNumeratorActive = false,
     this.onCellTap,
     this.onSwitchMatrixTarget,
     this.onUpdateDimensions,
     this.onSelectOperation,
     this.operationsInHeader = false,
   });
+
+  static const double _rowGap = 6;
 
   bool get _isSquareOnlyOp =>
       selectedOperation == MatrixOperation.determinant ||
@@ -70,9 +78,7 @@ class CasioMatrixEditorView extends StatelessWidget {
         isOledDark ? const Color(0xFF94A3B8) : const Color(0xFF334155);
 
     const int stride = 5;
-    final double bracketH = currentRows == 1
-        ? 34
-        : (currentRows == 2 ? 52 : (currentRows == 3 ? 72 : 88));
+    final double bracketH = currentRows * MatrixCellBox.minHeight + (currentRows - 1) * _rowGap + 6;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -194,88 +200,92 @@ class CasioMatrixEditorView extends StatelessWidget {
         ),
         const SizedBox(height: 3),
 
-        // 2. Matriz editable central con corchetes adaptativos y auto-escalado
+        // 2. Matriz editable central: celdas grandes con scroll suave en ambos ejes
         Expanded(
-          child: Center(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: constraints.maxWidth,
-                    maxHeight: constraints.maxHeight,
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          selectedOperation == MatrixOperation.determinant &&
-                                  !isEditingB
-                              ? '|A| ='
-                              : (isEditingB ? 'B =' : 'A ='),
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            fontFamily: 'monospace',
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        MatrixBracket(
-                          isLeft: true,
-                          isDeterminant: selectedOperation ==
-                                  MatrixOperation.determinant &&
-                              !isEditingB,
-                          color: bracketColor,
-                          height: bracketH,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 2),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: List.generate(currentRows, (r) {
-                              return Padding(
-                                padding: EdgeInsets.only(
-                                    bottom: r < currentRows - 1 ? 3 : 0),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: List.generate(currentCols, (c) {
-                                    final rawIdx = r * stride + c;
-                                    final value = rawIdx < activeCells.length
-                                        ? activeCells[rawIdx]
-                                        : '';
-                                    final isSelected = !isEditingK &&
-                                        r == activeRow &&
-                                        c == activeCol;
-                                    return _buildCell(
-                                      key: Key(
-                                          'matrix_${activeId}_cell_${r}_$c'),
-                                      value: value,
-                                      isActive: isSelected,
-                                      onTap: () => onCellTap?.call(r, c),
-                                    );
-                                  }),
-                                ),
-                              );
-                            }),
-                          ),
-                        ),
-                        MatrixBracket(
-                          isLeft: false,
-                          isDeterminant: selectedOperation ==
-                                  MatrixOperation.determinant &&
-                              !isEditingB,
-                          color: bracketColor,
-                          height: bracketH,
-                        ),
-                      ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final matrix = Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    selectedOperation == MatrixOperation.determinant && !isEditingB
+                        ? '|A| ='
+                        : (isEditingB ? 'B =' : 'A ='),
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      fontFamily: 'monospace',
                     ),
                   ),
-                );
-              },
-            ),
+                  const SizedBox(width: 6),
+                  MatrixBracket(
+                    isLeft: true,
+                    isDeterminant: selectedOperation == MatrixOperation.determinant && !isEditingB,
+                    color: bracketColor,
+                    height: bracketH,
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(currentRows, (r) {
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: r < currentRows - 1 ? _rowGap : 0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: List.generate(currentCols, (c) {
+                            final rawIdx = r * stride + c;
+                            final value = rawIdx < activeCells.length ? activeCells[rawIdx] : '';
+                            final isSelected = !isEditingK && r == activeRow && c == activeCol;
+                            return MatrixCellBox(
+                              key: Key('matrix_${activeId}_cell_${r}_$c'),
+                              value: value,
+                              active: isSelected,
+                              numeratorActive: fractionNumeratorActive,
+                              dark: isOledDark,
+                              onTap: () => onCellTap?.call(r, c),
+                            );
+                          }),
+                        ),
+                      );
+                    }),
+                  ),
+                  MatrixBracket(
+                    isLeft: false,
+                    isDeterminant: selectedOperation == MatrixOperation.determinant && !isEditingB,
+                    color: bracketColor,
+                    height: bracketH,
+                  ),
+                ],
+              );
+              return ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  scrollbars: false,
+                  dragDevices: {
+                    PointerDeviceKind.touch,
+                    PointerDeviceKind.mouse,
+                    PointerDeviceKind.trackpad,
+                    PointerDeviceKind.stylus,
+                  },
+                ),
+                child: SingleChildScrollView(
+                  key: const Key('matrix_scroll_h'),
+                  scrollDirection: Axis.horizontal,
+                  physics: const ClampingScrollPhysics(),
+                  child: SingleChildScrollView(
+                    key: const Key('matrix_scroll_v'),
+                    physics: const ClampingScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: constraints.maxWidth,
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Center(child: matrix),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
 
@@ -307,61 +317,6 @@ class CasioMatrixEditorView extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildCell({
-    required Key key,
-    required String value,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
-    final Color activeBg =
-        isOledDark ? const Color(0xFF1A2530) : const Color(0xFF141A17);
-    final Color activeText =
-        isOledDark ? const Color(0xFFF8FAFC) : const Color(0xFFFFFBEB);
-    final Color idleBg =
-        isOledDark ? const Color(0xFF1E2824) : const Color(0xFFC7D3C9);
-    final Color idleText = isOledDark
-        ? (value.isNotEmpty
-            ? const Color(0xFFE8F3EE)
-            : const Color(0xFF64748B))
-        : (value.isNotEmpty
-            ? const Color(0xFF0F172A)
-            : const Color(0xFF64748B));
-    final Color activeBorder =
-        isOledDark ? const Color(0xFFE5A93C) : const Color(0xFFE5A93C);
-    final Color idleBorder =
-        isOledDark ? const Color(0xFF3B4D46) : const Color(0xFF88998E);
-
-    return GestureDetector(
-      key: key,
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        constraints: const BoxConstraints(minWidth: 34, minHeight: 22),
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-        decoration: BoxDecoration(
-          color: isActive ? activeBg : idleBg,
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(
-            color: isActive ? activeBorder : idleBorder,
-            width: isActive ? 1.8 : 1.0,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: CasioCellValueText(
-          value: value,
-          emptyFallback: '0',
-          style: TextStyle(
-            color: isActive ? activeText : idleText,
-            fontSize: 12.5,
-            fontWeight: FontWeight.w800,
-            fontFamily: 'monospace',
-          ),
-        ),
-      ),
     );
   }
 

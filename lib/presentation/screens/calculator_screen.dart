@@ -24,6 +24,7 @@ import '../../domain/math_engine/solvers/step_evaluator.dart';
 import '../../domain/math_engine/solvers/trig_and_angles_solver.dart';
 import '../../domain/math_engine/solvers/vector_solver.dart';
 import '../../domain/services/class_history_service.dart';
+import '../utils/expr_cursor_nav.dart';
 import '../utils/goodnotes_exporter.dart';
 import '../utils/key_click_sound.dart';
 import '../widgets/ai_tutor_sheet.dart';
@@ -32,6 +33,7 @@ import '../widgets/casio_coefficient_view.dart';
 import '../widgets/casio_complex_editor_view.dart';
 import '../widgets/casio_graph_canvas.dart';
 import '../widgets/casio_lcd_screen.dart';
+import '../widgets/lcd/lcd_blink.dart';
 import '../widgets/lcd/lcd_dropdown_selector.dart';
 import '../widgets/lcd/lcd_error_screen.dart';
 import '../widgets/lcd/lcd_palette.dart';
@@ -180,7 +182,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   bool _polyIsNotableMode = false;
   final GlobalKey _lcdBoundsKey = GlobalKey();
   final Map<String, LcdDropdownController> _hdrCtrls = {};
-  int _headerFocus = -1; // foco D-Pad en desplegables de cabecera LCD (-1 = ninguno)
   static const List<String> _allRuffiniLabels = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
   int _ruffiniDegree = 3;
   bool _isChoosingRuffiniDegree = false;

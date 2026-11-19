@@ -123,6 +123,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                             activeRow: _matrixActiveRow,
                                             activeCol: _matrixActiveCol,
                                             isOledDark: _isOledDark,
+                                            fractionNumeratorActive: _cw.x.cellNumEdit,
                                             onCellTap: (r, c) {
                                               updateState(() {
                                                 _activeResolution = null;

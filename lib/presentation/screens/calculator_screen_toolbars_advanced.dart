@@ -91,7 +91,7 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                         )
                     ],
                   ),
-                ] else if (_calculatorMode == 11) ...[
+                ] else if (_calculatorMode == 11 && _activeResolution != null) ...[
                   const SizedBox(height: 3),
                   Row(
                     children: [

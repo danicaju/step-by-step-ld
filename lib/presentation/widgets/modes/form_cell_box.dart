@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../../../domain/math_engine/parser/live_latex_formatter.dart';
+import '../casio_cell_value_text.dart';
+import '../lcd/lcd_input_box.dart';
 import '../lcd/lcd_palette.dart';
-import 'form_cell_text.dart';
 import 'mode_form.dart';
 
-/// Celda editable de un [ModeFormState] (misma estetica Casio que `ModeFormWidget`).
+/// Celda editable de un [ModeFormState]: una [LcdInputBox] con su rotulo encima.
+///
+/// Las celdas de expresion se pintan como LaTeX en vivo (`x^{2}`, fracciones verticales,
+/// raices...) con el cursor parpadeante en su posicion; las numericas muestran el texto
+/// (o la fraccion `a/b` vertical) con el cursor en la parte activa.
 class FormCellBox extends StatelessWidget {
   final ModeField field;
   final bool active;
@@ -14,6 +20,9 @@ class FormCellBox extends StatelessWidget {
   final LcdPalette pal;
   final double minWidth;
   final String? caption;
+
+  /// Campo numerico con fraccion activa: `true` = cursor en el numerador.
+  final bool fracNumerator;
 
   const FormCellBox({
     super.key,
@@ -25,41 +34,47 @@ class FormCellBox extends StatelessWidget {
     required this.pal,
     this.minWidth = 96,
     this.caption,
+    this.fracNumerator = false,
   });
 
-  static const Color ink = Color(0xFF1A2530);
-  static const Color amber = Color(0xFFE5A93C);
+  static const Color ink = LcdInputBox.ink;
+  static const Color amber = LcdInputBox.amber;
   static const Color border = Color(0xFF7A8A7E);
+
+  /// LaTeX de [field] con el cursor (`#1A2530`) si esta [active]; `null` = usar texto plano.
+  static String? latexOf(ModeField field, {required bool active, required bool fracNumerator}) {
+    final text = field.text;
+    if (field.expr) {
+      if (text.isEmpty) return null;
+      return LiveLatexFormatter.rawToLiveLatex(text, cursorPos: active ? field.pos : null);
+    }
+    if (text.contains('/')) {
+      return CasioCellValueText.fractionTex(text,
+          activePart: active ? (fracNumerator ? 0 : 1) : null, coloredCursor: true);
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Las celdas de expresion se pintan en LaTeX: fondo claro (el cursor es oscuro).
-    final latex = field.expr;
-    final activeFill = latex ? Color.alphaBlend(amber.withValues(alpha: 0.22), pal.inset) : ink;
-    final activeInk = latex ? fg : const Color(0xFFC8D6CD);
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        if (caption != null)
-          Text(caption!, style: TextStyle(color: fg.withValues(alpha: 0.75), fontSize: 10)),
-        Container(
-          key: cellKey,
-          constraints: BoxConstraints(minWidth: minWidth, minHeight: 26),
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          alignment: Alignment.centerLeft,
-          decoration: BoxDecoration(
-            color: active ? activeFill : pal.inset,
-            borderRadius: BorderRadius.circular(5),
-            border: Border.all(color: active ? amber : border, width: active ? 2.2 : 1),
-          ),
-          child: FormCellText(
-            text: field.text,
-            active: active,
-            latex: latex,
-            color: active ? activeInk : fg,
-          ),
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      if (caption != null)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: Text(caption!, style: TextStyle(color: fg.withValues(alpha: 0.75), fontSize: 10)),
         ),
-      ]),
-    );
+      LcdInputBox(
+        key: cellKey,
+        active: active,
+        palette: pal,
+        latex: latexOf(field, active: active, fracNumerator: fracNumerator),
+        text: field.text,
+        fontSize: 14,
+        minWidth: minWidth,
+        minHeight: 30,
+        expandable: field.expr,
+        onTap: onTap,
+      ),
+    ]);
   }
 }

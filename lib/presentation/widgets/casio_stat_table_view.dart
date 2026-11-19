@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'casio_cell_value_text.dart';
+import 'lcd/lcd_input_box.dart';
+
 /// Tabla editable estilo Casio ClassWiz Iberia (2 columnas `xᵢ` | `fᵢ`)
 /// para el Modo 9 (Estadística 1-Variable).
 class CasioStatTableView extends StatefulWidget {
@@ -253,54 +256,23 @@ class _CasioStatTableViewState extends State<CasioStatTableView> {
     required bool isActive,
     required VoidCallback onTap,
   }) {
-    final activeBg = widget.isOledDark
-        ? const Color(0xFF1A2530)
-        : const Color(0xFF141A17);
-    final activeText = widget.isOledDark
-        ? const Color(0xFFF8FAFC)
-        : const Color(0xFFFFFBEB);
-    final idleBg = widget.isOledDark
-        ? const Color(0xFF111615)
-        : const Color(0xFFD5DFD8);
-    final idleText = widget.isOledDark
-        ? const Color(0xFFE8F3EE)
-        : const Color(0xFF0F172A);
-    final hintText = widget.isOledDark
-        ? const Color(0xFF64748B)
-        : const Color(0xFF64748B);
-    final activeBorder = widget.isOledDark
-        ? const Color(0xFFE5A93C)
-        : const Color(0xFFE5A93C);
-
-    final bool hasValue = value.isNotEmpty;
-    final String display = hasValue ? value : placeholder;
-
-    return GestureDetector(
+    final trimmed = value.trim();
+    final isFraction = trimmed.contains('/');
+    return LcdInputBox(
       key: key,
+      active: isActive,
+      dark: widget.isOledDark,
+      latex: isFraction
+          ? CasioCellValueText.fractionTex(trimmed, activePart: isActive ? 1 : null, coloredCursor: true)
+          : null,
+      text: isFraction ? null : value,
+      placeholder: placeholder,
+      fontSize: 14,
+      minWidth: 0,
+      minHeight: 0,
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        alignment: Alignment.centerRight,
-        decoration: BoxDecoration(
-          color: isActive ? activeBg : idleBg,
-          border: isActive ? Border.all(color: activeBorder, width: 1.8) : null,
-        ),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerRight,
-          child: Text(
-            display,
-            style: TextStyle(
-              color: hasValue
-                  ? (isActive ? activeText : idleText)
-                  : (isActive ? activeText.withValues(alpha: 0.7) : hintText),
-              fontSize: 14,
-              fontWeight: hasValue ? FontWeight.bold : FontWeight.w500,
-              fontFamily: 'monospace',
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

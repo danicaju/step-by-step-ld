@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
 
+import '../../../domain/math_engine/parser/expression_parser.dart';
 import '../../utils/cell_fraction_editor.dart';
+import '../../utils/expr_cursor_nav.dart';
 import '../lcd/lcd_palette.dart';
 import 'expr_key_input.dart';
-import 'form_cell_text.dart';
+import 'form_cell_box.dart';
 
 /// Campo de un formulario: `expr` = expresion en x; si no, numero (`0-9 . - /`).
 class ModeField {
   final String label;
   final bool expr;
   String text;
-  ModeField(this.label, {this.expr = false, this.text = ''});
+
+  /// Posicion del cursor en [text] (solo campos `expr`; por defecto, al final).
+  int cursor;
+  ModeField(this.label, {this.expr = false, this.text = ''}) : cursor = text.length;
+
+  int get pos => cursor.clamp(0, text.length);
+
+  void set(String t, int c) {
+    text = t;
+    cursor = c.clamp(0, t.length);
+  }
 }
 
 /// Formulario generico de las vistas nuevas (sin TextField: teclado fisico + D-Pad).
@@ -52,9 +64,10 @@ class ModeFormState {
   ModeField? get active => focus - base >= 0 && focus - base < fields.length ? fields[focus - base] : null;
   String text(int i) => fields[i].text;
 
-  /// D-Pad. `true` siempre (el formulario consume la pulsacion).
+  /// D-Pad. Dentro de una casilla se navega primero por su contenido (fraccion numerica,
+  /// plantillas de la expresion, numerador/denominador internos); solo si no hay
+  /// movimiento interno se cambia de casilla. Nunca sale del formulario hacia la cabecera.
   void dpad(String dir) {
-    // Dentro de una fraccion numerica ▶/▼ van al denominador y ◀/▲ al numerador.
     final cur = active;
     if (cur != null && !cur.expr) {
       final next = CellFractionEditor.dpad(cur.text, fracNum, dir);
@@ -63,10 +76,39 @@ class ModeFormState {
         return;
       }
     }
+    if (cur != null && cur.expr && _exprDpad(cur, dir)) return;
+    final before = focus;
     if (fractionStyle) {
       _fractionDpad(dir);
-      return;
+    } else {
+      _linearDpad(dir);
     }
+    final now = active;
+    if (focus != before && now != null && now.expr) {
+      now.cursor = dir == 'right' ? 0 : now.text.length;
+    }
+  }
+
+  /// Movimiento interno en una casilla de expresion; `true` si lo consume.
+  bool _exprDpad(ModeField f, String dir) {
+    final raw = f.text;
+    final pos = f.pos;
+    switch (dir) {
+      case 'left':
+      case 'right':
+        final (r, c) = dir == 'left' ? ExprCursorNav.left(raw, pos) : ExprCursorNav.right(raw, pos);
+        if (r == raw && c == pos) return false;
+        f.set(r, c);
+        return true;
+      default:
+        final j = ExprCursorNav.vertical(raw, pos, up: dir == 'up');
+        if (j == null || j == pos) return false;
+        f.cursor = j;
+        return true;
+    }
+  }
+
+  void _linearDpad(String dir) {
     final last = base + fields.length - 1;
     switch (dir) {
       case 'left':
@@ -133,10 +175,31 @@ class ModeFormState {
   bool key(String k, {bool alpha = false}) {
     final f = active;
     if (f == null) return false;
-    if (!f.expr && _fractionKey(f, k)) return true;
-    final next = f.expr ? ExprKeyInput.apply(f.text, k, alpha: alpha) : ExprKeyInput.applyNumber(f.text, k);
+    if (f.expr) return _exprKey(f, k, alpha);
+    if (_fractionKey(f, k)) return true;
+    final next = ExprKeyInput.applyNumber(f.text, k);
     if (next == null) return false;
     f.text = next;
+    return true;
+  }
+
+  /// Edicion de expresion en la posicion del cursor (`a/b` abre una fraccion vertical real).
+  bool _exprKey(ModeField f, String k, bool alpha) {
+    final pos = f.pos;
+    if (k == 'DEL') {
+      final (r, c) = ExpressionParser.deleteAtCursor(f.text, pos, emptyResult: '', emptyCursor: 0);
+      f.set(r, c);
+      return true;
+    }
+    if (k == '/') {
+      final (r, c) = FractionTemplate.insert(f.text, pos);
+      f.set(r, c);
+      return true;
+    }
+    final token = ExprKeyInput.tokenFor(k, alpha: alpha);
+    if (token == null) return false;
+    final (r, c) = ExpressionParser.insertAtCursor(f.text, pos, token, keepLeadingZero: true);
+    f.set(r, c);
     return true;
   }
 
@@ -174,7 +237,7 @@ class ModeFormState {
   void clear() {
     for (final l in layouts) {
       for (final f in l) {
-        f.text = '';
+        f.set('', 0);
       }
     }
     selector = 0;
@@ -261,32 +324,16 @@ class ModeFormWidget extends StatelessWidget {
 
   Widget _cell(int i, Color fg, LcdPalette pal) {
     final f = form.fields[i];
-    final active = form.focus == i + form.base;
-    return GestureDetector(
+    return FormCellBox(
+      field: f,
+      active: form.focus == i + form.base,
+      cellKey: Key('${keyPrefix}_cell_$i'),
       onTap: () => onFocus(i + form.base),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-        Text(f.label, style: TextStyle(color: fg.withValues(alpha: 0.8), fontSize: 10)),
-        Container(
-          key: Key('${keyPrefix}_cell_$i'),
-          constraints: BoxConstraints(minWidth: f.expr ? 120 : 52, minHeight: 26),
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          alignment: Alignment.centerLeft,
-          decoration: BoxDecoration(
-            color: active
-                ? (f.expr ? Color.alphaBlend(_amber.withValues(alpha: 0.22), pal.inset) : _ink)
-                : pal.inset,
-            borderRadius: BorderRadius.circular(5),
-            border: Border.all(color: active ? _amber : _border, width: active ? 2.2 : 1),
-          ),
-          child: FormCellText(
-            text: f.text,
-            active: active,
-            fracNumerator: form.fracNum,
-            latex: f.expr,
-            color: active ? (f.expr ? fg : const Color(0xFFC8D6CD)) : fg,
-          ),
-        ),
-      ]),
+      fg: fg,
+      pal: pal,
+      minWidth: f.expr ? 120 : 52,
+      caption: f.label,
+      fracNumerator: form.fracNum,
     );
   }
 }

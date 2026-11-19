@@ -19,7 +19,16 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
       void onFocus(int i) => updateState(() => f.focus = i);
       return _x.m4View == 2
           ? BoxDivisionInputWidget(form: f, theme: _lcdTheme, onFocus: onFocus)
-          : FractionInputWidget(form: f, theme: _lcdTheme, onFocus: onFocus);
+          : FractionInputWidget(
+              form: f,
+              theme: _lcdTheme,
+              onFocus: onFocus,
+              onSelector: (i) => updateState(() {
+                f.selector = i;
+                f.focus = 0;
+                _resetResolutionView();
+              }),
+            );
     }
     if (_calculatorMode == 8) {
       return ProbabilityDistributionWidget(
@@ -68,7 +77,7 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
 
   bool _handleExtraKey(String key) {
     final f = _extraForm;
-    if (f == null || _headerFocus >= 0 || _lcdErrorKind != null) return false;
+    if (f == null || _lcdErrorKind != null) return false;
     if (_isShiftActive) {
       // SHIFT + x² = exponente libre (x^4, x^10...): el resto de SHIFT+tecla sigue su camino normal.
       if (key != '^2') return false;

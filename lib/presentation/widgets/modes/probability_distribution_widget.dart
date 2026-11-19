@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
 import '../lcd/lcd_palette.dart';
-import 'form_cell_text.dart';
+import '../lcd/lcd_input_box.dart';
+import 'form_cell_box.dart';
 import 'mode_form.dart';
 
 /// Ficha de Normal `N(μ, σ)` y Binomial `B(n, p)` dentro de la LCD.
@@ -57,27 +58,18 @@ class ProbabilityDistributionWidget extends StatelessWidget {
     Widget cell(int i, {double width = 78}) {
       final f = form.fields[i];
       final active = form.focus == i + form.base;
-      return GestureDetector(
-        onTap: () => onFocus(i + form.base),
-        child: Container(
+      return SizedBox(
+        width: width,
+        child: LcdInputBox(
           key: Key('${keyPrefix}_cell_$i'),
-          width: width,
-          constraints: const BoxConstraints(minHeight: 30),
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          alignment: Alignment.centerLeft,
-          decoration: BoxDecoration(
-            color: active ? _ink : (night ? pal.inset : _idle),
-            borderRadius: BorderRadius.circular(5),
-            border: Border.all(color: active ? _amber : _border, width: active ? 2.2 : 1.5),
-          ),
-          child: FormCellText(
-            text: f.text,
-            active: active,
-            fracNumerator: form.fracNum,
-            latex: false,
-            color: active ? _lcd : fg,
-            fontSize: 15,
-          ),
+          active: active,
+          palette: pal,
+          latex: FormCellBox.latexOf(f, active: active, fracNumerator: form.fracNum),
+          text: f.text,
+          fontSize: 15,
+          minWidth: width,
+          minHeight: 30,
+          onTap: () => onFocus(i + form.base),
         ),
       );
     }
