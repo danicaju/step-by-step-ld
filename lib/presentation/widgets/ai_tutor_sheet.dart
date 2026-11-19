@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
 import '../../domain/math_engine/models/step_resolution.dart';
 import '../../domain/services/ai_tutor_service.dart';
 import 'casio_lcd_screen.dart';
+import 'safe_math.dart';
 
 class AiTutorSheet extends StatefulWidget {
   final StepByStepResolution resolution;
@@ -216,16 +216,12 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                           Center(
                             child: SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
-                              child: Math.tex(
+                              child: SafeMath.tex(
                                 CasioLcdScreen.sanitizeForMathTex(step.latexExpression),
                                 textStyle: const TextStyle(
                                   fontSize: 22,
                                   color: Color(0xFFF8FAFC),
                                   fontWeight: FontWeight.w600,
-                                ),
-                                onErrorFallback: (err) => Text(
-                                  step.latexExpression,
-                                  style: const TextStyle(fontSize: 16, color: Color(0xFFF8FAFC)),
                                 ),
                               ),
                             ),

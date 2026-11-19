@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/editor/lcd_cursor_tokens.dart';
 import '../../domain/math_engine/core/calculator_memory.dart';
 import '../../domain/math_engine/core/rational.dart';
 import '../../domain/math_engine/models/step_resolution.dart';
@@ -318,7 +319,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     if (_calculatorMode == 2) {
       final String leftTex = _eqLeftRaw.isEmpty
           ? (showLiveCursor && _eqActiveSide == 0
-              ? r'\textcolor{#1A2530}{\blacksquare}'
+              ? LcdCursor.box
               : r'\square')
           : ExpressionParser.rawToLiveLatex(
               _eqLeftRaw,
@@ -328,7 +329,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             );
       final String rightTex = _eqRightRaw.isEmpty
           ? (showLiveCursor && _eqActiveSide == 1
-              ? r'\textcolor{#1A2530}{\blacksquare}'
+              ? LcdCursor.box
               : r'\square')
           : ExpressionParser.rawToLiveLatex(
               _eqRightRaw,

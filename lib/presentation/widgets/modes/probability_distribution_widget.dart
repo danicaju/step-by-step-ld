@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
 
 import '../lcd/lcd_palette.dart';
 import '../lcd/lcd_input_box.dart';
 import 'form_cell_box.dart';
 import 'mode_form.dart';
+import '../safe_math.dart';
 
 /// Ficha de Normal `N(μ, σ)` y Binomial `B(n, p)` dentro de la LCD.
 ///
@@ -93,7 +93,7 @@ class ProbabilityDistributionWidget extends StatelessWidget {
       key: Key('${keyPrefix}_badge'),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(color: _ink, borderRadius: BorderRadius.circular(5)),
-      child: Math.tex(
+      child: SafeMath.tex(
         binomial ? r'B(n,\ p)' : r'N(\mu,\ \sigma)',
         textStyle: const TextStyle(color: _lcd, fontSize: 16, fontWeight: FontWeight.w800),
       ),

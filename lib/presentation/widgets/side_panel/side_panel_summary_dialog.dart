@@ -7,11 +7,11 @@ import '../../theme/theme_controller.dart';
 import '../../theme/calculator_themes.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../domain/services/class_history_service.dart';
 import '../casio_lcd_screen.dart';
+import '../safe_math.dart';
 
 class SidePanelSummaryDialog {
   static void show(BuildContext context, {
@@ -104,20 +104,13 @@ class SidePanelSummaryDialog {
                                 const SizedBox(height: 2),
                                 SingleChildScrollView(
                                   scrollDirection: Axis.horizontal,
-                                  child: Math.tex(
+                                  child: SafeMath.tex(
                                     CasioLcdScreen.sanitizeForMathTex(
                                       '${entries[i].resolution.originalInputLatex} = ${entries[i].resolution.exactResultLatex}',
                                     ),
                                     textStyle: TextStyle(
                                       color: _pnl.panel(Color(0xFF0F172A)),
                                       fontSize: 13,
-                                    ),
-                                    onErrorFallback: (_) => Text(
-                                      '${entries[i].resolution.originalInputLatex} = ${entries[i].resolution.exactResultLatex}',
-                                      style: TextStyle(
-                                        color: _pnl.panel(Color(0xFF0F172A)),
-                                        fontSize: 12,
-                                      ),
                                     ),
                                   ),
                                 ),

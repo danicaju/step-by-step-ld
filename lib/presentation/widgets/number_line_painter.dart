@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
 
 import '../../domain/math_engine/models/inequality_models.dart';
 import 'casio_lcd_screen.dart';
 import '../painters/number_line_painter.dart';
+import 'safe_math.dart';
 
 export '../painters/number_line_painter.dart';
 
@@ -78,7 +78,7 @@ class NumberLineWidget extends StatelessWidget {
                         scrollDirection: Axis.horizontal,
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Math.tex(
+                          child: SafeMath.tex(
                             CasioLcdScreen.sanitizeForMathTex(data.solutionLatex),
                             textStyle: TextStyle(
                               fontSize: 12.0,
@@ -152,7 +152,7 @@ class NumberLineWidget extends StatelessWidget {
                                 child: Center(
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
-                                    child: Math.tex(
+                                    child: SafeMath.tex(
                                       CasioLcdScreen.sanitizeForMathTex(cp.label),
                                       textStyle: TextStyle(
                                         fontSize: 12.0,

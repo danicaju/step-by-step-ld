@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
+import '../../../core/editor/lcd_cursor_tokens.dart';
 import 'blinking_cursor_builder.dart';
 import 'lcd_math_sanitizer.dart';
 import 'lcd_palette.dart';
+import '../safe_math.dart';
 
 /// Casilla de entrada unica de la LCD (M4, M8, M9, M10, M11, M12).
 ///
@@ -53,7 +55,7 @@ class LcdInputBox extends StatelessWidget {
   static const Color amber = Color(0xFFE5A93C);
   static const Color activeFill = Color(0xFFD8CFA6);
   static const Color ink = Color(0xFF1A2530);
-  static const String cursorBar = '\\textcolor{#1A2530}{\\mid}';
+  static const String cursorBar = LcdCursor.bar;
 
   LcdPalette get _pal => palette ?? (dark ? LcdPalette.night : LcdPalette.classic);
   bool get _night => dark || palette == LcdPalette.night;
@@ -113,14 +115,10 @@ class LcdInputBox extends StatelessWidget {
   }
 
   Widget _math(String tex) {
-    final math = Math.tex(
+    final math = SafeMath.tex(
       LcdMathSanitizer.sanitizeForMathTex(tex),
       mathStyle: MathStyle.text,
       textStyle: TextStyle(color: textColor, fontSize: fontSize + 2, fontWeight: FontWeight.w700),
-      onErrorFallback: (_) => Text(
-        text ?? '',
-        style: TextStyle(color: textColor, fontSize: fontSize, fontWeight: FontWeight.w800, fontFamily: 'monospace'),
-      ),
     );
     if (expandable) return math;
     return FittedBox(fit: BoxFit.scaleDown, alignment: alignment, child: math);

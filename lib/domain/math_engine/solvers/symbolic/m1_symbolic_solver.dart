@@ -130,7 +130,7 @@ class M1SymbolicSolver {
           ),
       ]);
       final unit = PolyOps.degree(rd) == 0 && PolyOps.coeff(rd, 0) == Rational(1);
-      result = unit ? shown(rn) : '\frac{${shown(rn)}}{${shown(rd)}}';
+      result = unit ? shown(rn) : '\\frac{${shown(rn)}}{${shown(rd)}}';
     }
     return StepByStepResolution(
       originalInputLatex: original,

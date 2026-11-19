@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../theme/theme_controller.dart';
 import '../../theme/calculator_themes.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
 import '../../../domain/services/class_history_service.dart';
 import '../casio_lcd_screen.dart';
 import 'side_panel_summary_dialog.dart';
+import '../safe_math.dart';
 
 class SidePanelHistoryTab extends StatelessWidget {
   final List<ClassHistoryEntry> entries;
@@ -206,7 +206,7 @@ class SidePanelHistoryTab extends StatelessWidget {
                             const SizedBox(height: 8),
                             SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
-                              child: Math.tex(
+                              child: SafeMath.tex(
                                 CasioLcdScreen.sanitizeForMathTex(
                                   entry.resolution.originalInputLatex,
                                 ),
@@ -214,13 +214,6 @@ class SidePanelHistoryTab extends StatelessWidget {
                                   color: _pnl.panel(Colors.white),
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                ),
-                                onErrorFallback: (_) => Text(
-                                  entry.resolution.originalInputLatex,
-                                  style: TextStyle(
-                                    color: _pnl.panel(Colors.white),
-                                    fontSize: 13,
-                                  ),
                                 ),
                               ),
                             ),
@@ -238,7 +231,7 @@ class SidePanelHistoryTab extends StatelessWidget {
                                 Flexible(
                                   child: SingleChildScrollView(
                                     scrollDirection: Axis.horizontal,
-                                    child: Math.tex(
+                                    child: SafeMath.tex(
                                       CasioLcdScreen.sanitizeForMathTex(
                                         entry.resolution.exactResultLatex,
                                       ),
@@ -246,14 +239,6 @@ class SidePanelHistoryTab extends StatelessWidget {
                                         color: _pnl.panel(Color(0xFFE5A93C)),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
-                                      ),
-                                      onErrorFallback: (_) => Text(
-                                        entry.resolution.exactResultLatex,
-                                        style: TextStyle(
-                                          color: _pnl.panel(Color(0xFFE5A93C)),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                        ),
                                       ),
                                     ),
                                   ),

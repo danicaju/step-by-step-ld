@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
+import '../../../core/editor/lcd_cursor_tokens.dart';
+
 /// Parpadeo del cursor de la LCD (530 ms) y color segun tema.
 class LcdBlink {
   const LcdBlink._();
@@ -19,22 +21,10 @@ class LcdBlink {
   /// Marca actividad del usuario (reinicia el ciclo de parpadeo a visible).
   static void markActivity() => activity.value++;
 
-  static const String _cursorColor = '#1A2530';
-  static const String _cursorColorOnDark = '#C8D6CD';
-
   /// Aplica el estado del parpadeo al LaTeX: apagado -> cursor invisible
-  /// (`\phantom`); tema oscuro -> cursor claro.
-  static String apply(String latex, {required bool on, required bool dark}) {
-    if (!latex.contains(_cursorColor)) return latex;
-    var out = latex;
-    if (!on) {
-      out = out
-          .replaceAll('\\textcolor{$_cursorColor}{\\mid}', '\\phantom{\\mid}')
-          .replaceAll('\\textcolor{$_cursorColor}{\\blacksquare}', '\\phantom{\\blacksquare}');
-    }
-    if (dark) out = out.replaceAll(_cursorColor, _cursorColorOnDark);
-    return out;
-  }
+  /// (`\phantom`, mismo layout: 0 px de desplazamiento); tema oscuro -> cursor claro.
+  static String apply(String latex, {required bool on, required bool dark}) =>
+      LcdCursor.applyBlink(latex, on: on, dark: dark);
 }
 
 /// Reconstruye [builder] cada [LcdBlink.period] con el estado del cursor (visible/oculto).

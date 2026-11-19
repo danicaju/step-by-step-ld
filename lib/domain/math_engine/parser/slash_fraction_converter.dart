@@ -1,9 +1,10 @@
 // Extracted from ExpressionParser for modularity and 500-line limit.
+import '../../../core/editor/lcd_cursor_tokens.dart';
 
 class SlashFractionConverter {
   static const String cursorSentinel = '\uE000';
-  static const String cursorMidLatex = r'\textcolor{#1A2530}{\mid}';
-  static const String cursorBoxLatex = r'\textcolor{#1A2530}{\blacksquare}';
+  static const String cursorMidLatex = LcdCursor.bar;
+  static const String cursorBoxLatex = LcdCursor.box;
 
   static String convertSlashesToLatex(String src, String cursorSentinel) {
     String out = src;

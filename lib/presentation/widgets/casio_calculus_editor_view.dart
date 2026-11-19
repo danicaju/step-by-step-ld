@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
 
 import '../../domain/math_engine/parser/expression_parser.dart';
 import '../../domain/math_engine/solvers/calculus_solver.dart';
 import 'casio_cell_value_text.dart';
 import 'casio_lcd_screen.dart';
 import 'lcd/lcd_input_box.dart';
+import 'safe_math.dart';
 
 /// Editor LCD interactivo para el Modo 11 (Derivadas, Recta Tangente e Integral por Barrow).
 class CasioCalculusEditorView extends StatelessWidget {
@@ -67,18 +67,9 @@ class CasioCalculusEditorView extends StatelessWidget {
           );
     // Cabecera y cierre son de solo lectura y van fuera del buffer editable.
     final bodyStyle = TextStyle(fontSize: 19, color: textColor);
-    Widget tex(String latex, String fallback) => Math.tex(
+    Widget tex(String latex, String fallback) => SafeMath.tex(
           CasioLcdScreen.sanitizeForMathTex(latex),
           textStyle: bodyStyle,
-          onErrorFallback: (_) => Text(
-            fallback,
-            style: TextStyle(
-              fontSize: 15,
-              fontFamily: 'monospace',
-              fontWeight: FontWeight.w700,
-              color: textColor,
-            ),
-          ),
         );
 
     return Column(

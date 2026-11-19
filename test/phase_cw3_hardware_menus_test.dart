@@ -75,9 +75,9 @@ void main() {
     });
 
     test('LcdBlink: cursor oculto, claro en tema oscuro y nunca azul', () {
-      const cur = r'1\textcolor{#1A2530}{\mid}2';
-      expect(LcdBlink.apply(cur, on: false, dark: false), r'1\phantom{\mid}2');
-      expect(LcdBlink.apply(cur, on: true, dark: true), r'1\textcolor{#C8D6CD}{\mid}2');
+      const cur = r'1\textcolor{#1A2530}{\lcdcursor}2';
+      expect(LcdBlink.apply(cur, on: false, dark: false), r'1\phantom{\lcdcursor}2');
+      expect(LcdBlink.apply(cur, on: true, dark: true), r'1\textcolor{#C8D6CD}{\lcdcursor}2');
       expect(LcdBlink.apply(cur, on: true, dark: false), cur);
       expect(cur.contains('2E86DE'), isFalse);
     });

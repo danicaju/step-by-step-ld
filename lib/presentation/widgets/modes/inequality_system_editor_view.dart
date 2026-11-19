@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
+import '../../../core/editor/lcd_cursor_tokens.dart';
 import '../../../domain/math_engine/parser/expression_parser.dart';
+import '../safe_math.dart';
 
 class InequalitySystemEditorView extends StatelessWidget {
   final bool isOledDark;
@@ -113,7 +114,7 @@ class InequalitySystemEditorView extends StatelessWidget {
                                         final String rowTex;
                                         if (raw.isEmpty) {
                                           rowTex = isActive
-                                              ? r'\textcolor{#1A2530}{\blacksquare}'
+                                              ? LcdCursor.box
                                               : (ineqSysUnknowns == 1
                                                   ? r'2x - 3 \le 5'
                                                   : r'x + y \le 4');
@@ -126,7 +127,7 @@ class InequalitySystemEditorView extends StatelessWidget {
                                         return FittedBox(
                                           fit: BoxFit.scaleDown,
                                           alignment: Alignment.centerLeft,
-                                          child: Math.tex(
+                                          child: SafeMath.tex(
                                             rowTex,
                                             textStyle: TextStyle(
                                               color: raw.isEmpty && !isActive

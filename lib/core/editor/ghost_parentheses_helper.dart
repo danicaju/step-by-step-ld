@@ -27,6 +27,6 @@ abstract final class GhostParenthesesHelper {
     if (n == 0) return '';
     final c = Color.lerp(background, ink, ghostOpacity)!;
     final hex = (c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase();
-    return '\textcolor{#$hex}{${')' * n}}';
+    return '\\textcolor{#$hex}{${')' * n}}';
   }
 }

@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../theme/theme_controller.dart';
 import '../theme/calculator_themes.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../domain/services/class_history_service.dart';
 import 'casio_lcd_screen.dart';
+import 'safe_math.dart';
 
 class ClassHistorySheet extends StatefulWidget {
   final ClassHistoryService historyService;
@@ -378,16 +378,12 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                       // Expresión original
                                       SingleChildScrollView(
                                         scrollDirection: Axis.horizontal,
-                                        child: Math.tex(
+                                        child: SafeMath.tex(
                                           CasioLcdScreen.sanitizeForMathTex(entry.resolution.originalInputLatex),
                                           textStyle: TextStyle(
                                             color: _pnl.panel(Colors.white),
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
-                                          ),
-                                          onErrorFallback: (err) => Text(
-                                            entry.resolution.originalInputLatex,
-                                            style: TextStyle(color: _pnl.panel(Colors.white), fontSize: 13),
                                           ),
                                         ),
                                       ),
@@ -414,16 +410,12 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                                         fontWeight: FontWeight.bold,
                                                       ),
                                                     ),
-                                                    Math.tex(
+                                                    SafeMath.tex(
                                                       CasioLcdScreen.sanitizeForMathTex(entry.resolution.exactResultLatex),
                                                       textStyle: TextStyle(
                                                         color: _pnl.panel(Color(0xFFE5A93C)),
                                                         fontSize: 14,
                                                         fontWeight: FontWeight.bold,
-                                                      ),
-                                                      onErrorFallback: (err) => Text(
-                                                        entry.resolution.exactResultLatex,
-                                                        style: TextStyle(color: _pnl.panel(Color(0xFFE5A93C)), fontSize: 13, fontWeight: FontWeight.bold),
                                                       ),
                                                     ),
                                                   ],

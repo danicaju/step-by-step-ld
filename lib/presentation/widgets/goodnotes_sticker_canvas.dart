@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
 import '../../domain/math_engine/models/step_resolution.dart';
 import '../../domain/math_engine/solvers/function_graph_solver.dart';
 import '../utils/latex_plain_text.dart';
 import 'casio_graph_canvas.dart';
 import 'casio_lcd_screen.dart';
+import 'safe_math.dart';
 /// Canvas dedicado para renderizado de stickers con estética de cuaderno / pizarra
 class GoodnotesStickerCanvas extends StatelessWidget {
   final StepByStepResolution resolution;
@@ -81,16 +81,12 @@ class GoodnotesStickerCanvas extends StatelessWidget {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
-                    child: Math.tex(
+                    child: SafeMath.tex(
                       CasioLcdScreen.sanitizeForMathTex(resolution.originalInputLatex),
                       textStyle: const TextStyle(
                         fontSize: 18,
                         color: Color(0xFF1E293B),
                         fontWeight: FontWeight.bold,
-                      ),
-                      onErrorFallback: (err) => Text(
-                        resolution.originalInputLatex,
-                        style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
                       ),
                     ),
                   ),
@@ -185,21 +181,17 @@ class GoodnotesStickerCanvas extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Math.tex(
+                        SafeMath.tex(
                           CasioLcdScreen.sanitizeForMathTex(resolution.exactResultLatex),
                           textStyle: const TextStyle(
                             fontSize: 20,
                             color: Color(0xFF064E3B),
                             fontWeight: FontWeight.bold,
                           ),
-                          onErrorFallback: (err) => Text(
-                            resolution.exactResultLatex,
-                            style: const TextStyle(fontSize: 16, color: Color(0xFF064E3B), fontWeight: FontWeight.bold),
-                          ),
                         ),
                         if (resolution.decimalApproxLatex.trim().isNotEmpty) ...[
                           const SizedBox(width: 10),
-                          Math.tex(
+                          SafeMath.tex(
                             CasioLcdScreen.sanitizeForMathTex(
                               '(\\approx ${resolution.decimalApproxLatex})',
                             ),
@@ -207,14 +199,6 @@ class GoodnotesStickerCanvas extends StatelessWidget {
                               color: Color(0xFF047857),
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                            ),
-                            onErrorFallback: (err) => Text(
-                              '(≈ ${resolution.decimalApproxLatex})',
-                              style: const TextStyle(
-                                color: Color(0xFF047857),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
                             ),
                           ),
                         ],
@@ -278,15 +262,11 @@ class GoodnotesStickerCanvas extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Math.tex(
+              child: SafeMath.tex(
                 CasioLcdScreen.sanitizeForMathTex(step.latexExpression),
                 textStyle: const TextStyle(
                   fontSize: 17,
                   color: Color(0xFF1E293B),
-                ),
-                onErrorFallback: (err) => Text(
-                  step.latexExpression,
-                  style: const TextStyle(fontSize: 14, color: Color(0xFF1E293B)),
                 ),
               ),
             ),

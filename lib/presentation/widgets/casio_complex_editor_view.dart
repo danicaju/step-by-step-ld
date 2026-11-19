@@ -4,6 +4,7 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import '../../domain/math_engine/solvers/complex_solver.dart';
 import 'casio_cell_value_text.dart';
 import 'lcd/lcd_input_box.dart';
+import 'safe_math.dart';
 
 /// Editor LCD interactivo para el Modo 10 (Números Complejos: Binómica a+bi ⬄ Polar r_α).
 class CasioComplexEditorView extends StatelessWidget {
@@ -168,11 +169,10 @@ class CasioComplexEditorView extends StatelessWidget {
   Widget _tex(String latex, Color color, double size) {
     return FittedBox(
       fit: BoxFit.scaleDown,
-      child: Math.tex(
+      child: SafeMath.tex(
         latex,
         mathStyle: MathStyle.text,
         textStyle: TextStyle(fontSize: size, color: color, fontWeight: FontWeight.w800),
-        onErrorFallback: (_) => Text(latex, style: TextStyle(fontSize: size, color: color)),
       ),
     );
   }

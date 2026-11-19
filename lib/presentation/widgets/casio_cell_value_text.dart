@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
+import '../../core/editor/lcd_cursor_tokens.dart';
 import '../../domain/math_engine/parser/expression_parser.dart';
 import '../utils/cell_fraction_editor.dart';
 import 'casio_lcd_screen.dart';
+import 'safe_math.dart';
 
 /// Renderiza el valor de una celda en las vistas estructuradas de la LCD.
 ///
@@ -37,8 +39,8 @@ class CasioCellValueText extends StatelessWidget {
   static String fractionTex(String value, {int? activePart, bool coloredCursor = false}) {
     final parts = CellFractionEditor.parts(value.trim());
     if (parts == null) return ExpressionParser.rawToLiveLatex(value.trim());
-    final bar = coloredCursor ? '\\textcolor{#1A2530}{\\mid}' : '\\mid';
-    final box = coloredCursor ? '\\textcolor{#1A2530}{\\blacksquare}' : '\\blacksquare';
+    final bar = coloredCursor ? LcdCursor.bar : LcdCursor.command;
+    final box = coloredCursor ? LcdCursor.box : '\\blacksquare';
     String part(String t, bool active) {
       if (t.isEmpty || t == '-') {
         return active ? '$t$box' : '$t\\square';
@@ -65,14 +67,13 @@ class CasioCellValueText extends StatelessWidget {
 
     return FittedBox(
       fit: BoxFit.scaleDown,
-      child: Math.tex(
+      child: SafeMath.tex(
         sanitized,
         mathStyle: mathStyle,
         textStyle: style.copyWith(
           fontFamily: null,
           fontSize: effectiveSize,
         ),
-        onErrorFallback: (_) => Text(value, style: style),
       ),
     );
   }

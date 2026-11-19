@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:casio_tutor_calc/core/editor/lcd_cursor_tokens.dart';
 import 'package:casio_tutor_calc/domain/math_engine/core/calculator_settings.dart';
 import 'package:casio_tutor_calc/presentation/screens/calculator_screen.dart';
 import 'package:casio_tutor_calc/presentation/widgets/casio_lcd_screen.dart';
@@ -52,6 +53,6 @@ CasioLcdScreen lcd(WidgetTester t) => t.widget<CasioLcdScreen>(find.byType(Casio
 String live(WidgetTester t) => lcd(t)
     .currentInputLatex
     .replaceAll(' ', '')
-    .replaceAll(r'\textcolor{#1A2530}{\mid}', '');
+    .replaceAll(LcdCursor.bar, '');
 
 String? result(WidgetTester t) => lcd(t).currentResolution?.exactResultLatex;

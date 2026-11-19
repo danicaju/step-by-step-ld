@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
+import '../../../core/editor/lcd_cursor_tokens.dart';
 import 'lcd_math_sanitizer.dart';
+import '../safe_math.dart';
 
 class LcdSubmenuHeaderRow extends StatelessWidget {
   final String badgeText;
@@ -172,7 +173,7 @@ class LcdCalcPrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final valueDisplay = calcValueRaw.isEmpty ? r'\textcolor{#1A2530}{\blacksquare}' : calcValueRaw;
+    final valueDisplay = calcValueRaw.isEmpty ? LcdCursor.box : calcValueRaw;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -186,7 +187,7 @@ class LcdCalcPrompt extends StatelessWidget {
         if (calcExpressionLatex != null)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Math.tex(
+            child: SafeMath.tex(
               LcdMathSanitizer.sanitizeForMathTex(calcExpressionLatex!),
               textStyle: TextStyle(
                 fontSize: 14,
@@ -207,7 +208,7 @@ class LcdCalcPrompt extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Math.tex(
+            SafeMath.tex(
               LcdMathSanitizer.sanitizeForMathTex(valueDisplay),
               textStyle: const TextStyle(
                 fontSize: 22,

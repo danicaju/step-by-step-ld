@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:casio_tutor_calc/core/editor/lcd_cursor_tokens.dart';
 import 'package:casio_tutor_calc/domain/math_engine/parser/expression_parser.dart';
 import 'package:casio_tutor_calc/domain/math_engine/parser/nested_fraction_navigator.dart';
 import 'package:casio_tutor_calc/presentation/screens/calculator_screen.dart';
@@ -72,7 +73,7 @@ void main() {
     String live(WidgetTester t) => lcd(t)
         .currentInputLatex
         .replaceAll(' ', '')
-        .replaceAll(r'\textcolor{#1A2530}{\mid}', '');
+        .replaceAll(LcdCursor.bar, '');
 
     testWidgets('M12 arranca vacio sin fraccion fantasma y x^2 -> 2x', (t) async {
       await boot(t);

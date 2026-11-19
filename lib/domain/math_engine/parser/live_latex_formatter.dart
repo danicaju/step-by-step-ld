@@ -1,3 +1,4 @@
+import '../../../core/editor/lcd_cursor_tokens.dart';
 import 'balanced_scan.dart';
 import 'live_function_formatter.dart';
 import 'cursor_navigation_helper.dart';
@@ -7,8 +8,8 @@ import '../arithmetic/classwiz_constants.dart';
 
 class LiveLatexFormatter {
   static const String _cursorSentinel = '\uE000';
-  static const String _cursorMidLatex = r'\textcolor{#1A2530}{\mid}';
-  static const String _cursorBoxLatex = r'\textcolor{#1A2530}{\blacksquare}';
+  static const String _cursorMidLatex = LcdCursor.bar;
+  static const String _cursorBoxLatex = LcdCursor.box;
 
   static String finalizeForEvaluation(String raw) {
     var out = TemplateNavigationHelper.finalizeMcmMcdInput(raw);
@@ -209,8 +210,10 @@ class LiveLatexFormatter {
     out = out.replaceAll("''", "'' ");
     out = out.replaceAll('"', "'' ");
     out = out.replaceAll('%', r'\%');
+    // El `pi` escrito a mano va primero; si no, `\pi ` volveria a casar y daria `\\pi`
+    // (un salto de fila TeX).
+    out = out.replaceAllMapped(RegExp(r'(?<!\\)\bpi\b'), (_) => r'\pi ');
     out = out.replaceAll('π', r'\pi ');
-    out = out.replaceAllMapped(RegExp(r'\bpi\b'), (_) => r'\pi ');
 
     // 6. Memoria ANS y variables
     out = out.replaceAll('Ran#', r'\mathrm{Ran}\#');

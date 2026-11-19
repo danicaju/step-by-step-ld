@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
 
 import '../../domain/math_engine/models/step_resolution.dart';
 import 'lcd/lcd_math_sanitizer.dart';
@@ -18,6 +17,7 @@ export 'lcd/lcd_mode_menu.dart';
 export 'lcd/lcd_setup_and_submenus.dart';
 export 'lcd/lcd_pedagogical_box.dart';
 import 'lcd/lcd_edge_arrows.dart';
+import 'safe_math.dart';
 export 'lcd/lcd_edge_arrows.dart';
 
 
@@ -281,19 +281,11 @@ class CasioLcdScreen extends StatelessWidget {
             const SizedBox(height: 4),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Math.tex(
+              child: SafeMath.tex(
                 CasioLcdScreen.sanitizeForMathTex(currentResolution!.originalInputLatex),
                 textStyle: TextStyle(
                   fontSize: 14,
                   color: originalFormulaColor,
-                ),
-                onErrorFallback: (err) => Text(
-                  currentResolution!.originalInputLatex,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: originalFormulaColor,
-                    fontFamily: 'monospace',
-                  ),
                 ),
               ),
             ),
@@ -346,15 +338,6 @@ class CasioLcdScreen extends StatelessWidget {
                                           color: formulaColor,
                                           fontWeight: FontWeight.w600,
                                         ),
-                                        onErrorFallback: (err) => Text(
-                                          cleanDisplay,
-                                          style: TextStyle(
-                                            fontSize: latexFontSize * 0.7,
-                                            color: formulaColor,
-                                            fontWeight: FontWeight.w600,
-                                            fontFamily: 'monospace',
-                                          ),
-                                        ),
                                       ),
                                     ),
                                   ),
@@ -402,15 +385,6 @@ class CasioLcdScreen extends StatelessWidget {
                                       fontSize: latexFontSize,
                                       color: formulaColor,
                                       fontWeight: FontWeight.w600,
-                                    ),
-                                    onErrorFallback: (err) => Text(
-                                      cleanDisplay,
-                                      style: TextStyle(
-                                        fontSize: latexFontSize * 0.75,
-                                        color: formulaColor,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'monospace',
-                                      ),
                                     ),
                                   ),
                                 ),
