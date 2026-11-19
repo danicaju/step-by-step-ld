@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
 import '../../domain/math_engine/calculus/function_numeric.dart';
@@ -176,7 +177,8 @@ class UniversalFunctionPainter extends CustomPainter {
       old.asymptotes != asymptotes ||
       old.window != window ||
       old.degrees != degrees ||
-      old.keyPoints.length != keyPoints.length;
+      old.trig != trig ||
+      !listEquals(old.keyPoints, keyPoints);
 }
 
 /// Visor con `ClipRRect` estricto: nada se dibuja fuera del marco LCD.
@@ -213,7 +215,7 @@ class UniversalGraphView extends StatelessWidget {
       child: Container(
         color: const Color(0xFFC8D6CD),
         child: LayoutBuilder(
-          builder: (context, c) => CustomPaint(
+          builder: (context, c) => RepaintBoundary(child: CustomPaint(
             key: const Key('universal_graph_paint'),
             size: Size(c.maxWidth.isFinite ? c.maxWidth : 300, c.maxHeight.isFinite ? c.maxHeight : 200),
             painter: UniversalFunctionPainter(
@@ -224,7 +226,7 @@ class UniversalGraphView extends StatelessWidget {
               degrees: degrees,
               trig: info?.family.isTrig ?? false,
             ),
-          ),
+          )),
         ),
       ),
     );

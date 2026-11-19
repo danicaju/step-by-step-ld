@@ -37,7 +37,7 @@ extension _CalculatorScreenChassis on _CalculatorScreenState {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
         child: CustomPaint(
-          painter: CarbonTexturePainter(),
+          painter: CarbonTexturePainter(finish: hw.finish, color: hw.textureColor),
           child: Padding(
             padding: const EdgeInsets.all(8.5),
             child: LayoutBuilder(
@@ -94,48 +94,15 @@ extension _CalculatorScreenChassis on _CalculatorScreenState {
 
                     // Keypad ergonómico ClassWiz
                     Expanded(
-                      child: CalculatorKeypadView(
-                        controlZoneH: controlZoneH,
-                        controlKeyVPad: controlKeyVPad,
-                        dpadW: dpadW,
-                        dpadH: dpadH,
-                        sciMinH: sciMinH,
-                        numMinH: numMinH,
-                        isShiftActive: _isShiftActive,
-                        isAlphaActive: _isAlphaActive,
-                        isMenuOpen: _isMenuOpen,
-                        isSetupOpen: _isSetupOpen,
-                        onKeyPress: _handleKeyPress,
-                        onDpadLeft: _handleDpadLeft,
-                        onDpadRight: _handleDpadRight,
-                        onDpadUp: _handleDpadUp,
-                        onDpadDown: _handleDpadDown,
-                        onDpadCenter: () => _handleKeyPress('='),
-                        onOptnPressed: () {
-                          if (_isShiftActive) {
-                            updateState(() {
-                              _isShiftActive = false;
-                              _isAlphaActive = false;
-                            });
-                            if (_calculatorMode == 8) {
-                              // M8 no usa OPTN: la tabla se gestiona en pantalla.
-                            } else if (const [1, 9, 10].contains(_calculatorMode)) {
-                              updateState(() => _openList('optn'));
-                            } else {
-                              _openQuickOptnModal();
-                            }
-                          } else if (_isAlphaActive && _calculatorMode == 2) {
-                            _insertEqualsInEquation();
-                          } else if (_isAlphaActive && _calculatorMode == 1) {
-                            updateState(() {
-                              _isAlphaActive = false;
-                              if (_activeResolution != null) _clearActiveResolutionCursor();
-                              _applyRawInsertion('=');
-                            });
-                          } else {
-                            _handleKeyPress('CALC');
-                          }
-                        },
+                      child: RepaintBoundary(
+                        child: _cachedKeypad(
+                          controlZoneH: controlZoneH,
+                          controlKeyVPad: controlKeyVPad,
+                          dpadW: dpadW,
+                          dpadH: dpadH,
+                          sciMinH: sciMinH,
+                          numMinH: numMinH,
+                        ),
                       ),
                     ),
                   ],

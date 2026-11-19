@@ -125,6 +125,7 @@ class SidePanelHistoryTab extends StatelessWidget {
                     final timeStr =
                         '${entry.timestamp.hour.toString().padLeft(2, '0')}:${entry.timestamp.minute.toString().padLeft(2, '0')}';
                     return InkWell(
+                      key: ValueKey(entry.id),
                       borderRadius: BorderRadius.circular(12),
                       onTap: () => onSelectEntry(entry),
                       child: Container(

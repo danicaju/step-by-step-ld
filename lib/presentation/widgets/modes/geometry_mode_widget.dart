@@ -84,11 +84,11 @@ class TriangleSketchView extends StatelessWidget {
       child: Container(
         color: const Color(0xFFC8D6CD),
         child: LayoutBuilder(
-          builder: (context, c) => CustomPaint(
+          builder: (context, c) => RepaintBoundary(child: CustomPaint(
             key: const Key('triangle_sketch_paint'),
             size: Size(c.maxWidth.isFinite ? c.maxWidth : 260, c.maxHeight.isFinite ? c.maxHeight : 150),
             painter: TriangleSketchPainter(solution),
-          ),
+          )),
         ),
       ),
     );

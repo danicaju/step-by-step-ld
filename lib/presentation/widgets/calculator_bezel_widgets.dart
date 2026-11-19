@@ -179,14 +179,19 @@ class HeaderBezelButton extends StatelessWidget {
 }
 
 class CarbonTexturePainter extends CustomPainter {
+  final ChassisFinish finish;
+  final Color color;
+
+  /// Los datos llegan por constructor: al cambiar de tema se repinta; sin cambios, no.
+  const CarbonTexturePainter({required this.finish, required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
-    final hw = ThemeController.current;
-    if (hw.finish == ChassisFinish.plain) return;
+    if (finish == ChassisFinish.plain) return;
     final paint = Paint()
-      ..color = hw.textureColor
+      ..color = color
       ..strokeWidth = 1.0;
-    if (hw.finish == ChassisFinish.grain) {
+    if (finish == ChassisFinish.grain) {
       // Grano de plastico retro: trazos horizontales finos.
       for (double y = 0; y < size.height; y += 4) {
         canvas.drawLine(Offset(0, y), Offset(size.width, y), paint..strokeWidth = 0.5);
@@ -203,5 +208,5 @@ class CarbonTexturePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CarbonTexturePainter old) => old.finish != finish || old.color != color;
 }

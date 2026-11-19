@@ -9,8 +9,8 @@ import 'lcd/lcd_setup_and_submenus.dart';
 import 'lcd/lcd_pedagogical_box.dart';
 import '../utils/latex_plain_text.dart';
 import 'lcd/lcd_copyable_result.dart';
+import 'lcd/lcd_blinking_latex.dart';
 import 'lcd/lcd_palette.dart';
-import 'lcd/lcd_blink.dart';
 
 export 'lcd/lcd_math_sanitizer.dart';
 export 'lcd/lcd_status_bar.dart';
@@ -137,9 +137,9 @@ class CasioLcdScreen extends StatelessWidget {
       LcdMathSanitizer.sanitizeForMathTex(latex);
 
   @override
-  Widget build(BuildContext context) => LcdBlinkBuilder(builder: _buildLcd);
+  Widget build(BuildContext context) => _buildLcd(context);
 
-  Widget _buildLcd(BuildContext context, bool cursorOn) {
+  Widget _buildLcd(BuildContext context) {
     final bool hasSteps =
         currentResolution != null && currentResolution!.steps.isNotEmpty;
 
@@ -155,8 +155,6 @@ class CasioLcdScreen extends StatelessWidget {
     } else {
       displayLatex = currentInputLatex.isEmpty ? '0' : currentInputLatex;
     }
-
-    displayLatex = LcdBlink.apply(displayLatex, on: cursorOn, dark: isOledDark);
 
     final String stepTitle = hasSteps
         ? currentResolution!.steps[activeStepIndex].shortTitle
@@ -340,8 +338,9 @@ class CasioLcdScreen extends StatelessWidget {
                                     alignment: Alignment.center,
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
-                                      child: Math.tex(
-                                        cleanDisplay,
+                                      child: LcdBlinkingLatex(
+                                        isOledDark: isOledDark,
+                                        latex: cleanDisplay,
                                         textStyle: TextStyle(
                                           fontSize: latexFontSize * 0.9,
                                           color: formulaColor,
@@ -396,8 +395,9 @@ class CasioLcdScreen extends StatelessWidget {
                                   alignment: isMultiLineLatex
                                       ? Alignment.center
                                       : Alignment.centerRight,
-                                  child: Math.tex(
-                                    cleanDisplay,
+                                  child: LcdBlinkingLatex(
+                                    isOledDark: isOledDark,
+                                    latex: cleanDisplay,
                                     textStyle: TextStyle(
                                       fontSize: latexFontSize,
                                       color: formulaColor,

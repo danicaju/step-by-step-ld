@@ -125,7 +125,7 @@ class NumberLineWidget extends StatelessWidget {
 
                     return Stack(
                       children: [
-                        CustomPaint(
+                        RepaintBoundary(child: CustomPaint(
                           size: Size(w, h),
                           painter: NumberLinePainter(
                             data: data,
@@ -135,7 +135,7 @@ class NumberLineWidget extends StatelessWidget {
                             minVal: minVal,
                             maxVal: maxVal,
                           ),
-                        ),
+                        )),
 
                         // Etiquetas de valores debajo de cada punto crítico usando Math.tex
                         for (final cp in data.criticalPoints)

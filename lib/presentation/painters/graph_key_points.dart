@@ -13,6 +13,13 @@ class KeyPoint {
   /// `false` = solo el punto, sin rotulo (evita amontonar etiquetas en trigonometria).
   final bool labeled;
   const KeyPoint(this.x, this.y, this.label, {this.labeled = true});
+
+  @override
+  bool operator ==(Object other) =>
+      other is KeyPoint && other.x == x && other.y == y && other.label == label && other.labeled == labeled;
+
+  @override
+  int get hashCode => Object.hash(x, y, label, labeled);
 }
 
 /// Calcula los puntos que el visor marca y rotula para cada familia.

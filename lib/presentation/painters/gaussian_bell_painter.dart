@@ -150,7 +150,7 @@ class GaussianBellView extends StatelessWidget {
       child: Container(
         color: const Color(0xFFC8D6CD),
         child: LayoutBuilder(
-          builder: (context, c) => CustomPaint(
+          builder: (context, c) => RepaintBoundary(child: CustomPaint(
             key: const Key('gaussian_bell_paint'),
             size: Size(c.maxWidth.isFinite ? c.maxWidth : 300, c.maxHeight.isFinite ? c.maxHeight : 160),
             painter: GaussianBellPainter(
@@ -160,7 +160,7 @@ class GaussianBellView extends StatelessWidget {
               upper: result.upper,
               probability: result.probability,
             ),
-          ),
+          )),
         ),
       ),
     );

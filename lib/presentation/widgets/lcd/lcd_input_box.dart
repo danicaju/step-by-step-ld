@@ -102,10 +102,12 @@ class LcdInputBox extends StatelessWidget {
     }
     final hasCursor = active && tex.contains('#1A2530');
     if (!hasCursor) return _math(tex);
-    return BlinkingCursorBuilder(
-      builder: (context, on) => KeyedSubtree(
-        key: ValueKey(on ? 'lcd_cursor_on' : 'lcd_cursor_off'),
-        child: _math(LcdBlink.apply(tex, on: on, dark: _night)),
+    return RepaintBoundary(
+      child: BlinkingCursorBuilder(
+        builder: (context, on) => KeyedSubtree(
+          key: ValueKey(on ? 'lcd_cursor_on' : 'lcd_cursor_off'),
+          child: _math(LcdBlink.apply(tex, on: on, dark: _night)),
+        ),
       ),
     );
   }

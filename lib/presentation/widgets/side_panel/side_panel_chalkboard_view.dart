@@ -114,9 +114,34 @@ class SidePanelChalkboardView extends StatelessWidget {
                     ),
                   ),
                 )
-              : ListView(
+              : ListView.builder(
                   padding: const EdgeInsets.all(12),
-                  children: [
+                  itemCount: resolution!.steps.length + 2,
+                  itemBuilder: (context, i) {
+                    if (i == 0) return _buildHeader();
+                    if (i == resolution!.steps.length + 1) return _buildResult();
+                    final idx = i - 1;
+                    // `ListView.builder` ya aisla cada item con su RepaintBoundary (addRepaintBoundaries).
+                    return Padding(
+                      key: ValueKey('step_tile_$idx'),
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: StepBoardTile(
+                        step: resolution!.steps[idx],
+                        isActive: idx == activeStepIndex,
+                        onTap: () => onSelectStep(idx),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeader() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
                     // Tarjeta de Enunciado
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -176,18 +201,12 @@ class SidePanelChalkboardView extends StatelessWidget {
                       const SizedBox(height: 10),
                     ],
 
-                    // Lista vertical simultánea de TODOS los pasos
-                    for (int i = 0; i < resolution!.steps.length; i++) ...[
-                      StepBoardTile(
-                        step: resolution!.steps[i],
-                        isActive: i == activeStepIndex,
-                        onTap: () => onSelectStep(i),
-                      ),
-                      const SizedBox(height: 8),
-                    ],
+      ],
+    );
+  }
 
-                    // Resultado final destacado
-                    Container(
+  Widget _buildResult() {
+    return Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: _pnl.panel(const Color(0xFF064E3B)).withValues(alpha: 0.35),
@@ -238,12 +257,7 @@ class SidePanelChalkboardView extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-        ),
-      ],
-    );
+                    );
   }
 }
 

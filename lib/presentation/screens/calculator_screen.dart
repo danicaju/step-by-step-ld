@@ -109,6 +109,7 @@ part 'calculator_screen_chassis_lcd.dart';
 part 'calculator_screen_views.dart';
 part 'calculator_screen_theme.dart';
 part 'calculator_screen_editing.dart';
+part 'calculator_screen_keypad_cache.dart';
 
 class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
@@ -135,6 +136,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   bool _isSoundMuted = KeyClickSound.isMuted;
   final EditorUndoStack _undo = EditorUndoStack();
   bool _undoPillVisible = false;
+  Widget? _keypadWidget;
+  Object? _keypadKey;
   bool _isMenuOpen = false;
   bool _isPoweredOff = false;
   bool _isInsertMode = true;

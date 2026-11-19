@@ -366,6 +366,11 @@ class NumberLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant NumberLinePainter oldDelegate) {
-    return oldDelegate.data != data || oldDelegate.isOledDark != isOledDark;
+    return oldDelegate.data != data ||
+        oldDelegate.isOledDark != isOledDark ||
+        oldDelegate.paddingX != paddingX ||
+        oldDelegate.centerY != centerY ||
+        oldDelegate.minVal != minVal ||
+        oldDelegate.maxVal != maxVal;
   }
 }

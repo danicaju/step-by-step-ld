@@ -38,10 +38,12 @@ class FeasibleRegionCanvas extends StatelessWidget {
         borderRadius: BorderRadius.circular(7),
         child: Padding(
           padding: const EdgeInsets.all(8),
-          child: CustomPaint(
-            painter: _FeasibleRegionPainter(
-              data: visualData,
-              isOledDark: isOledDark,
+          child: RepaintBoundary(
+            child: CustomPaint(
+              painter: _FeasibleRegionPainter(
+                data: visualData,
+                isOledDark: isOledDark,
+              ),
             ),
           ),
         ),

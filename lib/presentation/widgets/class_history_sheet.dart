@@ -280,6 +280,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                                   '${entry.timestamp.hour.toString().padLeft(2, '0')}:${entry.timestamp.minute.toString().padLeft(2, '0')}';
 
                               return InkWell(
+                                key: ValueKey(entry.id),
                                 onTap: () {
                                   Navigator.pop(context);
                                   widget.onSelectEntry(entry);

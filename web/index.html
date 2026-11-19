@@ -43,6 +43,29 @@
       overscroll-behavior: none;
     }
   </style>
+  <script>
+    // Arranque sin flash: aplica el fondo exterior del tema guardado (SharedPreferences web guarda
+    // "flutter.selected_hardware_theme" como JSON) antes de cargar Flutter. Los colores reflejan
+    // outerBg de lib/presentation/theme/calculator_themes.dart.
+    (function () {
+      var colors = { "default": "#121418", rosa: "#D986A4", arena: "#C4B8A3", menta: "#739984", perla: "#CFD4DE" };
+      var color = colors["default"];
+      try {
+        var raw = window.localStorage.getItem("flutter.selected_hardware_theme");
+        if (raw) {
+          var id = raw;
+          try { id = JSON.parse(raw); } catch (e) {}
+          if (typeof id === "string" && colors.hasOwnProperty(id)) color = colors[id];
+        }
+      } catch (e) {}
+      document.documentElement.style.backgroundColor = color;
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute("content", color);
+      document.addEventListener("DOMContentLoaded", function () {
+        document.body.style.backgroundColor = color;
+      });
+    })();
+  </script>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>

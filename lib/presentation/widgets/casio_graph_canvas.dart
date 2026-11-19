@@ -105,7 +105,7 @@ class _CasioGraphCanvasState extends State<CasioGraphCanvas> {
                   });
                 },
                 onTapUp: (details) => _handleTapUp(details, size),
-                child: CustomPaint(
+                child: RepaintBoundary(child: CustomPaint(
                   size: size,
                   painter: CasioGraphPainter(
                     analysisResult: widget.analysisResult,
@@ -114,7 +114,7 @@ class _CasioGraphCanvasState extends State<CasioGraphCanvas> {
                     isStickerMode: widget.isStickerMode,
                     selectedPoint: widget.selectedPoint,
                   ),
-                ),
+                )),
               );
             },
           ),
