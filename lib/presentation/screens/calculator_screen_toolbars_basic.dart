@@ -3,6 +3,21 @@ part of 'calculator_screen.dart';
 extension _CalculatorScreenToolbarsBasic on _CalculatorScreenState {
   List<Widget> _buildBasicModesToolbar() {
     return [
+                // M3 2x2: tras resolver, conmutador Pasos / Grafica de las dos rectas.
+                if (_hasSystemGraph) ...[
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      _buildMethodTab(
+                        key: const Key('sys2_graph_toggle'),
+                        icon: _showSystemGraph ? Icons.format_list_numbered_rounded : Icons.show_chart_rounded,
+                        label: _showSystemGraph ? 'Ver Pasos' : 'Ver Gráfica',
+                        selected: true,
+                        onTap: () => updateState(() => _showSystemGraph = !_showSystemGraph),
+                      ),
+                    ],
+                  ),
+                ],
                 // Barra interactiva contextual para Modos 2..11
                 // M2, M3, M4 y M6 no tienen barra inferior: x/y/= van por ALPHA y los selectores en la cabecera LCD.
                 // M5: el conmutador Pasos/Grafica solo existe cuando ya hay un resultado (tras `=`).

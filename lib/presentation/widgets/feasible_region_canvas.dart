@@ -3,49 +3,71 @@ import 'package:flutter/material.dart';
 
 import '../../domain/math_engine/models/inequality_models.dart';
 import '../../domain/math_engine/solvers/inequalities/sutherland_hodgman_2d.dart';
+import '../painters/graph_axis_ticks.dart';
+import '../painters/graph_label_layout.dart';
+import '../painters/graph_viewport_calculator.dart';
+import '../painters/graph_viewport_controller.dart';
+import '../painters/region_viewport.dart';
+import '../theme/theme_controller.dart';
 import '../utils/latex_plain_text.dart';
+import 'interactive_graph_frame.dart';
 
-/// Widget interactivo para renderizar la región factible 2D en el plano cartesiano
-/// con recorte exacto por Sutherland-Hodgman y diferenciación de contornos.
-class FeasibleRegionCanvas extends StatelessWidget {
+/// Region factible 2D interactiva: arrastre, pellizco, rueda, doble toque y botones de zoom
+/// ([InteractiveGraphFrame]); encuadre inicial inteligente ([computeRegionViewport]).
+class FeasibleRegionCanvas extends StatefulWidget {
   final FeasibleRegion2DVisualData visualData;
   final bool isOledDark;
   final double height;
+  final GraphViewportController? controller;
 
   const FeasibleRegionCanvas({
     super.key,
     required this.visualData,
     this.isOledDark = false,
     this.height = 220,
+    this.controller,
   });
 
   @override
+  State<FeasibleRegionCanvas> createState() => _FeasibleRegionCanvasState();
+}
+
+class _FeasibleRegionCanvasState extends State<FeasibleRegionCanvas> {
+  late final GraphViewportController _own = GraphViewportController();
+
+  @override
+  void dispose() {
+    _own.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final dark = widget.isOledDark;
+    final bg = dark ? const Color(0xFF111615) : ThemeController.current.lcdBackground;
     return Container(
-      height: height,
+      height: widget.height,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isOledDark ? const Color(0xFF111615) : const Color(0xFFDDE6DF),
+        color: bg,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isOledDark
-              ? const Color(0xFF263238)
-              : const Color(0xFF4F6B5C).withValues(alpha: 0.3),
+          color: dark ? const Color(0xFF263238) : const Color(0xFF4F6B5C).withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(7),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: RepaintBoundary(
-            child: CustomPaint(
-              painter: _FeasibleRegionPainter(
-                data: visualData,
-                isOledDark: isOledDark,
-              ),
-            ),
-          ),
+      child: InteractiveGraphFrame(
+        controller: widget.controller ?? _own,
+        fitKey: widget.visualData,
+        initialWindow: (aspect) => computeRegionViewport(widget.visualData, aspect: aspect),
+        background: bg,
+        clipKey: const Key('region_clip'),
+        gesturesKey: const Key('region_gestures'),
+        borderRadius: 7,
+        builder: (context, w, size) => CustomPaint(
+          key: const Key('region_paint'),
+          size: size,
+          painter: _FeasibleRegionPainter(data: widget.visualData, isOledDark: dark, window: w, background: bg),
         ),
       ),
     );
@@ -55,50 +77,22 @@ class FeasibleRegionCanvas extends StatelessWidget {
 class _FeasibleRegionPainter extends CustomPainter {
   final FeasibleRegion2DVisualData data;
   final bool isOledDark;
+  final GraphWindow window;
+  final Color background;
 
   _FeasibleRegionPainter({
     required this.data,
     required this.isOledDark,
+    required this.window,
+    required this.background,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.width <= 0 || size.height <= 0) return;
 
-    // 1. Determinar los límites visuales del plano cartesiano [minX, maxX] x [minY, maxY]
-    double minX = -2.0;
-    double maxX = 8.0;
-    double minY = -2.0;
-    double maxY = 8.0;
-
-    if (data.vertices.isNotEmpty) {
-      final xs = data.vertices.map((v) => v.x).toList();
-      final ys = data.vertices.map((v) => v.y).toList();
-      final pMinX = xs.reduce(math.min);
-      final pMaxX = xs.reduce(math.max);
-      final pMinY = ys.reduce(math.min);
-      final pMaxY = ys.reduce(math.max);
-
-      minX = math.min(-1.5, (pMinX - 2.0).floorToDouble());
-      maxX = math.max(5.0, (pMaxX + 2.5).ceilToDouble());
-      minY = math.min(-1.5, (pMinY - 2.0).floorToDouble());
-      maxY = math.max(5.0, (pMaxY + 2.5).ceilToDouble());
-    } else if (data.inequalities.isNotEmpty) {
-      final intercepts = <double>[];
-      for (final ineq in data.inequalities) {
-        if (ineq.a.abs() > 1e-6) intercepts.add(ineq.c / ineq.a);
-        if (ineq.b.abs() > 1e-6) intercepts.add(ineq.c / ineq.b);
-      }
-      if (intercepts.isNotEmpty) {
-        final iMin = intercepts.reduce(math.min);
-        final iMax = intercepts.reduce(math.max);
-        minX = math.min(-2.0, (iMin - 2.0).floorToDouble());
-        maxX = math.max(6.0, (iMax + 2.0).ceilToDouble());
-        minY = minX;
-        maxY = maxX;
-      }
-    }
-
+    // 1. Ventana visible (controlada por el marco interactivo)
+    final double minX = window.xMin, maxX = window.xMax, minY = window.yMin, maxY = window.yMax;
     final double spanX = maxX - minX;
     final double spanY = maxY - minY;
 
@@ -114,22 +108,10 @@ class _FeasibleRegionPainter extends CustomPainter {
     final labelColor =
         isOledDark ? const Color(0xFFDDE6DF) : const Color(0xFF1A2530);
 
-    // 2. Rejilla cartesiana
-    final gridPaint = Paint()
-      ..color = gridColor
-      ..strokeWidth = 0.8;
-
-    final int stepX = (spanX / 10).clamp(1.0, 10.0).round();
-    final int stepY = (spanY / 10).clamp(1.0, 10.0).round();
-
-    for (int x = minX.toInt(); x <= maxX.toInt(); x += stepX) {
-      final sx = toScreenX(x.toDouble());
-      canvas.drawLine(Offset(sx, 0), Offset(sx, size.height), gridPaint);
-    }
-    for (int y = minY.toInt(); y <= maxY.toInt(); y += stepY) {
-      final sy = toScreenY(y.toDouble());
-      canvas.drawLine(Offset(0, sy), Offset(size.width, sy), gridPaint);
-    }
+    // 2. Rejilla con pasos limpios (1, 2, 5 x 10^k) y numeros de ejes
+    final tickRects = GraphAxisTicks.paint(canvas, size, window,
+        trig: false, degrees: false, ink: axisColor, grid: isOledDark ? gridColor : const Color(0xFF9DB0A3));
+    final layout = GraphLabelLayout(size, occupied: tickRects);
 
     // 3. Ejes principales X e Y
     final axisPaint = Paint()
@@ -279,24 +261,16 @@ class _FeasibleRegionPainter extends CustomPainter {
           _drawDashedLine(canvas, p1, p2, linePaint);
         }
 
-        // Rotular la recta r1, r2...
+        // Rotular la recta r1, r2... (sin colisionar con ejes, numeros ni otras etiquetas)
         final mid = Offset((p1.dx + p2.dx) / 2, (p1.dy + p2.dy) / 2);
-        _drawText(
-          canvas,
-          'r${idx + 1}',
-          Offset(mid.dx.clamp(12.0, size.width - 24.0),
-              mid.dy.clamp(12.0, size.height - 18.0)),
-          TextStyle(
-            color: color,
-            fontSize: 9.5,
-            fontWeight: FontWeight.bold,
-            backgroundColor: isOledDark ? Colors.black54 : Colors.white70,
-          ),
-        );
+        _pillLabel(canvas, layout, 'r${idx + 1}', mid, TextStyle(color: color, fontSize: 9.5, fontWeight: FontWeight.bold));
       }
     }
 
     // 6. Marcar vértices de corte reales con círculos ● (cerrado) u ○ (abierto)
+    for (final v in data.vertices) {
+      layout.reserve(Rect.fromCircle(center: Offset(toScreenX(v.x), toScreenY(v.y)), radius: 6));
+    }
     for (int i = 0; i < data.vertices.length; i++) {
       final v = data.vertices[i];
       final sx = toScreenX(v.x);
@@ -327,18 +301,25 @@ class _FeasibleRegionPainter extends CustomPainter {
         canvas.drawCircle(Offset(sx, sy), 5.5, solidBorder);
       }
 
-      _drawText(
-        canvas,
-        '$name${LatexPlainText.toPlain(v.toLatex())}',
-        Offset(sx + 7, sy - 14),
-        TextStyle(
-          color: labelColor,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          backgroundColor: isOledDark ? Colors.black87 : Colors.white70,
-        ),
-      );
+      _pillLabel(canvas, layout, '$name${LatexPlainText.toPlain(v.toLatex())}', Offset(sx, sy),
+          TextStyle(color: labelColor, fontSize: 10, fontWeight: FontWeight.bold));
     }
+  }
+
+  /// Etiqueta con pastilla del color de la LCD (alpha .88) colocada por [GraphLabelLayout].
+  void _pillLabel(Canvas canvas, GraphLabelLayout layout, String text, Offset anchor, TextStyle style) {
+    final tp = TextPainter(text: TextSpan(text: text, style: style), textDirection: TextDirection.ltr)
+      ..layout(maxWidth: 160);
+    final box = layout.place(anchor, Size(tp.width + 6, tp.height + 3));
+    final rr = RRect.fromRectAndRadius(box, const Radius.circular(3));
+    canvas.drawRRect(rr, Paint()..color = background.withValues(alpha: 0.88));
+    canvas.drawRRect(
+        rr,
+        Paint()
+          ..color = const Color(0xFF1A2530).withValues(alpha: 0.35)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8);
+    tp.paint(canvas, box.topLeft + const Offset(3, 1.5));
   }
 
   (Point2D, Point2D)? _findLineScreenPoints(
@@ -423,6 +404,9 @@ class _FeasibleRegionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FeasibleRegionPainter oldDelegate) {
-    return oldDelegate.data != data || oldDelegate.isOledDark != isOledDark;
+    return oldDelegate.data != data ||
+        oldDelegate.isOledDark != isOledDark ||
+        oldDelegate.window != window ||
+        oldDelegate.background != background;
   }
 }

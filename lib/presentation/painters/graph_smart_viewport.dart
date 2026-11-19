@@ -94,12 +94,18 @@ GraphWindow computeSmartViewport(
 }) {
   final fam = info?.family ?? FunctionFamily.unknown;
   if (fam.isTrig) return GraphViewportCalculator.trigWindow(info!, deg, tan: fam == FunctionFamily.tangent);
+  return windowFromPoints(notablePoints(f, asym, info: info), aspect: aspect);
+}
+
+/// Ventana que abarca [pts] con ~30 % de margen por lado y escala casi isometrica
+/// (`aspect` = alto / ancho del lienzo). Sin puntos utiles (o todos en el origen): `[-6, 6]`.
+GraphWindow windowFromPoints(List<Offset> pts, {double aspect = 0.6}) {
   final asp = aspect.isFinite && aspect > 0.15 && aspect < 3 ? aspect : 0.6;
-  final pts = notablePoints(f, asym, info: info);
   final fallbackW = GraphWindow(-6, 6, -6 * asp, 6 * asp);
-  if (pts.isEmpty) return fallbackW;
-  var minX = pts.first.dx, maxX = minX, minY = pts.first.dy, maxY = minY;
-  for (final p in pts) {
+  final finite = pts.where((p) => p.dx.isFinite && p.dy.isFinite && p.dx.abs() < 1e4 && p.dy.abs() < 1e4).toList();
+  if (finite.isEmpty) return fallbackW;
+  var minX = finite.first.dx, maxX = minX, minY = finite.first.dy, maxY = minY;
+  for (final p in finite) {
     minX = math.min(minX, p.dx);
     maxX = math.max(maxX, p.dx);
     minY = math.min(minY, p.dy);

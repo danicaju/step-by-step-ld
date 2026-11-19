@@ -26,12 +26,12 @@ class GraphAxisTicks {
 
   /// Pinta la rejilla y devuelve los rectangulos ocupados por los numeros de los ejes.
   static List<Rect> paint(Canvas canvas, Size size, GraphWindow w,
-      {required bool trig, required bool degrees}) {
+      {required bool trig, required bool degrees, Color ink = ink, Color grid = gridColor}) {
     final used = <Rect>[];
     Offset px(double x, double y) =>
         Offset((x - w.xMin) / w.width * size.width, size.height - (y - w.yMin) / w.height * size.height);
-    final grid = Paint()
-      ..color = gridColor.withValues(alpha: 0.45)
+    final gridPaint = Paint()
+      ..color = grid.withValues(alpha: 0.45)
       ..strokeWidth = 0.6;
     final axis = Paint()
       ..color = ink
@@ -41,11 +41,11 @@ class GraphAxisTicks {
     final xs = xTicks ?? [for (var x = (w.xMin / sx).ceil() * sx; x <= w.xMax; x += sx) (x, _fmt(x))];
     final labelY = (w.yMin < 0 && w.yMax > 0) ? 0.0 : w.yMin;
     for (final (x, text) in xs) {
-      canvas.drawLine(px(x, w.yMin), px(x, w.yMax), x.abs() < 1e-9 ? axis : grid);
+      canvas.drawLine(px(x, w.yMin), px(x, w.yMax), x.abs() < 1e-9 ? axis : gridPaint);
       if (x.abs() > 1e-9) used.add(_text(canvas, size, text, px(x, labelY) + const Offset(-6, 2)));
     }
     for (var y = (w.yMin / sy).ceil() * sy; y <= w.yMax; y += sy) {
-      canvas.drawLine(px(w.xMin, y), px(w.xMax, y), y.abs() < 1e-9 ? axis : grid);
+      canvas.drawLine(px(w.xMin, y), px(w.xMax, y), y.abs() < 1e-9 ? axis : gridPaint);
       if (y.abs() > 1e-9) used.add(_text(canvas, size, _fmt(y), px((w.xMin < 0 && w.xMax > 0) ? 0 : w.xMin, y) + const Offset(2, -11)));
     }
     return used;

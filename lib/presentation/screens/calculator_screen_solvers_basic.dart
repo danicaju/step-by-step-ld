@@ -243,6 +243,7 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
       final res = System2x2Fractions.solve(row1: r1, row2: r2, method: _systemMethod);
       updateState(() {
         _activeResolution = res;
+        _storeSystemLines(r1, r2, res);
       });
       _recordCurrentResolutionToHistory(res, 'M3: Sistemas 2x2');
       return;

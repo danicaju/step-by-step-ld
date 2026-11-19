@@ -29,7 +29,10 @@ import '../../core/editor/editor_undo_stack.dart';
 import '../../core/editor/ghost_parentheses_helper.dart';
 import '../../core/input/physical_keyboard_handler.dart';
 import '../theme/calculator_themes.dart';
+import '../painters/graph_viewport_controller.dart';
+import '../painters/system_lines_data.dart';
 import '../theme/theme_controller.dart';
+import '../widgets/system_lines_graph.dart';
 import '../utils/expr_cursor_nav.dart';
 import '../widgets/calculator_app_bar.dart';
 import '../widgets/theme_picker_card.dart';
@@ -110,6 +113,7 @@ part 'calculator_screen_views.dart';
 part 'calculator_screen_theme.dart';
 part 'calculator_screen_editing.dart';
 part 'calculator_screen_keypad_cache.dart';
+part 'calculator_screen_graphs.dart';
 
 class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
@@ -136,6 +140,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   bool _isSoundMuted = KeyClickSound.isMuted;
   final EditorUndoStack _undo = EditorUndoStack();
   bool _undoPillVisible = false;
+  SystemLines2x2? _systemLines;
+  StepByStepResolution? _systemLinesRes;
+  bool _showSystemGraph = false;
+  final GraphViewportController _systemViewport = GraphViewportController();
+  final GraphViewportController _regionViewport = GraphViewportController();
   Widget? _keypadWidget;
   Object? _keypadKey;
   bool _isMenuOpen = false;

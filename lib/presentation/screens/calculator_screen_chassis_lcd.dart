@@ -12,6 +12,8 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
     }
     final m5Graph = _buildM5Graph();
     if (m5Graph != null) return m5Graph;
+    final sysGraph = _buildSystemGraph();
+    if (sysGraph != null) return sysGraph;
     return (_lcdErrorKind != null && !_isMenuOpen && !_isSetupOpen)
         ? _buildLcdErrorScreen()!
         : _isMenuOpen || _isSetupOpen
@@ -68,6 +70,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                         child: FeasibleRegionCanvas(
                           visualData: _currentFeasibleRegion!,
                           isOledDark: _isOledDark,
+                          controller: _regionViewport,
                         ),
                       )
                     : CasioLcdScreen(
