@@ -43,8 +43,10 @@ class ExpressionParser {
   static (String raw, int cursor)? handleStructuredBlockRightArrow(String raw, int cursorPos) =>
       TemplateNavigationHelper.handleStructuredBlockRightArrow(raw, cursorPos);
   static String finalizeForEvaluation(String raw) => LiveLatexFormatter.finalizeForEvaluation(raw);
-  static String rawToLiveLatex(String raw, {int? cursorPos, bool overwrite = false}) =>
-      LiveLatexFormatter.rawToLiveLatex(raw, cursorPos: cursorPos, overwrite: overwrite);
+  static String rawToLiveLatex(String raw,
+          {int? cursorPos, bool overwrite = false, bool ghostClosers = false}) =>
+      LiveLatexFormatter.rawToLiveLatex(raw,
+          cursorPos: cursorPos, overwrite: overwrite, ghostClosers: ghostClosers);
 
   late List<String> _tokens;
   int _pos = 0;

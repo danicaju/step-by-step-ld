@@ -52,7 +52,20 @@ class LiveLatexFormatter {
   /// Convierte la entrada en vivo del teclado en LaTeX estilo Casio Natural Display
   /// incluso cuando el alumno aún no ha terminado de escribir la operación.
   /// Si [cursorPos] no es nulo, inyecta un cursor visual compatible con `flutter_math_fork`.
-  static String rawToLiveLatex(String raw, {int? cursorPos, bool overwrite = false}) {
+  ///
+  /// Con [ghostClosers] (M1, M4 notables, M6) las llamadas sin cerrar terminan en
+  /// `\right.` invisible: el parentesis fantasma pone el unico `)` visible.
+  static String rawToLiveLatex(String raw,
+      {int? cursorPos, bool overwrite = false, bool ghostClosers = false}) {
+    LiveFunctionFormatter.invisibleClose = ghostClosers;
+    try {
+      return _rawToLiveLatex(raw, cursorPos: cursorPos, overwrite: overwrite);
+    } finally {
+      LiveFunctionFormatter.invisibleClose = false;
+    }
+  }
+
+  static String _rawToLiveLatex(String raw, {int? cursorPos, bool overwrite = false}) {
     if (raw.isEmpty) {
       return cursorPos != null ? _cursorBoxLatex : '0';
     }

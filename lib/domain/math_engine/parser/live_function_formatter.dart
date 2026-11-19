@@ -63,6 +63,10 @@ class LiveFunctionFormatter {
     return null;
   }
 
+  /// `true`: la llamada sin `)` escrito se cierra con `\right.` (invisible) porque el
+  /// parentesis fantasma ya dibuja el unico `)` visible. Lo fija `LiveLatexFormatter`.
+  static bool invisibleClose = false;
+
   static String format(String src, String cursor, String cursorBox) {
     final out = StringBuffer();
     var i = 0;
@@ -108,7 +112,8 @@ class LiveFunctionFormatter {
           : src.substring(openIdx + 1);
       final rec = format(innerRaw, cursor, cursorBox);
       final body = rec == cursor ? cursorBox : (rec.isEmpty ? r'\square' : rec);
-      out.write('$latexFn\\left($body\\right)');
+      final close = closeIdx == null && invisibleClose ? r'\right.' : r'\right)';
+      out.write('$latexFn\\left($body$close');
       i = closeIdx != null ? closeIdx + 1 : src.length;
     }
     return out.toString();

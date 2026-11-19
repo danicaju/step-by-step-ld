@@ -134,6 +134,15 @@ void main() {
       });
     }
 
+    test('con parentesis fantasma, sin ")" escrito solo hay UN cierre visible', () {
+      final live = ExpressionParser.rawToLiveLatex('sin(7', cursorPos: 6, ghostClosers: true);
+      expect(live, contains(r'\right.'));
+      expect(live, isNot(contains(r'\right)')));
+      final plain = ExpressionParser.rawToLiveLatex('sin(7');
+      expect(plain, contains(r'\right)'), reason: 'sin ghostClosers se cierra visualmente (M2, M5...)');
+      _parses(live);
+    });
+
     test('el pi no genera doble barra invertida', () {
       final l = ExpressionParser.rawToLiveLatex('2π+π');
       expect(l, isNot(contains(r'\\pi')), reason: l);
