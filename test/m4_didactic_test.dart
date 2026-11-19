@@ -174,4 +174,83 @@ void main() {
       expect(t.takeException(), isNull);
     });
   });
+
+  group('Caja espanola legible: 13 px fijos con scroll en vez de encoger', () {
+    final box = SpanishBoxDivisionSolver.divideText('x^4-3x^2+2x-5', 'x^2-x+1');
+    final last = box.resolution.steps.length - 1;
+    final clip = find.byKey(const Key('box_division_clip'));
+
+    Future<void> pumpBox(WidgetTester t, double w, double h, int? stage) => t.pumpWidget(MaterialApp(
+          home: Center(child: SizedBox(width: w, height: h, child: SpanishBoxDivisionView(result: box, stage: stage))),
+        ));
+
+    double maxExtent(WidgetTester t, String key) {
+      final s = t.state<ScrollableState>(find.descendant(of: find.byKey(Key(key)), matching: find.byType(Scrollable)).first);
+      return s.position.maxScrollExtent;
+    }
+
+    testWidgets('no usa FittedBox y todo el texto mide al menos 13 px', (t) async {
+      await pumpBox(t, 340, 110, null);
+      expect(find.descendant(of: clip, matching: find.byType(FittedBox)), findsNothing);
+      final texts = find.descendant(of: clip, matching: find.byType(Text));
+      expect(texts, findsWidgets);
+      for (final w in t.widgetList<Text>(texts)) {
+        expect(w.style?.fontSize, greaterThanOrEqualTo(13), reason: 'texto "${w.data}"');
+      }
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('grado 4 en 340x110: desplaza en horizontal y vertical sin overflow', (t) async {
+      await pumpBox(t, 340, 110, null);
+      expect(maxExtent(t, 'box_scroll_v'), greaterThan(0));
+      expect(maxExtent(t, 'box_scroll_h'), greaterThan(0));
+      await t.drag(clip, const Offset(0, -60));
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('en un espacio diminuto (140x90) tampoco falla', (t) async {
+      await pumpBox(t, 140, 90, null);
+      await t.drag(clip, const Offset(-80, -40));
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull);
+    });
+
+    testWidgets('si cabe, no hay scroll y la caja queda centrada', (t) async {
+      await pumpBox(t, 700, 400, null);
+      expect(maxExtent(t, 'box_scroll_v'), 0);
+      expect(maxExtent(t, 'box_scroll_h'), 0);
+    });
+
+    testWidgets('la fila del paso en curso queda a la vista y el bloque no cambia de tamano', (t) async {
+      final n = box.steps.length;
+      int active(int s) {
+        if (s >= 2 * n + 1) return 2 * n;
+        if (s == 0) return 0;
+        final cur = s.isOdd ? (s - 1) ~/ 2 : (s - 2) ~/ 2;
+        return s.isOdd ? (cur == 0 ? 0 : 2 * cur) : 2 + 2 * cur;
+      }
+
+      await pumpBox(t, 340, 110, 0);
+      await t.pumpAndSettle();
+      final size0 = t.getSize(find.byKey(const Key('box_left')));
+      for (var s = 0; s <= last; s++) {
+        await pumpBox(t, 340, 110, s);
+        await t.pumpAndSettle();
+        // Al final se enseña cociente y resto (arriba a la derecha); antes, la fila en curso.
+        final target = s == last ? find.byKey(const Key('box_remainder')) : find.byKey(Key('box_row_${active(s)}'));
+        final row = t.getRect(target);
+        final view = t.getRect(clip);
+        if (s == last) {
+          final q = t.getRect(find.byKey(const Key('box_quotient')));
+          expect(q.top, greaterThanOrEqualTo(view.top - 0.5), reason: 'cociente a la vista');
+          expect(q.right, lessThanOrEqualTo(view.right + 0.5), reason: 'cociente a la vista');
+        }
+        expect(row.top, greaterThanOrEqualTo(view.top - 0.5), reason: 'paso ${s + 1}: fila por encima');
+        expect(row.bottom, lessThanOrEqualTo(view.bottom + 0.5), reason: 'paso ${s + 1}: fila por debajo');
+        expect(t.getSize(find.byKey(const Key('box_left'))), size0, reason: 'paso ${s + 1}: tamano estable');
+      }
+      expect(t.takeException(), isNull);
+    });
+  });
 }
