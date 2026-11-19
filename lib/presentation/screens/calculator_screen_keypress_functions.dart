@@ -100,6 +100,10 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
 
       // Tecla √■ (Normal: √(, SHIFT: root(, ALPHA: ³√()
       if (key == '√') {
+        if (_calculatorMode == 11 && !_isShiftActive && !_isAlphaActive) {
+          _complexInsertToken('√');
+          return true;
+        }
         if (_isShiftActive) {
           _isShiftActive = false;
           if (_supportsScientificFns) {

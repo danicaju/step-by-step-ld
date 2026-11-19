@@ -68,9 +68,21 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
 
   bool _handleExtraKey(String key) {
     final f = _extraForm;
-    if (f == null || _isShiftActive || _headerFocus >= 0 || _lcdErrorKind != null) return false;
+    if (f == null || _headerFocus >= 0 || _lcdErrorKind != null) return false;
+    if (_isShiftActive) {
+      // SHIFT + x² = exponente libre (x^4, x^10...): el resto de SHIFT+tecla sigue su camino normal.
+      if (key != '^2') return false;
+      _isShiftActive = false;
+      if (_activeResolution != null) _resetResolutionView();
+      return f.key('^');
+    }
     final alpha = _isAlphaActive;
     _isAlphaActive = false;
+    // ALPHA + x² = x³ (etiqueta impresa sobre la tecla).
+    if (alpha && key == '^2') {
+      if (_activeResolution != null) _resetResolutionView();
+      return f.key('^3');
+    }
     final res = _activeResolution;
     switch (key) {
       case '=':

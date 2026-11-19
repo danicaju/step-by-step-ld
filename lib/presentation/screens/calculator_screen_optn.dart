@@ -44,19 +44,22 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
     _showOptnBottomSheet(
       title: 'OPTN · Opciones Rápidas (STEP-BY-STEP LD)',
       itemsBuilder: (ctx) => [
-        if (_calculatorMode == 1 || _calculatorMode == 12)
+        if (_calculatorMode == 1 || _calculatorMode == 12 || _calculatorMode == 6)
           Wrap(
             spacing: 8,
             runSpacing: 4,
             children: [
-              for (final (label, token) in const [
-                ('|x|', 'Abs('),
-                ('n!', '!'),
-                ('nCr', 'nCr'),
-                ('nPr', 'nPr'),
-                ('ℯ', 'ℯ'),
-                ('Ran#', 'Ran#'),
-                ('RanInt#', 'RanInt#('),
+              // M6 (valor absoluto): solo `|x|`; M1 y M12 tienen ademas las funciones de la lista.
+              for (final (label, token) in [
+                const ('|x|', 'Abs('),
+                if (_calculatorMode != 6) ...const [
+                  ('n!', '!'),
+                  ('nCr', 'nCr'),
+                  ('nPr', 'nPr'),
+                  ('ℯ', 'ℯ'),
+                  ('Ran#', 'Ran#'),
+                  ('RanInt#', 'RanInt#('),
+                ],
               ])
                 OutlinedButton(
                   key: Key('optn_insert_$token'),

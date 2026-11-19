@@ -179,7 +179,11 @@ class TriangleSolver {
     final j = (ai + 1) % 3, k = (ai + 2) % 3;
     final x = [...s];
     x[ai] = math.sqrt(x[j]! * x[j]! + x[k]! * x[k]! - 2 * x[j]! * x[k]! * math.cos(_rad(a[ai]!)));
-    _s(st, 'Teorema del coseno', '${_sn[ai]}^{2} = ${_sn[j]}^{2} + ${_sn[k]}^{2} - 2\\,${_sn[j]}\\,${_sn[k]}\\cos ${_an[ai]}\\;\\Rightarrow\\; ${_sn[ai]} = ${n(x[ai]!)}',
+    final c2 = x[ai]! * x[ai]!;
+    final c2Txt = (c2 - c2.roundToDouble()).abs() < 1e-6 ? '${c2.round()}' : n(c2);
+    final cosTxt = n(math.cos(_rad(a[ai]!)));
+    _s(st, 'Teorema del coseno',
+        '${_sn[ai]}^{2} = ${_sn[j]}^{2} + ${_sn[k]}^{2} - 2\\,${_sn[j]}\\,${_sn[k]}\\cos ${_an[ai]} = ${n(x[j]! * x[j]!)} + ${n(x[k]! * x[k]!)} - 2\\cdot ${n(x[j]!)}\\cdot ${n(x[k]!)}\\cdot $cosTxt = $c2Txt\\;\\Rightarrow\\; ${_sn[ai]} = \\sqrt{$c2Txt} \\approx ${n(x[ai]!)}',
         'Conocemos dos lados y el ángulo que forman: el coseno da el lado opuesto.');
     final sol = _sss(x, <MathStep>[]);
     final ang = [...sol.angles];

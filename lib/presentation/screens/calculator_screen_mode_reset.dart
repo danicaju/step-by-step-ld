@@ -13,8 +13,8 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
   void _setRuffiniDegree(int degree, {required bool enterTemplate}) {
     final safeDegree = degree.clamp(2, 6);
     _ruffiniDegree = safeDegree;
-    _ruffiniValues = List<String>.filled(safeDegree + 1, '');
-    _ruffiniLabels = _CalculatorScreenState._allRuffiniLabels.sublist(0, safeDegree + 1);
+    _ruffiniValues = List<String>.filled(safeDegree + 2, '');
+    _ruffiniLabels = [..._CalculatorScreenState._allRuffiniLabels.sublist(0, safeDegree + 1), 'r'];
     _ruffiniActiveIndex = 0;
     _isChoosingRuffiniDegree = !enterTemplate;
     _activeResolution = null;

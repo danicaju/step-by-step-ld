@@ -230,21 +230,17 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
         }
         return;
       }
-      final a1 = _parseCoeffValue(_sysValues[0], defaultValue: 1);
-      final b1 = _parseCoeffValue(_sysValues[1], defaultValue: 1);
-      final c1 = _parseCoeffValue(_sysValues[2], defaultValue: 0);
-      final a2 = _parseCoeffValue(_sysValues[3], defaultValue: 1);
-      final b2 = _parseCoeffValue(_sysValues[4], defaultValue: -1);
-      final c2 = _parseCoeffValue(_sysValues[5], defaultValue: 0);
-      final res = LinearSystemSolver.solve(
-        a1: a1,
-        b1: b1,
-        c1: c1,
-        a2: a2,
-        b2: b2,
-        c2: c2,
-        method: _systemMethod,
-      );
+      // Coeficientes racionales (a/b en las celdas): se quitan los denominadores, sin redondear.
+      final List<Rational> r1, r2;
+      try {
+        Rational q(int i, int def) => _parseRationalCell(_sysValues[i], defaultValue: Rational(def));
+        r1 = [q(0, 1), q(1, 1), q(2, 0)];
+        r2 = [q(3, 1), q(4, -1), q(5, 0)];
+      } on FormatException catch (e) {
+        _showLcdError(e.message);
+        return;
+      }
+      final res = System2x2Fractions.solve(row1: r1, row2: r2, method: _systemMethod);
       updateState(() {
         _activeResolution = res;
       });
@@ -280,8 +276,9 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
         return;
       }
       final coeffs = <Rational>[];
+      final coeffCount = _ruffiniValues.length - 1; // la ultima celda es la raiz r
       try {
-        for (int i = 0; i < _ruffiniValues.length; i++) {
+        for (int i = 0; i < coeffCount; i++) {
           coeffs.add(_parseRationalCell(
             _ruffiniValues[i],
             defaultValue: Rational(i == 0 ? 1 : 0),
@@ -300,13 +297,30 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
         );
         return;
       }
-      final res = RuffiniSolver.factorizeRational(coeffs);
+      // Con la celda `r` rellena se divide entre (x - r); vacia, se factoriza.
+      final rootRaw = _ruffiniValues.last.trim();
+      final StepByStepResolution res;
+      if (rootRaw.isEmpty) {
+        res = RuffiniSolver.factorizeRational(coeffs);
+      } else {
+        try {
+          final root = _parseRationalCell(rootRaw);
+          if (!root.isInteger || coeffs.any((c) => !c.isInteger)) {
+            _showLcdError('Ruffini divide con coeficientes y raíz r enteros. Para fracciones usa la división en caja.');
+            return;
+          }
+          res = RuffiniDivision.divide([for (final c in coeffs) c.numerator], root.numerator);
+        } on FormatException catch (e) {
+          _showLcdError(e.message);
+          return;
+        }
+      }
       updateState(() {
         _activeResolution = res;
       });
       _recordCurrentResolutionToHistory(
         res,
-        'M4: Regla de Ruffini ($_ruffiniDegree.º)',
+        rootRaw.isEmpty ? 'M4: Regla de Ruffini ($_ruffiniDegree.º)' : 'M4: Ruffini: división entre (x - r)',
       );
       return;
     }

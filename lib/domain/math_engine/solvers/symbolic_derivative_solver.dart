@@ -4,6 +4,7 @@ import 'calculus/calculus_step_texts.dart';
 import 'calculus/sym_build.dart';
 import 'calculus/sym_diff.dart';
 import 'calculus/sym_latex.dart';
+import 'calculus/sym_polish.dart';
 import 'exact/exact_number.dart';
 import 'exact/ext_expr.dart';
 import 'exact/ext_parser.dart';
@@ -29,7 +30,7 @@ class SymbolicDerivativeSolver {
       ));
     }
 
-    final df = SymDiff(log: log).d(f);
+    final df = SymPolish.polish(SymDiff(log: log).d(f));
     return (derivative: df, steps: steps);
   }
 

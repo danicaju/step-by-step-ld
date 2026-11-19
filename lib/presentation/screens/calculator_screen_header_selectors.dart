@@ -29,12 +29,18 @@ extension _CalculatorScreenHeaderSelectors on _CalculatorScreenState {
         NotableIdentityType.squareOfSum => '(A+B)²',
         NotableIdentityType.squareOfDiff => '(A-B)²',
         NotableIdentityType.sumTimesDiff => '(A+B)(A-B)',
+        NotableIdentityType.cubeOfSum => '(A+B)³',
+        NotableIdentityType.cubeOfDiff => '(A-B)³',
+        NotableIdentityType.differenceOfSquares => 'A²-B² (factorizar)',
       };
 
   String _identityTemplate(NotableIdentityType t) => switch (t) {
         NotableIdentityType.squareOfSum => '( + )^2',
         NotableIdentityType.squareOfDiff => '( - )^2',
         NotableIdentityType.sumTimesDiff => '( + )( - )',
+        NotableIdentityType.cubeOfSum => '( + )^3',
+        NotableIdentityType.cubeOfDiff => '( - )^3',
+        NotableIdentityType.differenceOfSquares => '',
       };
 
   Widget? _buildHeaderSelectors() {

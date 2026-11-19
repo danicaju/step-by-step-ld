@@ -79,10 +79,16 @@ class SymLatex {
     final left = _t(l);
     final negR = r is XNeg || (Sx.numVal(r)?.isNegative ?? false);
     var rr = negR ? _t(Sx.neg(r)) : _t(r);
-    if (r is XBin && (r.op == '+' || r.op == '-') && !negR) {
+    var flip = negR;
+    final isSum = r is XBin && (r.op == '+' || r.op == '-');
+    if (isSum && !negR) {
       rr = plus ? rr : '\\left($rr\\right)';
+    } else if (!negR && !isSum && rr.startsWith('-')) {
+      // Producto o cociente con coeficiente negativo (`-2/x`): el signo pasa al operador.
+      rr = rr.substring(1);
+      flip = true;
     }
-    if (negR) return '$left ${plus ? '-' : '+'} $rr';
+    if (flip) return '$left ${plus ? '-' : '+'} $rr';
     return '$left ${plus ? '+' : '-'} $rr';
   }
 

@@ -131,7 +131,9 @@ class CasioCoefficientView extends StatelessWidget {
         5: '⁵',
         6: '⁶',
       };
-      final degree = (cellValues.length - 1).clamp(1, 6);
+      // Ultima celda = raiz r (opcional): dividir entre (x - r) con la regla de Ruffini.
+      final degree = (cellValues.length - 2).clamp(1, 6);
+      final coefCount = degree + 1;
 
       List<Widget> buildTermSlice(int start, int end, {bool includePrefix = false}) {
         final widgets = <Widget>[];
@@ -150,31 +152,48 @@ class CasioCoefficientView extends StatelessWidget {
         return widgets;
       }
 
-      if (degree <= 3) {
-        return Row(
+      final rootRow = Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Row(
+          key: const Key('ruffini_root_row'),
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
-          children: buildTermSlice(0, cellValues.length, includePrefix: true),
+          children: [
+            _mathSymbol('÷ (x − ', compact: true),
+            _buildCell(coefCount, compact: true),
+            _mathSymbol(')  ', compact: true),
+            _mathSymbol('(opcional ▶)', compact: true),
+          ],
+        ),
+      );
+
+      final Widget body;
+      if (degree <= 3) {
+        body = Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: buildTermSlice(0, coefCount, includePrefix: true),
+        );
+      } else {
+        final splitIdx = (coefCount + 1) ~/ 2;
+        body = Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: buildTermSlice(0, splitIdx, includePrefix: true),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: buildTermSlice(splitIdx, coefCount),
+            ),
+          ],
         );
       }
-
-      final splitIdx = (cellValues.length + 1) ~/ 2;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: buildTermSlice(0, splitIdx, includePrefix: true),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: buildTermSlice(splitIdx, cellValues.length),
-          ),
-        ],
-      );
+      return Column(mainAxisSize: MainAxisSize.min, children: [body, rootRow]);
     }
 
     if (mode == 3 && cellValues.length < 12) {

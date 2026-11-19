@@ -59,20 +59,23 @@ class System2x2SubstitutionSolver {
         ),
       );
 
-      steps.add(
-        MathStep(
-          index: 3,
-          shortTitle: '3. Resolver la ecuación para hallar x',
-          latexExpression: 'x = ${xRational.toLatex()}',
-          pedagogicalNote:
-              'Operamos los paréntesis, agrupamos los términos en x a la izquierda y despejamos su valor numérico.',
-        ),
-      );
+      steps.addAll(_solveSteps(
+        v: 'x',
+        start: steps.length + 1,
+        // y = k x + m  (de a1 x + b1 y = c1)
+        k: Rational(-a1, b1),
+        m: Rational(c1, b1),
+        // a2 x + b2 y = c2
+        own: Rational(a2),
+        other: Rational(b2),
+        c: Rational(c2),
+        value: xRational,
+      ));
 
       steps.add(
         MathStep(
-          index: 4,
-          shortTitle: '4. Calcular el valor de y',
+          index: steps.length + 1,
+          shortTitle: '${steps.length + 1}. Calcular el valor de y',
           latexExpression:
               'y = $yExprLatex = ${yRational.toLatex()}',
           pedagogicalNote:
@@ -120,20 +123,23 @@ class System2x2SubstitutionSolver {
         ),
       );
 
-      steps.add(
-        MathStep(
-          index: 3,
-          shortTitle: '3. Resolver la ecuación para hallar y',
-          latexExpression: 'y = ${yRational.toLatex()}',
-          pedagogicalNote:
-              'Agrupamos monomios semejantes y despejamos la variable y.',
-        ),
-      );
+      steps.addAll(_solveSteps(
+        v: 'y',
+        start: steps.length + 1,
+        // x = k y + m  (de a1 x + b1 y = c1)
+        k: Rational(-b1, a1),
+        m: Rational(c1, a1),
+        // a2 x + b2 y = c2
+        own: Rational(b2),
+        other: Rational(a2),
+        c: Rational(c2),
+        value: yRational,
+      ));
 
       steps.add(
         MathStep(
-          index: 4,
-          shortTitle: '4. Calcular el valor de x',
+          index: steps.length + 1,
+          shortTitle: '${steps.length + 1}. Calcular el valor de x',
           latexExpression:
               'x = $xExprLatex = ${xRational.toLatex()}',
           pedagogicalNote:
@@ -148,5 +154,63 @@ class System2x2SubstitutionSolver {
       exactResultLatex: 'x = ${xRational.toLatex()}, \\; y = ${yRational.toLatex()}',
       decimalApproxLatex: 'x = ${xRational.toDecimalLatex()}, \\; y = ${yRational.toDecimalLatex()}',
     );
+  }
+
+  /// `+ a x - b ...` con los terminos no nulos (`v == ''` es el termino independiente).
+  static String _terms(List<(Rational, String)> terms) {
+    final buf = StringBuffer();
+    for (final (c, v) in terms) {
+      if (c.isZero) continue;
+      final abs = c.abs();
+      final body = v.isEmpty ? abs.toLatex() : (abs == Rational(1) ? v : '${abs.toLatex()}$v');
+      if (buf.isEmpty) {
+        buf.write(c.isNegative ? '-$body' : body);
+      } else {
+        buf.write(c.isNegative ? ' - $body' : ' + $body');
+      }
+    }
+    return buf.isEmpty ? '0' : buf.toString();
+  }
+
+  /// Sustitucion hecha: `own·v + other·(k v + m) = c` -> quitar parentesis, agrupar y despejar `v`.
+  static List<MathStep> _solveSteps({
+    required String v,
+    required int start,
+    required Rational k,
+    required Rational m,
+    required Rational own,
+    required Rational other,
+    required Rational c,
+    required Rational value,
+  }) {
+    final expandedVar = other * k;
+    final expandedConst = other * m;
+    final coef = own + expandedVar;
+    final rhs = c - expandedConst;
+    final expanded = '${_terms([(own, v), (expandedVar, v), (expandedConst, '')])} = ${c.toLatex()}';
+    final grouped = '${_terms([(coef, v), (expandedConst, '')])} = ${c.toLatex()}';
+    final moved = '${_terms([(coef, v)])} = ${rhs.toLatex()}';
+    return [
+      MathStep(
+        index: start,
+        shortTitle: '$start. Quitar paréntesis',
+        latexExpression: expanded,
+        pedagogicalNote:
+            'Aplicamos la propiedad distributiva: multiplicamos el número de fuera por cada término del paréntesis (cuidado con los signos).',
+      ),
+      MathStep(
+        index: start + 1,
+        shortTitle: '${start + 1}. Agrupar y pasar los números al otro miembro',
+        latexExpression: '$grouped \\implies $moved',
+        pedagogicalNote:
+            'Sumamos los términos en $v y pasamos el término independiente al segundo miembro cambiándole el signo.',
+      ),
+      MathStep(
+        index: start + 2,
+        shortTitle: '${start + 2}. Despejar $v',
+        latexExpression: '$v = \\frac{${rhs.toLatex()}}{${coef.toLatex()}} = ${value.toLatex()}',
+        pedagogicalNote: 'Dividimos los dos miembros entre el coeficiente de $v.',
+      ),
+    ];
   }
 }

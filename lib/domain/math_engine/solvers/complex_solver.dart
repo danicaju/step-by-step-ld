@@ -7,6 +7,7 @@ import 'complex/complex_polar_solver.dart';
 export '../models/complex_models.dart';
 export 'complex/complex_arithmetic_solver.dart';
 export 'complex/complex_polar_solver.dart';
+export 'complex/complex_polar_radical.dart';
 
 /// Facade modular para operaciones con números complejos en 1.º de Bachillerato / PAU.
 /// Todas las APIs históricas se mantienen 100 % retrocompatibles.
@@ -29,6 +30,7 @@ class ComplexSolver {
           modulus: polarModulus ?? Rational(1),
           angleDegrees: polarAngleDegrees ?? 0,
         ),
+      ComplexOperation.powerOfI => powerOfI(z1.real.numerator),
     };
   }
 
@@ -50,6 +52,7 @@ class ComplexSolver {
       ComplexOperation.toPolar => analyzeToPolar(z1),
       ComplexOperation.fromPolar =>
         ComplexResult(resolution: fromPolar(modulus: z1.real, angleDegrees: z1.imag.toDouble())),
+      ComplexOperation.powerOfI => ComplexResult(resolution: powerOfI(z1.real.numerator)),
     };
   }
 

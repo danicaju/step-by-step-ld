@@ -8,7 +8,8 @@ enum ComplexOperation {
   multiply('z₁ · z₂'),
   divide('z₁ / z₂'),
   toPolar('a+bi → r_α'),
-  fromPolar('r_α → a+bi');
+  fromPolar('r_α → a+bi'),
+  powerOfI('iⁿ (potencia)');
 
   final String shortLabel;
   const ComplexOperation(this.shortLabel);
@@ -18,6 +19,9 @@ enum ComplexOperation {
       this == ComplexOperation.subtract ||
       this == ComplexOperation.multiply ||
       this == ComplexOperation.divide;
+
+  /// Indice de la ultima celda editable (potencia de i: solo el exponente n).
+  int get lastCellIndex => needsSecondComplex ? 3 : (this == ComplexOperation.powerOfI ? 0 : 1);
 }
 
 /// Número complejo exacto en forma binómica `a + bi` con coeficientes [Rational].

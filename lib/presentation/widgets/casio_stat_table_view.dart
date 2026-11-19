@@ -13,6 +13,9 @@ class CasioStatTableView extends StatefulWidget {
   final VoidCallback? onAddRow;
   final VoidCallback? onRemoveRow;
 
+  /// 2 variables (regresion): la segunda columna es `yᵢ` (sin frecuencia por defecto).
+  final bool twoVar;
+
   const CasioStatTableView({
     super.key,
     required this.rows,
@@ -22,6 +25,7 @@ class CasioStatTableView extends StatefulWidget {
     this.onCellTap,
     this.onAddRow,
     this.onRemoveRow,
+    this.twoVar = false,
   });
 
   @override
@@ -124,7 +128,7 @@ class _CasioStatTableViewState extends State<CasioStatTableView> {
                 Expanded(
                   child: Center(
                     child: Text(
-                      'fᵢ (Freq)',
+                      widget.twoVar ? 'yᵢ' : 'fᵢ (Freq)',
                       style: TextStyle(
                         color: headerText,
                         fontSize: 11,
@@ -193,7 +197,7 @@ class _CasioStatTableViewState extends State<CasioStatTableView> {
                         child: _buildCell(
                           key: Key('stat_cell_${index}_1'),
                           value: row.fi,
-                          placeholder: row.xi.trim().isNotEmpty ? '1' : '',
+                          placeholder: !widget.twoVar && row.xi.trim().isNotEmpty ? '1' : '',
                           isActive: isFiActive,
                           onTap: () => widget.onCellTap?.call(index, 1),
                         ),

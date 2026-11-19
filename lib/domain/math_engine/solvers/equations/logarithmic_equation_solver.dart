@@ -8,6 +8,7 @@ import '../exact/ext_expr.dart';
 import '../trig_and_angles_solver.dart';
 import 'eq_context.dart';
 import 'eq_poly.dart';
+import 'logarithmic_ratio_solver.dart';
 
 /// Ecuaciones logaritmicas: propiedades (suma, resta, potencia), definicion de
 /// logaritmo e inyectividad, con descarte obligatorio de argumentos <= 0.
@@ -84,6 +85,9 @@ class LogarithmicEquationSolver {
   static String _wrap(Poly p) => '\\left(${PolyOps.latex(p)}\\right)';
 
   static StepByStepResolution? solve(EqCtx c) {
+    // log(A)/log(B) = k: cambio de base y comprobacion del denominador.
+    final ratio = LogarithmicRatioSolver.solve(c);
+    if (ratio != null) return ratio;
     final items = <(int, XNode)>[];
     _terms(c.left, 1, items);
     _terms(c.right, -1, items);

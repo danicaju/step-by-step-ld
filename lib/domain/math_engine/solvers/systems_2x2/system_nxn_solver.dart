@@ -61,7 +61,7 @@ class SystemNxnSolver {
     steps.add(
       MathStep(
         index: 1,
-        shortTitle: 'Sistema de $n ecuaciones con $n incognitas planteado',
+        shortTitle: 'Gauss: sistema de $n ecuaciones con $n incógnitas',
         latexExpression: originalInputLatex,
         pedagogicalNote:
             'Planteamos el sistema con todas las incognitas (${varNames.join(", ")}) ordenadas a la izquierda y los terminos independientes a la derecha.',
@@ -108,7 +108,7 @@ class SystemNxnSolver {
         steps.add(
           MathStep(
             index: steps.length + 1,
-            shortTitle: 'Eliminar incognita ${varNames[k]} en las ecuaciones inferiores',
+            shortTitle: 'Gauss: eliminar la incógnita ${varNames[k]} en las ecuaciones inferiores',
             latexExpression:
                 '${elimNotes.join(", ")} \\implies \\begin{cases} ${remainingEqs.join(" \\\\ ")} \\end{cases}',
             pedagogicalNote:
@@ -153,7 +153,7 @@ class SystemNxnSolver {
     steps.add(
       MathStep(
         index: steps.length + 1,
-        shortTitle: 'Sustitucion hacia atras (Back-substitution)',
+        shortTitle: 'Gauss: sustitución hacia atrás',
         latexExpression: backSubNotes.join(', \\quad '),
         pedagogicalNote:
             'Despejamos desde la ultima ecuacion triangularizada y sustituimos progresivamente hacia arriba para hallar cada incognita.',

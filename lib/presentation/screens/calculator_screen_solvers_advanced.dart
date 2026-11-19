@@ -143,15 +143,23 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
   void _solveMode8TwoVar() {
     try {
       final pts = <TwoVarPoint>[];
+      final estimateXs = <Rational>[]; // fila con x y sin y = "estimar y para este x"
       for (int i = 0; i < _statRows.length; i++) {
         final row = _statRows[i];
         if (row.xi.trim().isEmpty && row.fi.trim().isEmpty) continue;
-        if (row.xi.trim().isEmpty || row.fi.trim().isEmpty) {
-          throw FormatException('Falta x o y en la fila ${i + 1}.');
+        if (row.xi.trim().isEmpty) {
+          throw FormatException('Falta x en la fila ${i + 1}.');
+        }
+        if (row.fi.trim().isEmpty) {
+          estimateXs.add(_parseStatRational(row.xi.trim()));
+          continue;
         }
         pts.add(TwoVarPoint(_parseStatRational(row.xi.trim()), _parseStatRational(row.fi.trim())));
       }
-      final res = StatisticsTwoVarSolver.analyze(pts).resolution;
+      final analysis = StatisticsTwoVarSolver.analyze(pts);
+      final res = estimateXs.isEmpty
+          ? analysis.resolution
+          : StatisticsTwoVarSolver.withEstimates(analysis, pts, estimateXs);
       updateState(() {
         _activeResolution = res;
       });
@@ -280,6 +288,28 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
 
   void _solveMode11() {
       try {
+        if (_complexOp == ComplexOperation.powerOfI) {
+          final n = int.tryParse(_complexCells[0].trim());
+          if (n == null || n < 0) {
+            _showLcdError('El exponente n de i^n debe ser un entero no negativo (ej: 2026).');
+            return;
+          }
+          final res = ComplexSolver.powerOfI(n);
+          updateState(() => _activeResolution = res);
+          _recordCurrentResolutionToHistory(res, 'M11: Complejos (potencia de i)');
+          return;
+        }
+        // a+bi → r_α con radicales (`-1 + √3 i`): modulo y angulo exactos.
+        if (_complexOp == ComplexOperation.toPolar && (_complexCells[0].contains('√') || _complexCells[1].contains('√'))) {
+          RadicalPart part(String raw) {
+            if (!raw.contains('√')) return RadicalPart(_parseRationalCell(raw, defaultValue: Rational(0)));
+            return RadicalPart.parse(raw) ?? (throw const FormatException('Radical no válido: escribe √n, k√n o -k√n (ej: 2√3).'));
+          }
+          final res = ComplexPolarRadical.toPolar(part(_complexCells[0]), part(_complexCells[1]));
+          updateState(() => _activeResolution = res);
+          _recordCurrentResolutionToHistory(res, 'M11: Complejos (${_complexOp.shortLabel})');
+          return;
+        }
         final a1 = _parseRationalCell(_complexCells[0], defaultValue: Rational(0));
         final b1 = _parseRationalCell(_complexCells[1], defaultValue: Rational(0));
         final a2 = _parseRationalCell(_complexCells[2], defaultValue: Rational(0));

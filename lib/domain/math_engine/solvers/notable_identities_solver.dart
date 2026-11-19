@@ -1,9 +1,14 @@
+import 'dart:math' as math;
 import '../models/step_resolution.dart';
+import 'notable_identities_extra.dart';
 
 enum NotableIdentityType {
   squareOfSum('Cuadrado de una suma: (a + b)²'),
   squareOfDiff('Cuadrado de una resta: (a - b)²'),
-  sumTimesDiff('Suma por diferencia: (a + b)(a - b)');
+  sumTimesDiff('Suma por diferencia: (a + b)(a - b)'),
+  cubeOfSum('Cubo de una suma: (a + b)³'),
+  cubeOfDiff('Cubo de una resta: (a - b)³'),
+  differenceOfSquares('Diferencia de cuadrados: a² - b² = (a + b)(a - b)');
 
   final String displayName;
   const NotableIdentityType(this.displayName);
@@ -21,6 +26,20 @@ class NotableIdentitiesSolver {
     }
     if (bConst == 0) {
       throw ArgumentError('El término independiente no puede ser cero.');
+    }
+
+    switch (type) {
+      case NotableIdentityType.cubeOfSum:
+      case NotableIdentityType.cubeOfDiff:
+        return NotableIdentitiesExtra.cube(
+          minus: type == NotableIdentityType.cubeOfDiff,
+          a: aCoeff.abs(),
+          b: bConst.abs(),
+        );
+      case NotableIdentityType.differenceOfSquares:
+        return NotableIdentitiesExtra.differenceOfSquares(a: aCoeff.abs(), b: bConst.abs());
+      default:
+        break;
     }
 
     final int a = aCoeff.abs();
@@ -118,6 +137,11 @@ class NotableIdentitiesSolver {
         );
         break;
 
+      case NotableIdentityType.cubeOfSum:
+      case NotableIdentityType.cubeOfDiff:
+      case NotableIdentityType.differenceOfSquares:
+        throw StateError('Caso resuelto antes del switch.');
+
       case NotableIdentityType.sumTimesDiff:
         originalLatex = '($aStr + $b)($aStr - $b)';
         exactResultLatex = '$a2Term - $bSquared';
@@ -172,6 +196,35 @@ class NotableIdentitiesSolver {
     String s = expression.replaceAll(' ', '');
     if (s.isEmpty || s == '0') {
       throw const FormatException('Expresión de identidad notable vacía');
+    }
+
+    // Cubo de un binomio: (ax ± b)^3
+    final cubeMatch = RegExp(r'^\(([+-]?\d*)x([+-]\d+)\)(?:\^3|³)$', caseSensitive: false).firstMatch(s);
+    if (cubeMatch != null) {
+      final aStr = cubeMatch.group(1)!;
+      final bVal = int.tryParse(cubeMatch.group(2)!) ?? 1;
+      final a = (aStr.isEmpty || aStr == '+' || aStr == '-') ? 1 : (int.tryParse(aStr) ?? 1).abs();
+      return solve(
+        type: bVal < 0 ? NotableIdentityType.cubeOfDiff : NotableIdentityType.cubeOfSum,
+        aCoeff: a == 0 ? 1 : a,
+        bConst: bVal.abs() == 0 ? 1 : bVal.abs(),
+      );
+    }
+
+    // Diferencia de cuadrados a^2 x^2 - b^2 (factorizar)
+    final diffSquares = RegExp(r'^([+-]?\d*)x(?:\^2|²)-(\d+)$', caseSensitive: false).firstMatch(s);
+    if (diffSquares != null) {
+      final aStr = diffSquares.group(1)!;
+      final a2 = (aStr.isEmpty || aStr == '+') ? 1 : (int.tryParse(aStr) ?? 0);
+      final b2 = int.tryParse(diffSquares.group(2)!) ?? 0;
+      int root(int n) => n <= 0 ? -1 : (math.sqrt(n).round());
+      final a = root(a2), b = root(b2);
+      if (a <= 0 || b <= 0 || a * a != a2 || b * b != b2) {
+        throw const FormatException(
+          'No es una diferencia de cuadrados: los dos términos deben ser cuadrados perfectos (ej: 9x² - 25 = (3x)² - 5²).',
+        );
+      }
+      return solve(type: NotableIdentityType.differenceOfSquares, aCoeff: a, bConst: b);
     }
 
     // Normalizar potencias como ^2 o ²

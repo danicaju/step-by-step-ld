@@ -129,7 +129,10 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
           }
           final cells = _currentCellValues;
           final idx = _currentActiveIndex;
-          if (idx < cells.length - 1) {
+          // Ruffini: la celda `r` (dividir entre x - r) es opcional y se alcanza con ▶:
+          // `=` en el ultimo coeficiente ya resuelve.
+          final lastIdx = _calculatorMode == 4 ? cells.length - 2 : cells.length - 1;
+          if (idx < lastIdx) {
             _currentActiveIndex = idx + 1;
           } else {
             // Última celda -> resolver

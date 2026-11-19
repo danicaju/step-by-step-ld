@@ -3,6 +3,7 @@ import '../../core/rational.dart';
 import '../../models/step_resolution.dart';
 import '../radical_and_factor_solver.dart';
 import '../../models/complex_models.dart';
+import 'notable_trig.dart';
 
 /// Solver didáctico especializado en Forma Polar y Potencias de i
 /// para 1.º de Bachillerato / PAU.
@@ -188,7 +189,7 @@ class ComplexPolarSolver {
         : '${_formatLatexDec(normAngle, decimals: 2)}^{\\circ}';
 
     // Valores exactos para ángulos múltiples de 30° o 45°
-    final exactTrig = angleInt != null ? _notableCosSinLatex(angleInt) : null;
+    final exactTrig = angleInt != null ? NotableTrigTable.of(angleInt) : null;
 
     final String exactLatex;
     final String step2Latex;
@@ -352,99 +353,6 @@ class ComplexPolarSolver {
     if (ratio == Rational(1)) return 45;
     if (ratio == Rational(-1)) return -45;
     return null;
-  }
-
-  static ({
-    Rational? rationalCos,
-    Rational? rationalSin,
-    String cosLatex,
-    String sinLatex,
-    Rational cosRadCoeff,
-    int cosRad,
-    Rational sinRadCoeff,
-    int sinRad,
-  })? _notableCosSinLatex(int deg) {
-    switch (deg % 360) {
-      case 0:
-        return (
-          rationalCos: Rational(1),
-          rationalSin: Rational(0),
-          cosLatex: '1',
-          sinLatex: '0',
-          cosRadCoeff: Rational(1),
-          cosRad: 1,
-          sinRadCoeff: Rational(0),
-          sinRad: 1,
-        );
-      case 90:
-        return (
-          rationalCos: Rational(0),
-          rationalSin: Rational(1),
-          cosLatex: '0',
-          sinLatex: '1',
-          cosRadCoeff: Rational(0),
-          cosRad: 1,
-          sinRadCoeff: Rational(1),
-          sinRad: 1,
-        );
-      case 180:
-        return (
-          rationalCos: Rational(-1),
-          rationalSin: Rational(0),
-          cosLatex: '-1',
-          sinLatex: '0',
-          cosRadCoeff: Rational(-1),
-          cosRad: 1,
-          sinRadCoeff: Rational(0),
-          sinRad: 1,
-        );
-      case 270:
-        return (
-          rationalCos: Rational(0),
-          rationalSin: Rational(-1),
-          cosLatex: '0',
-          sinLatex: '-1',
-          cosRadCoeff: Rational(0),
-          cosRad: 1,
-          sinRadCoeff: Rational(-1),
-          sinRad: 1,
-        );
-      case 45:
-        return (
-          rationalCos: null,
-          rationalSin: null,
-          cosLatex: r'\frac{\sqrt{2}}{2}',
-          sinLatex: r'\frac{\sqrt{2}}{2}',
-          cosRadCoeff: Rational(1, 2),
-          cosRad: 2,
-          sinRadCoeff: Rational(1, 2),
-          sinRad: 2,
-        );
-      case 30:
-        return (
-          rationalCos: null,
-          rationalSin: Rational(1, 2),
-          cosLatex: r'\frac{\sqrt{3}}{2}',
-          sinLatex: r'\frac{1}{2}',
-          cosRadCoeff: Rational(1, 2),
-          cosRad: 3,
-          sinRadCoeff: Rational(1, 2),
-          sinRad: 1,
-        );
-      case 60:
-        return (
-          rationalCos: Rational(1, 2),
-          rationalSin: null,
-          cosLatex: r'\frac{1}{2}',
-          sinLatex: r'\frac{\sqrt{3}}{2}',
-          cosRadCoeff: Rational(1, 2),
-          cosRad: 1,
-          sinRadCoeff: Rational(1, 2),
-          sinRad: 3,
-        );
-      default:
-        return null;
-    }
   }
 
   static String _multiplyRationalByRadicalExpr(Rational m, Rational coeff, int rad) {

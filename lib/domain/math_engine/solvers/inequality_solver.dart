@@ -7,6 +7,7 @@ import 'inequalities/inequality_parsing_helper.dart';
 import 'inequalities/linear_inequality_1d_solver.dart';
 import 'inequalities/quadratic_inequality_solver.dart';
 import 'inequalities/rational_abs_inequality_solver.dart';
+import 'inequalities/rational_inequality_solver.dart';
 import 'inequalities/inequality_system_1d_solver.dart';
 
 export 'inequalities/inequality_sign.dart';
@@ -14,6 +15,7 @@ export 'inequalities/inequality_parsing_helper.dart';
 export 'inequalities/linear_inequality_1d_solver.dart';
 export 'inequalities/quadratic_inequality_solver.dart';
 export 'inequalities/rational_abs_inequality_solver.dart';
+export 'inequalities/rational_inequality_solver.dart';
 export 'inequalities/inequality_system_1d_solver.dart';
 export '../models/inequality_models.dart';
 
@@ -25,12 +27,35 @@ class InequalitySolver {
       RationalAbsInequalitySolver.visualDataExpando[res] ??
       InequalitySystem1DSolver.visualDataExpando[res];
 
+  /// `Abs(expr)` -> `|expr|` (la tecla Abs( escribe la funcion; el solver de valor absoluto usa barras).
+  static String _absToBars(String s) {
+    var out = s;
+    while (true) {
+      final i = out.indexOf('Abs(');
+      if (i < 0) return out;
+      var depth = 0;
+      var end = -1;
+      for (var k = i + 3; k < out.length; k++) {
+        if (out[k] == '(') depth++;
+        if (out[k] == ')') {
+          depth--;
+          if (depth == 0) {
+            end = k;
+            break;
+          }
+        }
+      }
+      final inner = out.substring(i + 4, end < 0 ? out.length : end);
+      out = '${out.substring(0, i)}|$inner|${end < 0 ? '' : out.substring(end + 1)}';
+    }
+  }
+
   /// Resuelve una inecuación escrita como cadena de texto (de 1.º, 2.º grado o con valor absoluto).
   static StepByStepResolution solveString(
     String rawInput, {
     InequalitySign? fallbackSign,
   }) {
-    final cleaned = rawInput
+    final cleaned = _absToBars(rawInput)
         .replaceAll(' ', '')
         .replaceAll(r'\cdot', '*')
         .replaceAll(r'\times', '*')
@@ -54,6 +79,12 @@ class InequalitySolver {
     final lhs = split.lhs;
     final rhs = split.rhs;
     final sign = split.sign;
+
+    // Racional: x en algun denominador -> tabla de signos.
+    if (RationalInequalitySolver.isRational(lhs, rhs)) {
+      final rational = RationalInequalitySolver.solve(lhs, rhs, sign);
+      if (rational != null) return rational;
+    }
 
     // Detectar si contiene grado 2 (x^2)
     if (lhs.contains('x^2') || rhs.contains('x^2')) {

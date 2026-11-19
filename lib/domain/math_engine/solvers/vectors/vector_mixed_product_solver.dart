@@ -43,7 +43,14 @@ class VectorMixedProductSolver {
           latexExpression: 'V = \\left|${value.toLatex()}\\right| = ${volume.toLatex()}\\;u^{3}',
           pedagogicalNote: value.isZero
               ? 'Producto mixto 0: los tres vectores son coplanarios (volumen nulo).'
-              : 'El volumen es el valor absoluto del producto mixto.',
+              : 'El volumen del paralelepípedo es el valor absoluto del producto mixto.',
+        ),
+        MathStep(
+          index: 4,
+          shortTitle: 'Paso 4: Volumen del tetraedro',
+          latexExpression:
+              'V_{tetraedro} = \\frac{|[u,v,w]|}{6} = \\frac{${volume.toLatex()}}{6} = ${(volume / Rational(6)).toLatex()}\\;u^{3}',
+          pedagogicalNote: 'El tetraedro que forman los tres vectores es la sexta parte del paralelepípedo.',
         ),
       ],
       exactResultLatex: '[\\vec{u}, \\vec{v}, \\vec{w}] = ${value.toLatex()}',

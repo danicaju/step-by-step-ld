@@ -47,6 +47,8 @@ class CasioComplexEditorView extends StatelessWidget {
               child: _tex(
                 selectedOperation == ComplexOperation.fromPolar
                     ? r'\text{Polar } r_{\alpha} \rightarrow \text{ Binomica } a + bi'
+                    : selectedOperation == ComplexOperation.powerOfI
+                    ? r'\text{Potencias de la unidad imaginaria } i^{n}'
                     : (selectedOperation == ComplexOperation.toPolar
                         ? r'\text{Binomica } a + bi \rightarrow \text{ Polar } r_{\alpha}'
                         : r'\text{Forma binomica } a + bi'),
@@ -65,6 +67,8 @@ class CasioComplexEditorView extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: selectedOperation == ComplexOperation.fromPolar
                   ? _buildPolarRow(textColor)
+                  : selectedOperation == ComplexOperation.powerOfI
+                  ? _buildPowerRow(textColor)
                   : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -169,6 +173,23 @@ class CasioComplexEditorView extends StatelessWidget {
         textStyle: TextStyle(fontSize: size, color: color, fontWeight: FontWeight.w800),
         onErrorFallback: (_) => Text(latex, style: TextStyle(fontSize: size, color: color)),
       ),
+    );
+  }
+
+  /// Potencia de la unidad imaginaria: `i^[n]`.
+  Widget _buildPowerRow(Color textColor) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'i',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: textColor),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14, left: 2),
+          child: _buildNumCell(index: 0, hint: 'n'),
+        ),
+      ],
     );
   }
 

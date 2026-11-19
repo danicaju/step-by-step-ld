@@ -125,4 +125,43 @@ class StatisticsTwoVarSolver {
 
   static StepByStepResolution solve(List<TwoVarPoint> points) =>
       analyze(points).resolution;
+
+  /// Anade a la regresion la estimacion `ŷ(x0) = m·x0 + n` para cada x pedido (fila con x y sin y).
+  static StepByStepResolution withEstimates(
+    StatisticsTwoVarResult r,
+    List<TwoVarPoint> points,
+    List<Rational> xs,
+  ) {
+    final m = r.slopeM, n = r.interceptN;
+    if (xs.isEmpty || m == null || n == null) return r.resolution;
+    final minX = points.map((p) => p.x.toDouble()).reduce(math.min);
+    final maxX = points.map((p) => p.x.toDouble()).reduce(math.max);
+    final steps = List<MathStep>.of(r.resolution.steps);
+    final results = <String>[];
+    for (final x0 in xs) {
+      final y0 = m * x0 + n;
+      final outside = x0.toDouble() < minX || x0.toDouble() > maxX;
+      results.add('\\hat{y}(${x0.toLatex()}) = ${y0.toLatex()}');
+      steps.add(
+        MathStep(
+          index: steps.length + 1,
+          shortTitle: 'Paso ${steps.length + 1}: Estimación de y para x = ${x0.toLatex()}',
+          latexExpression:
+              '\\hat{y}(${x0.toLatex()}) = ${m.toLatex()} \\cdot ${x0.isNegative ? '\\left(${x0.toLatex()}\\right)' : x0.toLatex()} ${n.isNegative ? '-' : '+'} ${n.abs().toLatex()} = ${y0.toLatex()}',
+          pedagogicalNote:
+              'Sustituimos el valor de x en la recta de regresión y = mx + n para predecir y.',
+          warningTrick: outside
+              ? 'Cuidado: x = ${x0.toLatex()} está fuera del rango de los datos (${minX.toStringAsFixed(0)} a ${maxX.toStringAsFixed(0)}); es una extrapolación y la predicción es menos fiable.'
+              : 'x = ${x0.toLatex()} está dentro del rango de los datos (interpolación): la estimación es fiable si r es cercano a ±1.',
+        ),
+      );
+    }
+    final reg = r.resolution.exactResultLatex;
+    return StepByStepResolution(
+      originalInputLatex: r.resolution.originalInputLatex,
+      steps: steps,
+      exactResultLatex: '$reg,\\; ${results.join(',\\; ')}',
+      decimalApproxLatex: r.resolution.decimalApproxLatex,
+    );
+  }
 }

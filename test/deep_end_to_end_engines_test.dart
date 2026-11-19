@@ -215,7 +215,7 @@ void main() {
     test('derivadas', () {
       expect(d('x^3'), r"f'(x) = 3x^{2}");
       expect(d('sin(3x^2)'), r"f'(x) = 6x\cos\left(3x^{2}\right)");
-      expect(d('x*e^x'), r"f'(x) = e^{x} + xe^{x}");
+      expect(d('x*e^x'), r"f'(x) = \left(x + 1\right)e^{x}");
       expect(d('(x+1)/(x-1)'), contains(r'\frac'));
       expect(d('ln(x^2+1)'), r"f'(x) = \frac{2x}{x^{2} + 1}");
       final t = CalculusSolver.solve(

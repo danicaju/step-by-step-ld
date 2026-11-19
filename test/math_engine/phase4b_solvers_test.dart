@@ -98,7 +98,8 @@ void main() {
       );
 
       expect(res.exactResultLatex, equals(r'x = 3, \; y = 1'));
-      expect(res.steps.length, equals(4));
+      // Despejar, sustituir, quitar paréntesis, agrupar, despejar x y calcular y.
+      expect(res.steps.length, equals(6));
 
       // Paso 1: Despejar y en la 1.ª ecuación
       expect(res.steps[0].shortTitle, contains('Despejar una incógnita'));
@@ -108,11 +109,12 @@ void main() {
       expect(res.steps[1].shortTitle, contains('Sustituir en la otra ecuación'));
       expect(res.steps[1].latexExpression, contains(r'\textcolor{#2563EB}'));
 
-      // Paso 3: Hallar x
-      expect(res.steps[2].latexExpression, contains('x = 3'));
+      // Pasos 3-5: quitar paréntesis, agrupar y despejar x (sin saltos)
+      expect(res.steps[2].shortTitle, contains('Quitar paréntesis'));
+      expect(res.steps[4].latexExpression, endsWith('= 3'));
 
-      // Paso 4: Hallar y
-      expect(res.steps[3].latexExpression, contains('y = 7 - 2x = 1'));
+      // Paso 6: Hallar y
+      expect(res.steps[5].latexExpression, contains('y = 7 - 2x = 1'));
     });
 
     test('Método de Igualación: 2x + y = 7, x - y = 2 => x = 3, y = 1', () {

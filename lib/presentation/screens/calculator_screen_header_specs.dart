@@ -310,7 +310,8 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
         prefix: 'Método',
         value: methods.contains(_systemMethod) ? _systemMethod.index : methods.first.index,
         items: [
-          for (final m in methods) LcdDropdownItem(value: m.index, label: labels[m]!),
+          for (final m in methods)
+            LcdDropdownItem(value: m.index, label: labels[m]!, key: Key('sys_method_${m.name}')),
         ],
         onSelect: (i) {
           _systemMethod = SystemResolutionMethod.values[i];
@@ -365,14 +366,14 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
           value: _identityType.index,
           items: [
             for (final t in NotableIdentityType.values)
-              LcdDropdownItem(value: t.index, label: _identityLabel(t)),
+              LcdDropdownItem(value: t.index, label: _identityLabel(t), key: Key('identity_${t.name}')),
           ],
           onSelect: (i) {
             _identityType = NotableIdentityType.values[i];
             _activeResolution = null;
             _activeStepIndex = 0;
             _rawInput = _identityTemplate(_identityType);
-            _cursorPos = 1;
+            _cursorPos = _rawInput.isEmpty ? 0 : 1;
             _replayIndex = -1;
           },
         ),

@@ -21,7 +21,7 @@ void main() {
       'sqrt(x)': r"f'(x) = \frac{1}{2\sqrt{x}}",
       '1/x': r"f'(x) = -\frac{1}{x^{2}}",
       '1/x^3': r"f'(x) = -\frac{3}{x^{4}}",
-      'x*e^x': r"f'(x) = e^{x} + xe^{x}",
+      'x*e^x': r"f'(x) = \left(x + 1\right)e^{x}",
       'sin(x)/x': r"f'(x) = \frac{x\cos\left(x\right) - \sin\left(x\right)}{x^{2}}",
       'sin(3x^2)': r"f'(x) = 6x\cos\left(3x^{2}\right)",
       'e^(2x)': r"f'(x) = 2e^{2x}",

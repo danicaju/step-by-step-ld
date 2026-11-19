@@ -29,11 +29,14 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
           NotableIdentityType.squareOfSum => 'Escribe (a + b)², ej: (2x + 3)², y pulsa =',
           NotableIdentityType.squareOfDiff => 'Escribe (a - b)², ej: (x - 4)², y pulsa =',
           NotableIdentityType.sumTimesDiff => 'Escribe (a + b)(a - b), ej: (x + 2)(x - 2), y pulsa =',
+          NotableIdentityType.cubeOfSum => 'Escribe (a + b)³, ej: (x + 2)³, y pulsa =',
+          NotableIdentityType.cubeOfDiff => 'Escribe (a - b)³, ej: (2x - 1)³, y pulsa =',
+          NotableIdentityType.differenceOfSquares => 'Escribe a²x² - b², ej: 9x² - 25, y pulsa = para factorizar',
         };
       }
       return _isChoosingRuffiniDegree
           ? 'Elige grado (2.º–6.º): toca una tarjeta, pulsa 2..6 o ◀ ▶ + ='
-          : 'Rellena ${_ruffiniDegree + 1} coef. (0 si falta grado) y pulsa =';
+          : 'Rellena ${_ruffiniDegree + 1} coef. (0 si falta grado) y pulsa =; o ▶ a r y = para dividir entre (x − r)';
     }
     if (_calculatorMode == 6) {
       if (_ineqDegree == 1) {
@@ -41,7 +44,7 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
       } else if (_ineqDegree == 2) {
         return 'Escribe inecuación de 2.º grado (ej: 2x² + 5x > 4) y pulsa =';
       } else {
-        return 'Teclea valor absoluto o racional (ej: |x - 5| < 3) y pulsa =';
+        return 'Valor absoluto (SHIFT+OPTN → |x|, ej: |x - 5| < 3) o racional (ej: (x-2)/(x+1) ≥ 0) y pulsa =';
       }
     }
     if (_calculatorMode == 7) {
@@ -51,7 +54,7 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
     }
     if (_calculatorMode == 8) {
       return switch (_cw.x.m8View) {
-        1 => 'Introduce xi e yi, muévete con D-Pad ◀ ▶ ▲ ▼ y pulsa = para la regresión',
+        1 => 'Introduce xi e yi (D-Pad ◀ ▶ ▲ ▼) y pulsa =. Para estimar ŷ: una fila con x y sin y',
         2 => 'Rellena μ, σ y a (◀ ▶ en la barra cambia P(X ≤ a)); avanza con ▶ y pulsa =',
         3 => 'Rellena n, p y k (◀ ▶ en la barra cambia P(X = k)); avanza con ▶ y pulsa =',
         _ => 'Introduce xi/fi, muévete con D-Pad ◀ ▶ ▲ ▼ y pulsa = para calcular',
@@ -90,6 +93,9 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
           NotableIdentityType.squareOfSum => '(A + B)² = A² + 2AB + B²',
           NotableIdentityType.squareOfDiff => '(A - B)² = A² - 2AB + B²',
           NotableIdentityType.sumTimesDiff => '(A + B)(A - B) = A² - B²',
+          NotableIdentityType.cubeOfSum => '(A + B)³ = A³ + 3A²B + 3AB² + B³',
+          NotableIdentityType.cubeOfDiff => '(A - B)³ = A³ - 3A²B + 3AB² - B³',
+          NotableIdentityType.differenceOfSquares => 'A² - B² = (A + B)(A - B)',
         };
       }
       return _isChoosingRuffiniDegree

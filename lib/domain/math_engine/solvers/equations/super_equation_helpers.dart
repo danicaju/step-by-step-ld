@@ -51,6 +51,8 @@ class SuperEquationHelpers {
         .replaceAll(r'\times', '*')
         .replaceAll('²', '^2')
         .replaceAll('³', '^3')
+        // `x^(4)` (plantilla de exponente del editor) -> `x^4` para reconocer las bicuadradas.
+        .replaceAllMapped(RegExp(r'\^\((\d+)\)'), (m) => '^${m[1]}')
         .replaceAll('X', 'x');
   }
 

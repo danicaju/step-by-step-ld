@@ -156,6 +156,14 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
   }
 
   void _complexInsertToken(String token) {
+    if (token == '√') {
+      // Radical en la celda (solo a+bi → r_α): `√3`, `2√3`, `-√3`. Una sola raiz por celda.
+      final cur = _complexCells[_complexActiveIndex];
+      if (_complexOp == ComplexOperation.toPolar && !cur.contains('√') && !cur.contains('/') && !cur.contains('.')) {
+        _complexCells[_complexActiveIndex] = '$cur√';
+      }
+      return;
+    }
     _complexCells[_complexActiveIndex] = _appendTokenToNumericCell(
       _complexCells[_complexActiveIndex],
       token,
@@ -170,7 +178,7 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
   }
 
   void _complexAdvanceOnEquals() {
-    final maxIdx = _complexOp.needsSecondComplex ? 3 : 1;
+    final maxIdx = _complexOp.lastCellIndex;
     if (_complexActiveIndex < maxIdx) {
       _complexActiveIndex++;
     } else {
@@ -179,7 +187,7 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
   }
 
   void _complexMoveDpad({required int dRow, required int dCol}) {
-    final maxIdx = _complexOp.needsSecondComplex ? 3 : 1;
+    final maxIdx = _complexOp.lastCellIndex;
     if (dCol < 0 && _complexActiveIndex > 0) {
       _complexActiveIndex--;
     } else if (dCol > 0 && _complexActiveIndex < maxIdx) {

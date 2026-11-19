@@ -104,6 +104,7 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                             _statActiveCol = c;
                                           });
                                         },
+                                        twoVar: _cw.x.m8View == 1,
                                         onAddRow: _statAddRow,
                                         onRemoveRow: _statRemoveRow,
                                       )
@@ -136,6 +137,9 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                               updateState(() {
                                                 _activeResolution = null;
                                                 _matrixActiveTarget = target;
+                                                // Al cambiar de matriz el cursor vuelve a la primera celda.
+                                                _matrixActiveRow = 0;
+                                                _matrixActiveCol = 0;
                                               });
                                             },
                                             onUpdateDimensions:

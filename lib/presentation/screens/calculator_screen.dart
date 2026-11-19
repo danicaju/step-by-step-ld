@@ -59,6 +59,8 @@ import '../widgets/modes/inequality_system_editor_view.dart';
 import 'classwiz_state.dart';
 import '../widgets/solar_panel.dart';
 import '../utils/cell_fraction_editor.dart';
+import '../../domain/math_engine/solvers/systems_2x2/system_2x2_fractions.dart';
+import '../../domain/math_engine/solvers/ruffini_division.dart';
 
 part 'calculator_screen_optn.dart';
 part 'calculator_screen_lcd_error.dart';
@@ -179,19 +181,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   final GlobalKey _lcdBoundsKey = GlobalKey();
   final Map<String, LcdDropdownController> _hdrCtrls = {};
   int _headerFocus = -1; // foco D-Pad en desplegables de cabecera LCD (-1 = ninguno)
-  static const List<String> _allRuffiniLabels = [
-    'a',
-    'b',
-    'c',
-    'd',
-    'e',
-    'f',
-    'g',
-  ];
+  static const List<String> _allRuffiniLabels = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
   int _ruffiniDegree = 3;
   bool _isChoosingRuffiniDegree = false;
-  List<String> _ruffiniValues = ['', '', '', ''];
-  List<String> _ruffiniLabels = ['a', 'b', 'c', 'd'];
+  // Coeficientes + una celda final `r` opcional (dividir entre x - r).
+  List<String> _ruffiniValues = ['', '', '', '', ''];
+  List<String> _ruffiniLabels = ['a', 'b', 'c', 'd', 'r'];
   int _ruffiniActiveIndex = 0;
   NotableIdentityType _identityType = NotableIdentityType.squareOfDiff;
 
