@@ -32,6 +32,7 @@ import '../../core/input/physical_keyboard_handler.dart';
 import '../theme/calculator_themes.dart';
 import '../painters/graph_viewport_controller.dart';
 import '../painters/system_lines_data.dart';
+import '../theme/theme_contrast.dart';
 import '../theme/theme_controller.dart';
 import '../widgets/system_lines_graph.dart';
 import '../utils/expr_cursor_nav.dart';

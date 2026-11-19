@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/math_engine/models/step_resolution.dart';
 import '../../domain/services/ai_tutor_service.dart';
+import '../theme/theme_contrast.dart';
+import '../theme/theme_controller.dart';
 import 'casio_lcd_screen.dart';
 import 'safe_math.dart';
 
@@ -20,13 +22,14 @@ class AiTutorSheet extends StatefulWidget {
     required StepByStepResolution resolution,
     required int stepIndex,
   }) {
+    final hw = ThemeController.current;
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1C1E22),
-      shape: const RoundedRectangleBorder(
+      backgroundColor: hw.panelBg,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        side: BorderSide(color: Color(0xFF7C5CFF), width: 1.5),
+        side: BorderSide(color: hw.panelAccentText, width: 1.5),
       ),
       builder: (ctx) => AiTutorSheet(
         resolution: resolution,
@@ -80,6 +83,7 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final hw = ThemeController.current;
     final validIndex =
         widget.stepIndex.clamp(0, widget.resolution.steps.length - 1);
     final MathStep step = widget.resolution.steps[validIndex];
@@ -98,7 +102,7 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
               width: 44,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFF7C5CFF).withValues(alpha: 0.4),
+                color: hw.panelAccentText.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -111,13 +115,13 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                   Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF7C5CFF).withValues(alpha: 0.2),
+                      color: hw.panelAccentText.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF7C5CFF)),
+                      border: Border.all(color: hw.panelAccentText),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.auto_awesome,
-                      color: Color(0xFF7C5CFF),
+                      color: hw.panelAccentText,
                       size: 20,
                     ),
                   ),
@@ -128,10 +132,10 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                       children: [
                         Row(
                           children: [
-                            const Text(
+                            Text(
                               'TUTOR IA SOCRÁTICO',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: hw.panelText,
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.8,
@@ -144,8 +148,8 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                                     horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: _diagnosis!.isCloudAi
-                                      ? const Color(0xFF4C1D95)
-                                      : const Color(0xFF134E4A),
+                                      ? hw.panelCard
+                                      : hw.panelCard,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -154,8 +158,8 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                                       : 'Motor Local ESO',
                                   style: TextStyle(
                                     color: _diagnosis!.isCloudAi
-                                        ? const Color(0xFFD8B4FE)
-                                        : const Color(0xFF5EEAD4),
+                                        ? hw.panelAccentText
+                                        : hw.panelAccentText,
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -165,8 +169,8 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                         ),
                         Text(
                           'Paso ${step.index} de ${widget.resolution.steps.length}: ${step.shortTitle}',
-                          style: const TextStyle(
-                            color: Color(0xFF94A3B8),
+                          style: TextStyle(
+                            color: hw.panelMuted,
                             fontSize: 12,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -175,13 +179,13 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white60),
+                    icon: Icon(Icons.close, color: hw.panelText),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
             ),
-            const Divider(color: Color(0xFF334155), height: 16),
+            Divider(color: hw.panelBorder, height: 16),
 
             // Contenido con scroll
             Expanded(
@@ -196,17 +200,17 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A),
+                        color: hw.panelCard,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFF334155)),
+                        border: Border.all(color: hw.panelBorder),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'OPERACIÓN ANALIZADA',
                             style: TextStyle(
-                              color: Color(0xFF64748B),
+                              color: hw.panelMuted,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.0,
@@ -218,9 +222,9 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                               scrollDirection: Axis.horizontal,
                               child: SafeMath.tex(
                                 CasioLcdScreen.sanitizeForMathTex(step.latexExpression),
-                                textStyle: const TextStyle(
+                                textStyle: TextStyle(
                                   fontSize: 22,
-                                  color: Color(0xFFF8FAFC),
+                                  color: hw.panelText,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -233,18 +237,18 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
 
                     // Estado de carga o tarjetas de diagnóstico
                     if (_isLoading)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.symmetric(vertical: 40.0),
                         child: Column(
                           children: [
                             CircularProgressIndicator(
-                              color: Color(0xFF7C5CFF),
+                              color: hw.panelAccentText,
                             ),
                             SizedBox(height: 14),
                             Text(
                               'El Tutor IA está analizando tu paso con método socrático...',
                               style: TextStyle(
-                                color: Color(0xFF94A3B8),
+                                color: hw.panelMuted,
                                 fontSize: 13,
                               ),
                             ),
@@ -255,24 +259,24 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                       // 1. Tarjeta Pregunta Socrática
                       _DiagnosisCard(
                         icon: Icons.psychology_outlined,
-                        iconColor: const Color(0xFFA78BFA),
-                        bgColor: const Color(0xFF231F33),
-                        borderColor: const Color(0xFF7C5CFF),
+                        iconColor: hw.panelAccentText,
+                        bgColor: hw.panelCard,
+                        borderColor: hw.panelAccentText,
                         title: 'Pregunta para reflexionar',
                         content: _diagnosis!.socraticQuestion,
-                        contentColor: const Color(0xFFF3E8FF),
+                        contentColor: hw.panelText,
                       ),
                       const SizedBox(height: 12),
 
                       // 2. Tarjeta Pista Conceptual
                       _DiagnosisCard(
                         icon: Icons.lightbulb_outline,
-                        iconColor: const Color(0xFF38BDF8),
-                        bgColor: const Color(0xFF132338),
-                        borderColor: const Color(0xFF0284C7),
+                        iconColor: hw.panelAccentText,
+                        bgColor: hw.panelCard,
+                        borderColor: hw.panelBorder,
                         title: 'Pista Conceptual (ESO / Bachillerato)',
                         content: _diagnosis!.conceptualHint,
-                        contentColor: const Color(0xFFE2E8F0),
+                        contentColor: hw.panelText,
                       ),
                       const SizedBox(height: 12),
 
@@ -280,12 +284,12 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                       if (_diagnosis!.examTrapAlert != null) ...[
                         _DiagnosisCard(
                           icon: Icons.warning_amber_rounded,
-                          iconColor: const Color(0xFFEF4444),
-                          bgColor: const Color(0xFF2E1515),
+                          iconColor: hw.isDefault ? const Color(0xFFEF4444) : const Color(0xFFB91C1C),
+                          bgColor: hw.isDefault ? const Color(0xFF2E1515) : hw.isDefault ? const Color(0xFFFEE2E2) : const Color(0xFF7F1D1D),
                           borderColor: const Color(0xFFDC2626),
                           title: '¡Cazador de Errores de Examen!',
                           content: _diagnosis!.examTrapAlert!,
-                          contentColor: const Color(0xFFFEE2E2),
+                          contentColor: hw.isDefault ? const Color(0xFFFEE2E2) : const Color(0xFF7F1D1D),
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -294,10 +298,10 @@ class _AiTutorSheetState extends State<AiTutorSheet> {
                     const SizedBox(height: 10),
 
                     // Fila de Preguntas Frecuentes del Alumno
-                    const Text(
+                    Text(
                       'PREGUNTAS RÁPIDAS AL TUTOR',
                       style: TextStyle(
-                        color: Color(0xFF94A3B8),
+                        color: hw.panelMuted,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.8,
@@ -422,27 +426,28 @@ class _QuickDoubtChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hw = ThemeController.current;
     return ActionChip(
       avatar: Icon(
         icon,
         size: 15,
-        color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
+        color: isSelected ? hw.actionFg : hw.panelText,
       ),
       label: Text(
         label,
         style: TextStyle(
-          color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
+          color: isSelected ? hw.actionFg : hw.panelText,
           fontSize: 11.5,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
         ),
       ),
       backgroundColor: isSelected
-          ? const Color(0xFF7C5CFF)
-          : const Color(0xFF1E293B),
+          ? hw.actionBg
+          : hw.panelCard,
       side: BorderSide(
         color: isSelected
-            ? const Color(0xFFA78BFA)
-            : const Color(0xFF475569),
+            ? hw.panelAccentText
+            : hw.panelBorder,
       ),
       onPressed: onTap,
     );

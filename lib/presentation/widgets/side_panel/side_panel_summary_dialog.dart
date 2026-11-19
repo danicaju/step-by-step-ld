@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../theme/theme_contrast.dart';
 import '../../theme/theme_controller.dart';
 import '../../theme/calculator_themes.dart';
 import 'package:flutter/rendering.dart';
@@ -22,7 +23,6 @@ class SidePanelSummaryDialog {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('No hay ejercicios en el historial para exportar.'),
-          backgroundColor: _pnl.panel(Color(0xFFB91C1C)),
           duration: Duration(seconds: 2),
         ),
       );
@@ -34,15 +34,15 @@ class SidePanelSummaryDialog {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _pnl.panel(_pnl.panel(Color(0xFF1E293B))),
+        backgroundColor: _pnl.panelBg,
         title: Row(
           children: [
-            Icon(Icons.summarize_rounded, color: _pnl.panel(Color(0xFFE5A93C)), size: 22),
+            Icon(Icons.summarize_rounded, color: _pnl.panelAccentText, size: 22),
             SizedBox(width: 8),
             Expanded(
               child: Text(
                 'Exportar Resumen de Clase',
-                style: TextStyle(color: _pnl.panel(Colors.white), fontSize: 16),
+                style: TextStyle(color: _pnl.panelText, fontSize: 16),
               ),
             ),
           ],
@@ -58,7 +58,7 @@ class SidePanelSummaryDialog {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: _pnl.panel(_pnl.panel(Color(0xFFF8FAFC))),
+                      color: _paper,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Column(
@@ -70,7 +70,7 @@ class SidePanelSummaryDialog {
                             Text(
                               'STEP-BY-STEP LD',
                               style: TextStyle(
-                                color: _pnl.panel(Color(0xFF0F172A)),
+                                color: _paperInk,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 13,
                               ),
@@ -79,14 +79,14 @@ class SidePanelSummaryDialog {
                             Text(
                               'Resumen de Clase',
                               style: TextStyle(
-                                color: _pnl.panel(Color(0xFF475569)),
+                                color: _paperMuted,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
-                        Divider(color: _pnl.panel(Color(0xFFCBD5E1))),
+                        Divider(color: _paperLine),
                         for (int i = 0; i < entries.length && i < 6; i++) ...[
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
@@ -96,7 +96,7 @@ class SidePanelSummaryDialog {
                                 Text(
                                   '${i + 1}. ${entries[i].modeName}',
                                   style: TextStyle(
-                                    color: _pnl.panel(Color(0xFFE5A93C)),
+                                    color: _pnl.inkOnPaper,
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -109,7 +109,7 @@ class SidePanelSummaryDialog {
                                       '${entries[i].resolution.originalInputLatex} = ${entries[i].resolution.exactResultLatex}',
                                     ),
                                     textStyle: TextStyle(
-                                      color: _pnl.panel(Color(0xFF0F172A)),
+                                      color: _paperInk,
                                       fontSize: 13,
                                     ),
                                   ),
@@ -131,13 +131,13 @@ class SidePanelSummaryDialog {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'Cerrar',
-              style: TextStyle(color: _pnl.panel(Color(0xFF94A3B8))),
+              style: TextStyle(color: _pnl.panelText),
             ),
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: _pnl.panel(const Color(0xFFE5A93C)),
-              foregroundColor: _pnl.panel(const Color(0xFF1A2530)),
+              backgroundColor: _pnl.action2Bg,
+              foregroundColor: _pnl.action2Fg,
             ),
             icon: const Icon(Icons.code_rounded, size: 16),
             label: const Text('Copiar .TEX'),
@@ -158,8 +158,8 @@ class SidePanelSummaryDialog {
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: _pnl.panel(const Color(0xFF2F5D50)),
-              foregroundColor: _pnl.panel(Colors.white),
+              backgroundColor: _pnl.actionBg,
+              foregroundColor: _pnl.actionFg,
             ),
             icon: const Icon(Icons.image_rounded, size: 16),
             label: const Text('Compartir PNG'),
@@ -206,7 +206,6 @@ class SidePanelSummaryDialog {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('No se pudo exportar PNG: $e'),
-                      backgroundColor: _pnl.panel(const Color(0xFFB91C1C)),
                     ),
                   );
                 }
@@ -220,3 +219,9 @@ class SidePanelSummaryDialog {
 }
 
 CalculatorHardwareTheme get _pnl => ThemeController.current;
+
+// Hoja de papel del resumen exportado (PNG): neutra y independiente del tema.
+const Color _paper = Color(0xFFFAF8F4);
+const Color _paperInk = Color(0xFF1F2328);
+const Color _paperMuted = Color(0xFF5A5F66);
+const Color _paperLine = Color(0xFFD9D5CB);

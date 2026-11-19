@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/math_engine/models/step_resolution.dart';
 import '../../domain/math_engine/solvers/function_graph_solver.dart';
+import '../theme/theme_contrast.dart';
+import '../theme/theme_controller.dart';
 import '../utils/latex_plain_text.dart';
 import 'casio_graph_canvas.dart';
 import 'casio_lcd_screen.dart';
@@ -119,12 +121,12 @@ class GoodnotesStickerCanvas extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: p.type == PointType.vertex
-                        ? const Color(0xFFEFF6FF)
+                        ? const Color(0xFFF3EFE6)
                         : const Color(0xFFFEF2F2),
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
                       color: p.type == PointType.vertex
-                          ? const Color(0xFF3B82F6)
+                          ? ThemeController.current.inkOnPaper
                           : const Color(0xFFEF4444),
                     ),
                   ),
@@ -132,7 +134,7 @@ class GoodnotesStickerCanvas extends StatelessWidget {
                     '${p.label}: (${p.x % 1 == 0 ? p.x.toInt() : p.x.toStringAsFixed(1)}, ${p.y % 1 == 0 ? p.y.toInt() : p.y.toStringAsFixed(1)})',
                     style: TextStyle(
                       color: p.type == PointType.vertex
-                          ? const Color(0xFF1D4ED8)
+                          ? ThemeController.current.inkOnPaper
                           : const Color(0xFFB91C1C),
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -226,17 +228,17 @@ class GoodnotesStickerCanvas extends StatelessWidget {
             children: [
               Text(
                 'Paso ${step.index}',
-                style: const TextStyle(
-                  color: Color(0xFF2563EB),
+                style: TextStyle(
+                  color: ThemeController.current.inkOnPaper,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(width: 4),
-              const Text(
+              Text(
                 '⇒',
                 style: TextStyle(
-                  color: Color(0xFF2563EB),
+                  color: ThemeController.current.inkOnPaper,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                 ),

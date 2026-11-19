@@ -111,7 +111,8 @@ void main() {
 
     test('colores exactos pedidos', () {
       expect(HardwareThemes.rosa.chassisMid, const Color(0xFFE89EB8));
-      expect(HardwareThemes.rosa.funcKey, const Color(0xFFC95D82));
+      // C95D82 -> C34A73: con el rosa original el texto blanco quedaba en 3.9:1 (auditoria WCAG).
+      expect(HardwareThemes.rosa.funcKey, const Color(0xFFC34A73));
       expect(HardwareThemes.rosa.panelBg, const Color(0xFFF5DCE5));
       expect(HardwareThemes.rosa.panelCard, const Color(0xFFFFF7FA));
       expect(HardwareThemes.arena.chassisMid, const Color(0xFFD8CEBC));

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme/calculator_themes.dart';
+import '../theme/theme_contrast.dart';
 import '../theme/theme_controller.dart';
 import '../utils/key_click_sound.dart';
 import 'repeat_press.dart';
@@ -74,8 +75,8 @@ class _CasioPhysicalKeyState extends State<CasioPhysicalKey> {
         : (showAlphaFace ? widget.alphaLabel! : widget.label);
 
     final Color effectiveTextColor = showShiftFace
-        ? hw.legendShift
-        : (showAlphaFace ? hw.legendAlpha : style.text);
+        ? hw.shiftLegendOn(bgColor)
+        : (showAlphaFace ? hw.alphaLegendOn(bgColor) : style.text);
 
     return Expanded(
       flex: widget.flex,

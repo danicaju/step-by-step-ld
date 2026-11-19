@@ -11,7 +11,7 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                         if (_activeResolution != null) ...[
                           _buildMethodTab(
                             key: const Key('ineq_sys_edit_btn'),
-                            label: '✎ Editar Sistema',
+                            label: 'Editar Sistema',
                             selected: false,
                             onTap: () {
                               updateState(() {
@@ -62,7 +62,7 @@ extension _CalculatorScreenToolbarsAdvanced on _CalculatorScreenState {
                       children: [
                         _buildMethodTab(
                           key: const Key('matrix_edit_btn'),
-                          label: '✎ Editar Matriz',
+                          label: 'Editar Matriz',
                           selected: false,
                           onTap: () {
                             updateState(() {

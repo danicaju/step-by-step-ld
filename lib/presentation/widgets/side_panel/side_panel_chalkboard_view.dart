@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/theme_contrast.dart';
 import '../../theme/theme_controller.dart';
 import '../../theme/calculator_themes.dart';
 import '../../../domain/math_engine/models/step_resolution.dart';
@@ -44,8 +45,8 @@ class SidePanelChalkboardView extends StatelessWidget {
                 message: 'EXPORTAR PNG',
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _pnl.panel(const Color(0xFF0D9488)),
-                    foregroundColor: _pnl.panel(Colors.white),
+                    backgroundColor: _pnl.actionBg,
+                    foregroundColor: _pnl.actionFg,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,
@@ -66,8 +67,8 @@ class SidePanelChalkboardView extends StatelessWidget {
                 message: 'COPIAR LaTeX',
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _pnl.panel(const Color(0xFFE5A93C)),
-                    foregroundColor: _pnl.panel(const Color(0xFF1A2530)),
+                    backgroundColor: _pnl.action2Bg,
+                    foregroundColor: _pnl.action2Fg,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,

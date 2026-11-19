@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/calculator_themes.dart';
+import '../theme/theme_contrast.dart';
 import '../theme/theme_controller.dart';
 import '../utils/key_click_sound.dart';
 
@@ -90,7 +91,7 @@ class _CompactControlKeyState extends State<CompactControlKey> {
                         Text(
                           widget.caption!,
                           style: TextStyle(
-                            color: hw.legendShift,
+                            color: hw.shiftLegendOn(style.background),
                             fontSize: 7,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.6,
@@ -102,7 +103,7 @@ class _CompactControlKeyState extends State<CompactControlKey> {
                         Text(
                           widget.alphaCaption!,
                           style: TextStyle(
-                            color: hw.legendAlpha,
+                            color: hw.alphaLegendOn(style.background),
                             fontSize: 8.5,
                             fontWeight: FontWeight.w800,
                           ),
@@ -112,7 +113,7 @@ class _CompactControlKeyState extends State<CompactControlKey> {
                 Text(
                   showAlpha ? widget.alphaCaption! : widget.label,
                   style: TextStyle(
-                    color: showAlpha ? hw.legendAlpha : style.text,
+                    color: showAlpha ? hw.alphaLegendOn(style.background) : style.text,
                     fontFamily: style.mono ? 'monospace' : null,
                     fontSize: 10,
                     fontWeight: FontWeight.w800,

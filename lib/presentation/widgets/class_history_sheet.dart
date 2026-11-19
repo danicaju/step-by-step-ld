@@ -41,7 +41,7 @@ class ClassHistorySheet extends StatefulWidget {
 class _ClassHistorySheetState extends State<ClassHistorySheet> {
   List<ClassHistoryEntry> _entries = [];
   bool _isLoading = true;
-  String _selectedFilter = 'Todos'; // 'Todos', 'Favoritos ⭐', '1.º-2.º ESO', '3.º-4.º ESO'
+  String _selectedFilter = 'Todos'; // 'Todos', 'Favoritos', '1.º-2.º ESO', '3.º-4.º ESO'
   int _todayCount = 0;
 
   @override
@@ -63,7 +63,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
   }
 
   List<ClassHistoryEntry> get _filteredEntries {
-    if (_selectedFilter == 'Favoritos ⭐') {
+    if (_selectedFilter == 'Favoritos') {
       return _entries.where((e) => e.isFavorite).toList();
     }
     if (_selectedFilter == '1.º-2.º ESO') {
@@ -217,7 +217,7 @@ class _ClassHistorySheetState extends State<ClassHistorySheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
                   children: [
-                    for (final filter in ['Todos', 'Favoritos ⭐', '1.º-2.º ESO', '3.º-4.º ESO'])
+                    for (final filter in ['Todos', 'Favoritos', '1.º-2.º ESO', '3.º-4.º ESO'])
                       Padding(
                         padding: const EdgeInsets.only(right: 8.0),
                         child: ChoiceChip(

@@ -5,12 +5,14 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
     required String title,
     required List<Widget> Function(BuildContext sheetContext) itemsBuilder,
   }) {
+    final hw = ThemeController.current;
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A2530),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      backgroundColor: hw.panelBg,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        side: BorderSide(color: hw.panelBorder),
       ),
       builder: (ctx) {
         return SafeArea(
@@ -23,8 +25,8 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: hw.panelText,
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
@@ -41,6 +43,7 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
   }
 
   void _openQuickOptnModal() {
+    final hw = ThemeController.current;
     _showOptnBottomSheet(
       title: 'OPTN · Opciones Rápidas (STEP-BY-STEP LD)',
       itemsBuilder: (ctx) => [
@@ -64,8 +67,8 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
                 OutlinedButton(
                   key: Key('optn_insert_$token'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFFE5A93C),
-                    side: const BorderSide(color: Color(0xFFE5A93C)),
+                    foregroundColor: hw.panelAccentText,
+                    side: BorderSide(color: hw.panelAccentText),
                   ),
                   onPressed: () {
                     Navigator.pop(ctx);
@@ -80,10 +83,10 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
           ),
         if (_calculatorMode == 1)
           ListTile(
-            leading: const Icon(Icons.functions_rounded, color: Color(0xFFFBBF24)),
-            title: const Text(
+            leading: Icon(Icons.functions_rounded, color: hw.panelAccentText),
+            title: Text(
               'CALC · Evaluar expresión para x = ?',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              style: TextStyle(color: hw.panelText, fontWeight: FontWeight.w600),
             ),
             onTap: () {
               Navigator.pop(ctx);
@@ -91,10 +94,10 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
             },
           ),
         ListTile(
-          leading: const Icon(Icons.rotate_right_rounded, color: Color(0xFFE5A93C)),
+          leading: Icon(Icons.rotate_right_rounded, color: hw.panelAccentText),
           title: Text(
             'Unidad angular: $_angleLabel (cambiar)',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            style: TextStyle(color: hw.panelText, fontWeight: FontWeight.w600),
           ),
           onTap: () {
             Navigator.pop(ctx);
@@ -102,10 +105,10 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
           },
         ),
         ListTile(
-          leading: const Icon(Icons.image_outlined, color: Color(0xFFE5A93C)),
-          title: const Text(
+          leading: Icon(Icons.image_outlined, color: hw.panelAccentText),
+          title: Text(
             'Exportar desarrollo a PNG transparente',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            style: TextStyle(color: hw.panelText, fontWeight: FontWeight.w600),
           ),
           onTap: () {
             Navigator.pop(ctx);
@@ -113,10 +116,10 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
           },
         ),
         ListTile(
-          leading: const Icon(Icons.code_rounded, color: Color(0xFFE5A93C)),
-          title: const Text(
+          leading: Icon(Icons.code_rounded, color: hw.panelAccentText),
+          title: Text(
             'Copiar bloque LaTeX al portapapeles',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            style: TextStyle(color: hw.panelText, fontWeight: FontWeight.w600),
           ),
           onTap: () {
             Navigator.pop(ctx);

@@ -8,6 +8,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../domain/math_engine/models/step_resolution.dart';
 import '../../domain/math_engine/solvers/function_graph_solver.dart';
+import '../theme/theme_contrast.dart';
+import '../theme/theme_controller.dart';
 import '../widgets/goodnotes_sticker_canvas.dart';
 
 export '../widgets/goodnotes_sticker_canvas.dart';
@@ -105,20 +107,22 @@ class GoodnotesExporter {
     await Clipboard.setData(ClipboardData(text: text));
   }
 
-  /// Muestra un modal elegante para previsualizar el sticker y exportarlo
+  /// Muestra un modal para previsualizar el sticker y exportarlo (colores del tema activo).
   static void showStickerPreviewDialog(
     BuildContext context,
     StepByStepResolution resolution, {
     FunctionAnalysisResult? graphAnalysis,
   }) {
     final GlobalKey repaintKey = GlobalKey();
+    final hw = ThemeController.current;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      backgroundColor: hw.panelBg,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        side: BorderSide(color: hw.panelBorder),
       ),
       builder: (ctx) {
         return DraggableScrollableSheet(
@@ -135,7 +139,7 @@ class GoodnotesExporter {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white24,
+                    color: hw.panelMuted,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -143,45 +147,36 @@ class GoodnotesExporter {
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.image_outlined,
-                        color: Color(0xFFE5A93C),
-                      ),
+                      Icon(Icons.image_outlined, color: hw.panelAccentText),
                       const SizedBox(width: 8),
-                      const Text(
+                      Text(
                         'Exportar Desarrollo a PNG',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: hw.panelText,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white70),
+                        icon: Icon(Icons.close, color: hw.panelText),
                         onPressed: () => Navigator.of(ctx).pop(),
                       ),
                     ],
                   ),
                 ),
-                const Divider(color: Colors.white12),
+                Divider(color: hw.panelBorder),
 
-                // Previsualización sobre fondo simulado de cuaderno
+                // Previsualizacion sobre papel (el PNG exportado es transparente)
                 Expanded(
                   child: SingleChildScrollView(
                     controller: scrollController,
                     padding: const EdgeInsets.all(16),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: const Color(0xFFFAF8F4),
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 8,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
+                        border: Border.all(color: hw.panelBorder),
                       ),
                       child: RepaintBoundary(
                         key: repaintKey,
@@ -194,16 +189,20 @@ class GoodnotesExporter {
                   ),
                 ),
 
-                // Botones de acción inferiores
-                Padding(
+                // Barra inferior de acciones
+                Container(
+                  decoration: BoxDecoration(
+                    color: hw.panelTabBar,
+                    border: Border(top: BorderSide(color: hw.panelBorder)),
+                  ),
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     children: [
                       Expanded(
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2F5D50),
-                            foregroundColor: Colors.white,
+                            backgroundColor: hw.actionBg,
+                            foregroundColor: hw.actionFg,
                             padding: const EdgeInsets.symmetric(vertical: 13),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -226,10 +225,7 @@ class GoodnotesExporter {
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error al compartir: $e'),
-                                    backgroundColor: const Color(0xFFB91C1C),
-                                  ),
+                                  SnackBar(content: Text('Error al compartir: $e')),
                                 );
                               }
                             }
@@ -239,8 +235,8 @@ class GoodnotesExporter {
                       const SizedBox(width: 10),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE5A93C),
-                          foregroundColor: const Color(0xFF1A2530),
+                          backgroundColor: hw.action2Bg,
+                          foregroundColor: hw.action2Fg,
                           padding: const EdgeInsets.symmetric(
                             vertical: 13,
                             horizontal: 16,
@@ -259,9 +255,8 @@ class GoodnotesExporter {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text(
-                                    '¡Bloque LaTeX copiado al portapapeles!'),
-                                                    duration: Duration(seconds: 2),
+                                content: Text('Bloque LaTeX copiado al portapapeles'),
+                                duration: Duration(seconds: 2),
                               ),
                             );
                           }

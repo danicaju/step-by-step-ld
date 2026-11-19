@@ -2,6 +2,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'presentation/screens/calculator_screen.dart';
+import 'presentation/theme/calculator_themes.dart';
+import 'presentation/theme/theme_contrast.dart';
 import 'presentation/theme/theme_controller.dart';
 
 Future<void> main() async {
@@ -22,11 +24,13 @@ Future<void> main() async {
 
 /// Tema global Casio ClassWiz: chasis `#181E29`, tinta `#1A2530`, LCD `#C8D6CD` y acento ámbar.
 /// Sustituye los tonos violeta/índigo por defecto de Material 3 (SnackBar, chips, diálogos...).
-ThemeData casioTheme() {
+/// Con [hw] distinto de `Predeterminado`, SnackBar y tooltips toman los colores del tema.
+ThemeData casioTheme({CalculatorHardwareTheme? hw}) {
   const ink = Color(0xFF1A2530);
   const lcd = Color(0xFFC8D6CD);
   const amber = Color(0xFFE5A93C);
   const alphaRed = Color(0xFFE05D5D);
+  final themed = hw != null && !hw.isDefault;
   final scheme = const ColorScheme(
     brightness: Brightness.dark,
     primary: amber,
@@ -58,20 +62,29 @@ ThemeData casioTheme() {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    snackBarTheme: const SnackBarThemeData(
-      backgroundColor: ink,
-      contentTextStyle: TextStyle(color: lcd, fontWeight: FontWeight.w600),
-      actionTextColor: amber,
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: themed ? hw.panelText : ink,
+      contentTextStyle: TextStyle(
+        color: themed ? hw.panelBg : lcd,
+        fontWeight: FontWeight.w600,
+      ),
+      actionTextColor: themed
+          ? ThemeContrast.ensure(hw.shiftKey, hw.panelText, ThemeContrast.text)
+          : amber,
     ),
     tooltipTheme: TooltipThemeData(
       waitDuration: const Duration(milliseconds: 700),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: ink,
+        color: themed ? hw.panelText : ink,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFF474E5D)),
+        border: Border.all(color: themed ? hw.panelBorder : const Color(0xFF474E5D)),
       ),
-      textStyle: const TextStyle(color: lcd, fontSize: 11, fontWeight: FontWeight.w600),
+      textStyle: TextStyle(
+        color: themed ? hw.panelBg : lcd,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+      ),
     ),
   );
 }
@@ -81,11 +94,14 @@ class CasioCalculatorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'STEP-BY-STEP LD',
-      debugShowCheckedModeBanner: false,
-      theme: casioTheme(),
-      home: const CalculatorScreen(),
+    return ListenableBuilder(
+      listenable: ThemeController.instance,
+      builder: (context, _) => MaterialApp(
+        title: 'STEP-BY-STEP LD',
+        debugShowCheckedModeBanner: false,
+        theme: casioTheme(hw: ThemeController.current),
+        home: const CalculatorScreen(),
+      ),
     );
   }
 }

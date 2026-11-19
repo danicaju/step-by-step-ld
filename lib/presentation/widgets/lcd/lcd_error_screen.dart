@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/theme_contrast.dart';
+import '../../theme/theme_controller.dart';
 import 'lcd_error_text.dart';
 
 export 'lcd_error_text.dart';
@@ -26,8 +28,6 @@ class LcdErrorScreen extends StatelessWidget {
   });
 
   static const Color _ink = Color(0xFF1A2530);
-  static const Color _lcd = Color(0xFFC8D6CD);
-  static const Color _inset = Color(0xFFBDCEBE);
   static const Color _border = Color(0xFF7A8A7E);
   static const Color _shift = Color(0xFFE5A93C);
   static const Color _alpha = Color(0xFFE05D5D);
@@ -40,9 +40,10 @@ class LcdErrorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color bg = isOledDark ? const Color(0xFF111615) : _lcd;
+    final hw = ThemeController.current;
+    final Color bg = isOledDark ? const Color(0xFF111615) : hw.lcdBackground;
     final Color fg = isOledDark ? const Color(0xFFE8F3EE) : _ink;
-    final Color card = isOledDark ? const Color(0xFF1B2421) : _inset;
+    final Color card = isOledDark ? const Color(0xFF1B2421) : hw.lcdInset;
     final info = LcdErrorText.info(message, syntax: kind == LcdErrorKind.syntax);
     final tip = hint ?? info.hint;
     return Container(
@@ -60,7 +61,7 @@ class LcdErrorScreen extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _header(compact),
+              _header(compact, bg),
               SizedBox(height: compact ? 3 : 6),
               Expanded(child: _card(info.message, tip, fg, card, compact)),
               SizedBox(height: compact ? 3 : 6),
@@ -72,7 +73,7 @@ class LcdErrorScreen extends StatelessWidget {
     );
   }
 
-  Widget _header(bool compact) => Container(
+  Widget _header(bool compact, Color lcd) => Container(
         padding: EdgeInsets.symmetric(horizontal: 8, vertical: compact ? 1 : 5),
         decoration: BoxDecoration(color: _ink, borderRadius: BorderRadius.circular(6)),
         child: Row(
@@ -87,7 +88,7 @@ class LcdErrorScreen extends StatelessWidget {
                   _title,
                   key: const Key('lcd_error_title'),
                   style: TextStyle(
-                    color: _lcd,
+                    color: lcd,
                     fontSize: compact ? 16 : 23,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'monospace',
@@ -125,7 +126,8 @@ class LcdErrorScreen extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.lightbulb_outline_rounded, color: _shift, size: 18),
+                    Icon(Icons.lightbulb_outline_rounded,
+                        color: ThemeContrast.ensure(_shift, cardColor, ThemeContrast.large), size: 18),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
