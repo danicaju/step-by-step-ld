@@ -1,3 +1,5 @@
+import '../calculus/non_elementary_integral_handler.dart';
+import '../calculus/universal_rational_integrator.dart';
 import '../core/rational.dart';
 import '../models/step_resolution.dart';
 import 'calculus/calculus_step_texts.dart';
@@ -71,7 +73,15 @@ class SymbolicIntegralSolver {
 
   static StepByStepResolution indefinite(String raw) {
     final f = parse(raw);
-    final r = antiderivative(f);
+    final ({XNode antiderivative, List<MathStep> steps}) r;
+    try {
+      r = antiderivative(f);
+    } on ExtUnsupported {
+      // Racionales generales y familias sin primitiva elemental.
+      final alt = UniversalRationalIntegrator.indefinite(f) ?? NonElementaryIntegralHandler.indefinite(f);
+      if (alt != null) return alt;
+      rethrow;
+    }
     final steps = <MathStep>[
       CalculusStepTexts.prepare(f),
       CalculusStepTexts.method(f, r.steps),
@@ -119,7 +129,14 @@ class SymbolicIntegralSolver {
 
   static StepByStepResolution definite(String raw, Rational a, Rational b) {
     final f = parse(raw);
-    final r = antiderivative(f);
+    final ({XNode antiderivative, List<MathStep> steps}) r;
+    try {
+      r = antiderivative(f);
+    } on ExtUnsupported {
+      final alt = UniversalRationalIntegrator.definite(f, a, b) ?? NonElementaryIntegralHandler.definite(f, a, b);
+      if (alt != null) return alt;
+      rethrow;
+    }
     final big = r.antiderivative;
     // Integrando no acotado en [a, b] -> integral impropia.
     final lo = a.toDouble() < b.toDouble() ? a.toDouble() : b.toDouble();
