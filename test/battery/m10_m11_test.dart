@@ -49,14 +49,14 @@ void main() {
     });
 
     bothSizes('4a. triangulo rectangulo de catetos 3 y 4: hipotenusa 5', (t) async {
-      await seq(t, 'mode:10 pick:hdr_vector_view:vector_view_2 3 = 4 = = = = 9 0 =');
+      await seq(t, 'mode:10 pick:hdr_vector_view:vector_view_2 = 3 = 4 = = = =');
       final r = res(t);
-      expect(norm(r.exactResultLatex), contains('c=5{,}0000'));
+      expect(norm(r.exactResultLatex), contains('c=5,'));
       expectLesson(r, minSteps: 3);
     });
 
     bothSizes('4b. oblicuangulo a=7, b=8, C=60°: c = sqrt(57) ≈ 7,55 (teorema del coseno)', (t) async {
-      await seq(t, 'mode:10 pick:hdr_vector_view:vector_view_2 7 = 8 = = = = 6 0 =');
+      await seq(t, 'mode:10 pick:hdr_vector_view:vector_view_2 pick:xform_selector_dropdown:tri_form_1 = 7 = 8 = = = = 6 0 =');
       final r = res(t);
       expect(norm(r.exactResultLatex), contains('c=7{,}5498'));
       expect(lessonText(r).toLowerCase(), contains('coseno'));
@@ -65,9 +65,9 @@ void main() {
     });
 
     bothSizes('4c. triangulo imposible a=2, b=3, c=10: LcdErrorScreen claro', (t) async {
-      await seq(t, 'mode:10 pick:hdr_vector_view:vector_view_2 2 = 3 = 1 0 = = = =');
+      await seq(t, 'mode:10 pick:hdr_vector_view:vector_view_2 pick:xform_selector_dropdown:tri_form_1 = 2 = 3 = 1 0 = = = =');
       expect(find.byKey(const Key('lcd_error_screen')), findsOneWidget);
-      expect(find.textContaining('No es un triángulo'), findsWidgets);
+      expect(find.textContaining('NO ES UN TRIÁNGULO'), findsWidgets);
     });
   });
 

@@ -1,6 +1,9 @@
 import '../../domain/math_engine/geometry/geometry_triangle_solver.dart';
+import '../../domain/math_engine/geometry/line_equations_solver.dart';
 import '../../domain/math_engine/polynomials/spanish_box_division_solver.dart';
 import '../../domain/math_engine/statistics/probability_distribution_solver.dart';
+import '../widgets/m10/line_equations_visual_editor.dart';
+import '../widgets/m10/triangle_visual_editor.dart';
 import '../widgets/modes/mode_form.dart';
 
 /// Estado de las vistas nuevas de M4 (caja y fracciones), M8 (Normal/Binomial/2 variables)
@@ -36,18 +39,28 @@ class ExtraViewsState {
   );
 
   final ModeFormState line = ModeFormState(
-    selectorLabels: const ['2 puntos A, B', 'Punto y vector', 'Punto y pendiente'],
+    selectorLabels: LineEquationsVisualEditor.forms,
     cols: 2,
     layouts: [
       [ModeField('x1'), ModeField('y1'), ModeField('x2'), ModeField('y2')],
       [ModeField('x0'), ModeField('y0'), ModeField('v1'), ModeField('v2')],
       [ModeField('x0'), ModeField('y0'), ModeField('m')],
+      [ModeField('m'), ModeField('n')],
+      [ModeField('A'), ModeField('B'), ModeField('C')],
+      [ModeField('x0'), ModeField('y0'), ModeField('v1'), ModeField('v2')],
     ],
   );
 
-  final ModeFormState tri = ModeFormState(cols: 3, layouts: [
-    [ModeField('a'), ModeField('b'), ModeField('c'), ModeField('A°'), ModeField('B°'), ModeField('C°')],
-  ]);
+  /// M10 triangulos: 0 = rectangulo (C = 90° fijo, 5 casillas), 1 = cualquier triangulo (6 casillas).
+  /// Casillas de expresion (fracciones y raices); en blanco = incognita.
+  final ModeFormState tri = ModeFormState(
+    selectorLabels: TriangleVisualEditor.kinds,
+    cols: 3,
+    layouts: [
+      [for (final l in ['a', 'b', 'c', 'A°', 'B°']) ModeField(l, expr: true)],
+      [for (final l in ['a', 'b', 'c', 'A°', 'B°', 'C°']) ModeField(l, expr: true)],
+    ],
+  );
 
   final ModeFormState normal = ModeFormState(
     selectorLabels: const ['P(X ≤ a)', 'P(X ≥ a)', 'P(a ≤ X ≤ b)'],
@@ -81,11 +94,13 @@ class ExtraViewsState {
   BoxDivisionResult? boxResult;
   NormalResult? normalResult;
   TriangleResult? triResult;
+  LineEquationsResult? lineResult;
 
   void clearResults() {
     boxResult = null;
     normalResult = null;
     triResult = null;
+    lineResult = null;
   }
 
   void reset() {

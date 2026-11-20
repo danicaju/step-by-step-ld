@@ -10,7 +10,7 @@ import '../../utils/latex_plain_text.dart';
 import '../casio_graph_canvas.dart';
 import '../casio_lcd_screen.dart';
 import '../number_line_painter.dart';
-import '../safe_math.dart';
+import '../common/responsive_math_formula.dart';
 class SidePanelChalkboardView extends StatelessWidget {
   final StepByStepResolution? resolution;
   final int activeStepIndex;
@@ -173,17 +173,14 @@ class SidePanelChalkboardView extends StatelessWidget {
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: SafeMath.tex(
-                                CasioLcdScreen.sanitizeForMathTex(
-                                  resolution!.originalInputLatex,
-                                ),
-                                textStyle: TextStyle(
-                                  color: _pnl.panel(Colors.white),
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            child: ResponsiveMathFormula(
+                              latex: CasioLcdScreen.sanitizeForMathTex(
+                                resolution!.originalInputLatex,
+                              ),
+                              textStyle: TextStyle(
+                                color: _pnl.panel(Colors.white),
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
@@ -237,17 +234,14 @@ class SidePanelChalkboardView extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: SafeMath.tex(
-                                CasioLcdScreen.sanitizeForMathTex(
-                                  '${resolution!.exactResultLatex} \\;\\; (\\approx ${resolution!.decimalApproxLatex})',
-                                ),
-                                textStyle: TextStyle(
-                                  color: _pnl.panel(Colors.white),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            child: ResponsiveMathFormula(
+                              latex: CasioLcdScreen.sanitizeForMathTex(
+                                '${resolution!.exactResultLatex} \\;\\; (\\approx ${resolution!.decimalApproxLatex})',
+                              ),
+                              textStyle: TextStyle(
+                                color: _pnl.panel(Colors.white),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
@@ -331,14 +325,12 @@ class StepBoardTile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SafeMath.tex(
-                CasioLcdScreen.sanitizeForMathTex(step.latexExpression),
-                textStyle: TextStyle(
-                  color: _pnl.panel(Colors.white),
-                  fontSize: 17,
-                ),
+            ResponsiveMathFormula(
+              key: Key('step_formula_${step.index}'),
+              latex: CasioLcdScreen.sanitizeForMathTex(step.latexExpression),
+              textStyle: TextStyle(
+                color: _pnl.panel(Colors.white),
+                fontSize: 17,
               ),
             ),
             if (numberLine != null) ...[

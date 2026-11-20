@@ -22,6 +22,7 @@ export '../widgets/modes/function_table_widget.dart';
 export '../widgets/modes/limit_form_widget.dart';
 export '../../domain/math_engine/geometry/geometry_triangle_solver.dart';
 export '../../domain/math_engine/geometry/line_equations_solver.dart';
+export '../../domain/math_engine/geometry/triangle_value_parser.dart';
 export '../../domain/math_engine/polynomials/algebraic_fraction_solver.dart';
 export '../../domain/math_engine/polynomials/spanish_box_division_solver.dart';
 export '../../domain/math_engine/statistics/probability_distribution_solver.dart';

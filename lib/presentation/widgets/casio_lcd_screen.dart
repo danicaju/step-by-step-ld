@@ -9,6 +9,7 @@ import 'lcd/lcd_pedagogical_box.dart';
 import '../utils/latex_plain_text.dart';
 import 'lcd/lcd_copyable_result.dart';
 import 'lcd/lcd_blinking_latex.dart';
+import 'lcd/lcd_step_formula.dart';
 import 'lcd/lcd_palette.dart';
 
 export 'lcd/lcd_math_sanitizer.dart';
@@ -366,7 +367,19 @@ class CasioLcdScreen extends StatelessWidget {
                           alignment: isMultiLineLatex
                               ? Alignment.center
                               : Alignment.centerRight,
-                          child: LayoutBuilder(
+                          child: hasSteps
+                              ? LcdStepFormula(
+                                  latex: displayLatex,
+                                  originalLatex:
+                                      lcdConstraints.maxHeight >= 100 && !visualFirst
+                                          ? currentResolution!.originalInputLatex
+                                          : null,
+                                  fontSize: latexFontSize,
+                                  color: formulaColor,
+                                  background: backgroundColor,
+                                  centered: isMultiLineLatex,
+                                )
+                              : LayoutBuilder(
                             builder: (context, constraints) {
                               final cleanDisplay =
                                   CasioLcdScreen.sanitizeForMathTex(displayLatex);

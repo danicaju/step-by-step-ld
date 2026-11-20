@@ -114,12 +114,12 @@ void main() {
       expect(r.slope, Rational(2));
       expect(r.intercept, Rational(0));
       expect(r.resolution.exactResultLatex, '2x - y = 0');
-      expect(r.resolution.steps.length, 7);
+      expect(r.resolution.steps.length, 8);
       final t = _tex(r.resolution);
       expect(t, contains(r'(x,\; y) = (1,\; 2) + t'));
       expect(t, contains(r'x = 1 + 2t'));
       expect(t, contains(r'\frac{x - 1}{2} = \frac{y - 2}{4}'));
-      expect(t, contains(r'y - 2 = 2\,\left(x - 1\right)'));
+      expect(t, contains(r'y - 2 = 2\left(x - 1\right)'));
       expect(t, contains('y = 2x'));
       _clean(r.resolution);
     });
@@ -405,8 +405,8 @@ void main() {
       await boot(t);
       await goMode(t, 10);
       await pickHeader(t, 'hdr_vector_view', 'vector_view_2');
-      await keys(t, ['3', '=', '4', '=', '=', '=', '=', '9', '0', '=']);
-      expect(result(t), contains('c = 5{,}0000'));
+      await keys(t, ['=', '3', '=', '4', '=', '=', '=', '=']);
+      expect(result(t), contains('c = 5'));
       for (var i = 0; i < 8 && find.byKey(const Key('triangle_sketch_clip')).evaluate().isEmpty; i++) {
         await key(t, '=');
       }
@@ -417,7 +417,8 @@ void main() {
       await boot(t);
       await goMode(t, 10);
       await pickHeader(t, 'hdr_vector_view', 'vector_view_2');
-      await keys(t, ['1', '=', '2', '=', '5', '=', '=', '=', '=']);
+      await pickHeader(t, 'xform_selector_dropdown', 'tri_form_1');
+      await keys(t, ['=', '1', '=', '2', '=', '5', '=', '=', '=', '=']);
       expect(find.byKey(const Key('lcd_error_screen')), findsOneWidget);
     });
 

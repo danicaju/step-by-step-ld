@@ -69,6 +69,7 @@ import '../widgets/windows_side_panel.dart';
 import '../../domain/math_engine/solvers/linear_inequality_2d_solver.dart';
 import '../widgets/calculator_bezel_widgets.dart';
 import '../widgets/calculator_keypad_view.dart';
+import '../widgets/m10/m10_widgets.dart';
 import '../widgets/modes/calculator_method_tab.dart';
 import '../widgets/modes/probability_distribution_widget.dart';
 import '../widgets/modes/free_system_editor_view.dart';

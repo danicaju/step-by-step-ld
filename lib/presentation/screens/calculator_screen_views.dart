@@ -136,7 +136,11 @@ extension _CalculatorScreenViews on _CalculatorScreenState {
       return 'MATRICES $_matrixDim×$_matrixDim';
     }
     if (_calculatorMode == 10) {
-      return 'VECTORES ${_vectorDim}D (${_vectorOp.shortLabel})';
+      return switch (_cw.x.m10View) {
+        1 => '6 ECUACIONES DE LA RECTA',
+        2 => 'RESOLUCIÓN DE TRIÁNGULOS',
+        _ => 'VECTORES ${_vectorDim}D (${_vectorOp.shortLabel})',
+      };
     }
     if (_calculatorMode == 11) {
       return 'COMPLEJOS (${_complexOp.shortLabel})';

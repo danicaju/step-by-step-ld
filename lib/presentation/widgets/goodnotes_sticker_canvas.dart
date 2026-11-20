@@ -6,7 +6,7 @@ import '../theme/theme_controller.dart';
 import '../utils/latex_plain_text.dart';
 import 'casio_graph_canvas.dart';
 import 'casio_lcd_screen.dart';
-import 'safe_math.dart';
+import 'common/responsive_math_formula.dart';
 /// Canvas dedicado para renderizado de stickers con estética de cuaderno / pizarra
 class GoodnotesStickerCanvas extends StatelessWidget {
   final StepByStepResolution resolution;
@@ -80,16 +80,13 @@ class GoodnotesStickerCanvas extends StatelessWidget {
                   ),
                 ),
                 Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: SafeMath.tex(
-                      CasioLcdScreen.sanitizeForMathTex(resolution.originalInputLatex),
-                      textStyle: const TextStyle(
-                        fontSize: 18,
-                        color: Color(0xFF1E293B),
-                        fontWeight: FontWeight.bold,
-                      ),
+                  child: ResponsiveMathFormula(
+                    latex: CasioLcdScreen.sanitizeForMathTex(resolution.originalInputLatex),
+                    allowScroll: false,
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      color: Color(0xFF1E293B),
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
@@ -177,34 +174,17 @@ class GoodnotesStickerCanvas extends StatelessWidget {
                   ),
                 ),
                 Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SafeMath.tex(
-                          CasioLcdScreen.sanitizeForMathTex(resolution.exactResultLatex),
-                          textStyle: const TextStyle(
-                            fontSize: 20,
-                            color: Color(0xFF064E3B),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (resolution.decimalApproxLatex.trim().isNotEmpty) ...[
-                          const SizedBox(width: 10),
-                          SafeMath.tex(
-                            CasioLcdScreen.sanitizeForMathTex(
-                              '(\\approx ${resolution.decimalApproxLatex})',
-                            ),
-                            textStyle: const TextStyle(
-                              color: Color(0xFF047857),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ],
+                  child: ResponsiveMathFormula(
+                    latex: CasioLcdScreen.sanitizeForMathTex(
+                      resolution.decimalApproxLatex.trim().isEmpty
+                          ? resolution.exactResultLatex
+                          : '${resolution.exactResultLatex} \\;\\; (\\approx ${resolution.decimalApproxLatex})',
+                    ),
+                    allowScroll: false,
+                    textStyle: const TextStyle(
+                      fontSize: 20,
+                      color: Color(0xFF064E3B),
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
@@ -261,15 +241,12 @@ class GoodnotesStickerCanvas extends StatelessWidget {
           // Expresión LaTeX del paso
           Padding(
             padding: const EdgeInsets.only(left: 14.0),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: SafeMath.tex(
-                CasioLcdScreen.sanitizeForMathTex(step.latexExpression),
-                textStyle: const TextStyle(
-                  fontSize: 17,
-                  color: Color(0xFF1E293B),
-                ),
+            child: ResponsiveMathFormula(
+              latex: CasioLcdScreen.sanitizeForMathTex(step.latexExpression),
+              allowScroll: false,
+              textStyle: const TextStyle(
+                fontSize: 17,
+                color: Color(0xFF1E293B),
               ),
             ),
           ),

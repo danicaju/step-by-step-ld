@@ -53,6 +53,32 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
         onFocus: (i) => updateState(() => f.focus = i),
       );
     }
+    if (_calculatorMode == 10 && _x.m10View == 2) {
+      return TriangleVisualEditor(
+        form: f,
+        theme: _lcdTheme,
+        boundsKey: _lcdBoundsKey,
+        onFocus: (i) => updateState(() => f.focus = i),
+        onSelector: (i) => updateState(() {
+          f.selector = i;
+          f.focus = 0;
+          _resetResolutionView();
+        }),
+      );
+    }
+    if (_calculatorMode == 10 && _x.m10View == 1) {
+      return LineEquationsVisualEditor(
+        form: f,
+        theme: _lcdTheme,
+        boundsKey: _lcdBoundsKey,
+        onFocus: (i) => updateState(() => f.focus = i),
+        onSelector: (i) => updateState(() {
+          f.selector = i;
+          f.focus = 0;
+          _resetResolutionView();
+        }),
+      );
+    }
     return ModeFormWidget(
       form: f,
       theme: _lcdTheme,
@@ -74,14 +100,18 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
     if (_calculatorMode == 8 && x.normalResult != null && identical(res, x.normalResult!.resolution)) {
       return GaussianBellView(result: x.normalResult!);
     }
+    if (_calculatorMode == 10 && x.lineResult != null && identical(res, x.lineResult!.resolution)) {
+      return LineGraphView(result: x.lineResult!, theme: _lcdTheme);
+    }
     if (_calculatorMode == 10 && x.triResult != null && identical(res, x.triResult!.resolution)) {
-      return TriangleSketchView(solution: x.triResult!.solutions.first);
+      final sols = x.triResult!.solutions;
+      return TriangleSketchView(solution: sols.first, others: sols.skip(1).toList(), theme: _lcdTheme);
     }
     return null;
   }
 
   /// Reparto (sobre 10) del alto de la LCD para el visual: la caja ocupa casi todo.
-  int get _extraVisualFlex => _calculatorMode == 4 && _x.m4View == 2 ? 8 : 6;
+  int get _extraVisualFlex => _calculatorMode == 4 && _x.m4View == 2 ? 8 : (_calculatorMode == 10 ? 10 : 6);
 
   bool _extraDpad(String dir) {
     final f = _extraForm;
@@ -167,15 +197,24 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
         case 10:
           if (x.m10View == 1) {
             Rational n(int i) => ProportionSolver.parseQuantity(_t(x.line, i));
-            res = switch (x.line.selector) {
-              0 => LineEquationsSolver.fromPoints(n(0), n(1), n(2), n(3)).resolution,
-              1 => LineEquationsSolver.fromPointVector(n(0), n(1), n(2), n(3)).resolution,
-              _ => LineEquationsSolver.fromPointSlope(n(0), n(1), n(2)).resolution,
+            final r = switch (x.line.selector) {
+              0 => LineEquationsSolver.fromPoints(n(0), n(1), n(2), n(3)),
+              1 => LineEquationsSolver.fromPointVector(n(0), n(1), n(2), n(3)),
+              2 => LineEquationsSolver.fromPointSlope(n(0), n(1), n(2)),
+              3 => LineEquationsSolver.fromExplicit(n(0), n(1)),
+              4 => LineEquationsSolver.fromGeneral(n(0), n(1), n(2)),
+              _ => LineEquationsSolver.fromContinuous(n(0), n(2), n(1), n(3)),
             };
+            x.lineResult = r;
+            res = r.resolution;
             label = 'M10: Ecuaciones de la recta';
           } else {
-            double? v(int i) => _t(x.tri, i).trim().isEmpty ? null : ProportionSolver.parseQuantity(_t(x.tri, i)).toDouble();
-            final r = TriangleSolver.solve(sides: [v(0), v(1), v(2)], angles: [v(3), v(4), v(5)]);
+            double? v(int i) => TriangleValueParser.parseOrNull(_t(x.tri, i));
+            final isRight = x.tri.selector == 0;
+            final r = TriangleSolver.solve(
+              sides: [v(0), v(1), v(2)],
+              angles: [v(3), v(4), isRight ? 90 : v(5)],
+            );
             x.triResult = r;
             res = r.resolution;
             label = 'M10: Triángulos';

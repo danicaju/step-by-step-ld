@@ -256,6 +256,10 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
 
 
   void _solveMode10() {
+      if (_extraFormActive) {
+        _solveExtra();
+        return;
+      }
       try {
         final u = _buildRationalVectorFromCells(_vecUCells, _vectorDim);
         final v = _vectorOp.needsSecondVector

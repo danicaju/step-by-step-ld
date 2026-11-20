@@ -23,7 +23,11 @@ extension _CalculatorScreenLabels on _CalculatorScreenState {
       7: _ineqSysUnknowns == 1 ? 'M7: SIST. INEC 1D' : 'M7: REGIÓN 2D',
       8: 'M8: ESTADÍST.',
       9: 'M9: MATRICES ($_matrixRowsA×$_matrixColsA)',
-      10: 'M10: VECTORES ${_vectorDim}D',
+      10: switch (_cw.x.m10View) {
+        1 => 'M10: RECTAS',
+        2 => 'M10: TRIÁNGULOS',
+        _ => 'M10: VECTORES ${_vectorDim}D',
+      },
       11: 'M11: COMPLEJOS',
       12: 'M12: DERIV. E INT.',
     };
