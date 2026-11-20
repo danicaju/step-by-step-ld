@@ -282,7 +282,9 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                 _calcExpressionRaw)
                             : null,
                         calcValueRaw: _calcValueRaw,
-                        headerSelectors: _buildHeaderSelectors(),
+                        headerSelectorsBuilder: _buildHeaderSelectors,
+                        headerCanWrap: _calculatorMode == 3,
+                        bodyMinHeight: _lcdBodyMinHeight(),
                         supplementaryVisualFlex:
                             _ineqLineStepActive ? 10 : _extraVisualFlex,
                         supplementaryVisualView: _extraVisual() ??

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
 import '../../../core/editor/lcd_cursor_tokens.dart';
+import '../common/lcd_scroll_body.dart';
 import 'blinking_cursor_builder.dart';
 import 'lcd_math_sanitizer.dart';
 import 'lcd_palette.dart';
@@ -88,8 +89,13 @@ class LcdInputBox extends StatelessWidget {
       ),
       child: _content(),
     );
-    if (onTap == null) return box;
-    return GestureDetector(behavior: HitTestBehavior.opaque, onTap: onTap, child: box);
+    // Celda activa (D-Pad): se asegura visible dentro del scroll vertical de la LCD.
+    return LcdEnsureVisible(
+      active: active,
+      child: onTap == null
+          ? box
+          : GestureDetector(behavior: HitTestBehavior.opaque, onTap: onTap, child: box),
+    );
   }
 
   Widget _content() {

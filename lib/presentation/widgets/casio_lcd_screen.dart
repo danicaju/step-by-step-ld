@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/math_engine/models/step_resolution.dart';
+import 'common/lcd_scroll_body.dart';
 import 'lcd/lcd_math_sanitizer.dart';
-import 'lcd/lcd_status_bar.dart';
 import 'lcd/lcd_mode_menu.dart';
 import 'lcd/lcd_setup_and_submenus.dart';
-import 'lcd/lcd_pedagogical_box.dart';
-import '../utils/latex_plain_text.dart';
-import 'lcd/lcd_copyable_result.dart';
-import 'lcd/lcd_blinking_latex.dart';
-import 'lcd/lcd_step_formula.dart';
 import 'lcd/lcd_palette.dart';
+import 'lcd/lcd_steps_body.dart';
+import 'lcd/lcd_edge_arrows.dart';
 
 export 'lcd/lcd_math_sanitizer.dart';
 export 'lcd/lcd_status_bar.dart';
 export 'lcd/lcd_mode_menu.dart';
 export 'lcd/lcd_setup_and_submenus.dart';
 export 'lcd/lcd_pedagogical_box.dart';
-import 'lcd/lcd_edge_arrows.dart';
-import 'safe_math.dart';
 export 'lcd/lcd_edge_arrows.dart';
 
 
@@ -60,7 +55,17 @@ class CasioLcdScreen extends StatelessWidget {
   final bool isCalcPromptActive;
   final String? calcExpressionLatex;
   final String calcValueRaw;
-  final Widget? headerSelectors;
+  /// Construye la cabecera de selectores; `wrap` indica si debe ir en varias filas.
+  final Widget? Function(bool wrap)? headerSelectorsBuilder;
+
+  /// La cabecera puede pasar a 2 filas (Wrap) en LCD estrecha y suficientemente alta.
+  final bool headerCanWrap;
+
+  /// Ancho maximo de la LCD para usar la cabecera en 2 filas (el scroll absorbe el alto).
+  static const double wrapMaxWidth = 480;
+
+  /// Alto minimo (sin barra de estado) que necesita el cuerpo; por debajo scrollea.
+  final double? bodyMinHeight;
 
   final Widget? supplementaryVisualView;
 
@@ -106,9 +111,11 @@ class CasioLcdScreen extends StatelessWidget {
     this.isCalcPromptActive = false,
     this.calcExpressionLatex,
     this.calcValueRaw = '',
-    this.headerSelectors,
+    this.headerSelectorsBuilder,
+    this.headerCanWrap = false,
     this.supplementaryVisualView,
     this.supplementaryVisualFlex = 6,
+    this.bodyMinHeight,
   });
 
   /// Número de módulos visibles por página en el MENU paginado (2×2).
@@ -139,6 +146,16 @@ class CasioLcdScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _buildLcd(context);
+
+  /// Menu MODE / SETUP / CALC dentro del scroll vertical de la LCD.
+  Widget _scrolled(String id, double minH, LcdPalette palette, Widget child) =>
+      LcdScrollBody(
+        ink: palette.formula,
+        background: palette.background,
+        minContentHeight: minH,
+        resetKey: id,
+        builder: (context, h) => child,
+      );
 
   Widget _buildLcd(BuildContext context) {
     final bool hasSteps =
@@ -182,7 +199,6 @@ class CasioLcdScreen extends StatelessWidget {
     final Color insetTopColor = palette.inset;
     final Color borderColor = palette.border;
     final Color formulaColor = palette.formula;
-    final Color originalFormulaColor = palette.original;
     final Color stepTitleColor = palette.title;
 
     final Widget lcdBody = Container(
@@ -207,7 +223,11 @@ class CasioLcdScreen extends StatelessWidget {
           border: Border.all(color: borderColor, width: 1.5),
         ),
         child: isMenuOpen
-            ? LcdModeMenu(
+            ? _scrolled(
+                'menu',
+                0,
+                palette,
+                LcdModeMenu(
                 menuCursorIndex: menuCursorIndex,
                 onMenuCursorChanged: onMenuCursorChanged,
                 onSelectMenuMode: onSelectMenuMode,
@@ -218,211 +238,41 @@ class CasioLcdScreen extends StatelessWidget {
                 backgroundColor: backgroundColor,
                 formulaColor: formulaColor,
                 stepTitleColor: stepTitleColor,
-              )
+              ))
             : isSetupOpen
-            ? setupView ?? LcdSetupMenu(
+            ? setupView ?? _scrolled(
+                'setup',
+                120,
+                palette,
+                LcdSetupMenu(
                 isOledDark: isOledDark,
                 isRadMode: isRadMode,
                 onSelectSetupOption: onSelectSetupOption,
                 formulaColor: formulaColor,
                 stepTitleColor: stepTitleColor,
-              )
+              ))
             : isCalcPromptActive
-            ? LcdCalcPrompt(
+            ? _scrolled(
+                'calc',
+                100,
+                palette,
+                LcdCalcPrompt(
                 varLabel: calcVarLabel,
                 calcValueRaw: calcValueRaw,
                 calcExpressionLatex: calcExpressionLatex,
                 formulaColor: formulaColor,
                 stepTitleColor: stepTitleColor,
-              )
-            : LayoutBuilder(
-                builder: (context, lcdConstraints) {
-                  final double maxNoteHeight = lcdConstraints.maxHeight.isFinite
-                      ? (lcdConstraints.maxHeight * 0.34).clamp(28.0, 68.0)
-                      : 68.0;
-                  // Visual dominante (caja espanola): el dibujo manda, sin selector ni enunciado repetido.
-                  final bool visualFirst = hasSteps &&
-                      supplementaryVisualView != null &&
-                      supplementaryVisualFlex >= 8;
-                  final double headerExtra =
-                      headerSelectors != null && !visualFirst ? 30.0 : 0.0;
-                  final bool showBottomNote = lcdConstraints.maxHeight >=
-                          (supplementaryVisualView != null ? 190.0 : 118.0) + headerExtra &&
-                      (coefficientView == null ||
-                          lcdConstraints.maxHeight >= 140.0 + headerExtra);
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      LcdStatusBar(
-                        isShiftActive: isShiftActive,
-                        isAlphaActive: isAlphaActive,
-                        isMemoryActive: isMemoryActive,
-                        showDisp: showDisp,
-                        showSto: showSto,
-                        showIns: showIns,
-                        isRadMode: isRadMode,
-                        angleLabel: angleLabel,
-                        onToggleAngleUnit: onToggleAngleUnit,
-                        modeLabel: modeLabel,
-                        hasSteps: hasSteps,
-                        activeStepIndex: activeStepIndex,
-                        totalSteps: currentResolution?.steps.length ?? 0,
-                        stepTitle: stepTitle,
-                        stepTitleColor: stepTitleColor,
-                        isOledDark: isOledDark,
-                        stepTitleBelow: lcdConstraints.maxHeight >= 150,
-                        isSoundMuted: isSoundMuted,
-                        onToggleSound: onToggleSound,
-                        onToggleTheme: onToggleTheme,
-                        onUndo: onUndo,
-                      ),
-                      if (headerSelectors != null && !visualFirst) headerSelectors!,
-          // 2. Expresión de entrada original pequeña arriba a la izquierda (como en Casio reales)
-          if (hasSteps && lcdConstraints.maxHeight >= 100 && !visualFirst) ...[
-            const SizedBox(height: 4),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SafeMath.tex(
-                CasioLcdScreen.sanitizeForMathTex(currentResolution!.originalInputLatex),
-                textStyle: TextStyle(
-                  fontSize: 14,
-                  color: originalFormulaColor,
-                ),
-              ),
-            ),
-          ],
-
-          SizedBox(height: lcdConstraints.maxHeight >= 100 ? 4 : 1),
-
-          // 3. Expresión principal renderizada en LaTeX, vista personalizada o Plantilla de Coeficientes
-          Expanded(
-            child: customBodyView != null && !hasSteps
-                ? customBodyView!
-                : coefficientView != null && !hasSteps
-                ? Center(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: constraints.maxWidth,
-                            maxHeight: constraints.maxHeight,
-                          ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.center,
-                            child: coefficientView!,
-                          ),
-                        );
-                      },
-                    ),
-                  )
-                : Stack(
-                    children: [
-                      if (supplementaryVisualView != null && hasSteps)
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            final cleanDisplay =
-                                CasioLcdScreen.sanitizeForMathTex(displayLatex);
-                            return Column(
-                              children: [
-                                // Con flex 10 el visual ocupa toda la LCD (recta real en su propio paso).
-                                if (supplementaryVisualFlex < 10)
-                                Expanded(
-                                  flex: 10 - supplementaryVisualFlex,
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: LcdBlinkingLatex(
-                                        isOledDark: isOledDark,
-                                        latex: cleanDisplay,
-                                        textStyle: TextStyle(
-                                          fontSize: latexFontSize * 0.9,
-                                          color: formulaColor,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                if (supplementaryVisualFlex < 10) const SizedBox(height: 3),
-                                Expanded(
-                                  flex: supplementaryVisualFlex,
-                                  child: supplementaryVisualView!,
-                                ),
-                              ],
-                            );
-                          },
-                        )
-                      else
-                        LcdCopyableResult(
-                          enabled: hasSteps && activeStepIndex == currentResolution!.steps.length - 1,
-                          copyText: LatexPlainText.toPlain(
-                              showDecimalApprox && currentResolution != null
-                                  ? currentResolution!.decimalApproxLatex
-                                  : (currentResolution?.exactResultLatex ?? '')),
-                          ink: formulaColor,
-                          background: backgroundColor,
-                          child: Align(
-                          alignment: isMultiLineLatex
-                              ? Alignment.center
-                              : Alignment.centerRight,
-                          child: hasSteps
-                              ? LcdStepFormula(
-                                  latex: displayLatex,
-                                  originalLatex:
-                                      lcdConstraints.maxHeight >= 100 && !visualFirst
-                                          ? currentResolution!.originalInputLatex
-                                          : null,
-                                  fontSize: latexFontSize,
-                                  color: formulaColor,
-                                  background: backgroundColor,
-                                  centered: isMultiLineLatex,
-                                )
-                              : LayoutBuilder(
-                            builder: (context, constraints) {
-                              final cleanDisplay =
-                                  CasioLcdScreen.sanitizeForMathTex(displayLatex);
-                              return ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  maxWidth: constraints.maxWidth,
-                                  maxHeight: constraints.maxHeight,
-                                ),
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: isMultiLineLatex
-                                      ? Alignment.center
-                                      : Alignment.centerRight,
-                                  child: LcdBlinkingLatex(
-                                    isOledDark: isOledDark,
-                                    latex: cleanDisplay,
-                                    textStyle: TextStyle(
-                                      fontSize: latexFontSize,
-                                      color: formulaColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        )),
-                    ],
-                  ),
-          ),
-
-                      if (showBottomNote) ...[
-                        const SizedBox(height: 4),
-                        LcdPedagogicalBox(
-                          warningTrick: warningTrick,
-                          pedagogicalNote: pedagogicalNote,
-                          maxNoteHeight: maxNoteHeight,
-                          isOledDark: isOledDark,
-                        ),
-                      ],
-                    ],
-                  );
-                },
+              ))
+            : LcdStepsBody(
+                screen: this,
+                palette: palette,
+                hasSteps: hasSteps,
+                displayLatex: displayLatex,
+                stepTitle: stepTitle,
+                pedagogicalNote: pedagogicalNote,
+                warningTrick: warningTrick,
+                isMultiLineLatex: isMultiLineLatex,
+                latexFontSize: latexFontSize,
               ),
       ),
     );

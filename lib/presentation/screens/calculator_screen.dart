@@ -122,6 +122,7 @@ part 'calculator_screen_m5.dart';
 part 'calculator_screen_forms.dart';
 part 'calculator_screen_chassis.dart';
 part 'calculator_screen_chassis_lcd.dart';
+part 'calculator_screen_lcd_metrics.dart';
 part 'calculator_screen_views.dart';
 part 'calculator_screen_theme.dart';
 part 'calculator_screen_editing.dart';

@@ -284,12 +284,16 @@ class _LcdDropdownSelectorState<T> extends State<LcdDropdownSelector<T>> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                Text(
-                  currentItem.label,
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: widget.fontSize,
-                    fontWeight: FontWeight.bold,
+                Flexible(
+                  child: Text(
+                    currentItem.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: widget.fontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 3),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/theme_controller.dart';
+import '../common/lcd_scroll_body.dart';
 import 'lcd_error_palette.dart';
 import 'lcd_error_text.dart';
 
@@ -51,9 +52,13 @@ class LcdErrorScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(8.5),
         border: Border.all(color: _border, width: 1.5),
       ),
-      child: LayoutBuilder(
-        builder: (context, c) {
-          final compact = c.maxHeight.isFinite && c.maxHeight < 120;
+      child: LcdScrollBody(
+        ink: p.body,
+        background: p.bg,
+        minContentHeight: 96,
+        resetKey: message,
+        builder: (context, bodyH) {
+          final compact = bodyH < 120;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

@@ -43,9 +43,32 @@ extension _CalculatorScreenHeaderSelectors on _CalculatorScreenState {
         NotableIdentityType.differenceOfSquares => '',
       };
 
-  Widget? _buildHeaderSelectors() {
+  Widget? _buildHeaderSelectors(bool wrap) {
     final specs = _headerSpecs();
     if (specs.isEmpty) return null;
+    Widget selector(_HeaderSpec s) => LcdDropdownSelector<int>(
+          widgetKey: Key(s.keyName),
+          prefix: s.prefix,
+          value: s.value,
+          items: s.items,
+          isOledDark: _isOledDark,
+          height: 22,
+          fontSize: 10.5,
+          controller: _hdrCtrls.putIfAbsent(s.keyName, LcdDropdownController.new),
+          boundsKey: _lcdBoundsKey,
+          onChanged: (v) => updateState(() => s.onSelect(v)),
+        );
+    if (wrap) {
+      return Padding(
+        padding: EdgeInsets.zero,
+        child: Wrap(
+          key: const Key('lcd_header_wrap'),
+          spacing: 4,
+          runSpacing: 4,
+          children: [for (final s in specs) selector(s)],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(top: 3, bottom: 2),
       child: SingleChildScrollView(
@@ -55,19 +78,7 @@ extension _CalculatorScreenHeaderSelectors on _CalculatorScreenState {
           children: [
             for (int i = 0; i < specs.length; i++) ...[
               if (i > 0) const SizedBox(width: 4),
-              LcdDropdownSelector<int>(
-                widgetKey: Key(specs[i].keyName),
-                prefix: specs[i].prefix,
-                value: specs[i].value,
-                items: specs[i].items,
-                isOledDark: _isOledDark,
-                height: 22,
-                fontSize: 10.5,
-                controller: _hdrCtrls.putIfAbsent(
-                    specs[i].keyName, LcdDropdownController.new),
-                boundsKey: _lcdBoundsKey,
-                onChanged: (v) => updateState(() => specs[i].onSelect(v)),
-              ),
+              selector(specs[i]),
             ],
           ],
         ),
