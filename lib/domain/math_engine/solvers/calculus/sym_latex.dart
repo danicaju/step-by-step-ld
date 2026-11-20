@@ -61,6 +61,8 @@ class SymLatex {
           : '\\log_{${_t(f.base!)}}\\left($a\\right)';
     }
     const inv = {'asin': 'arcsin', 'acos': 'arccos', 'atan': 'arctan'};
+    const invH = {'asinh': r'\sinh^{-1}', 'acosh': r'\cosh^{-1}', 'atanh': r'\tanh^{-1}'};
+    if (invH.containsKey(f.name)) return '${invH[f.name]}\\left($a\\right)';
     return '\\${inv[f.name] ?? f.name}\\left($a\\right)';
   }
 

@@ -43,9 +43,16 @@ class ExtMath {
   /// Raiz n-esima real de [v]: indices impares admiten radicando negativo
   /// (`-pow(-v, 1/n)`); los pares lo rechazan con error de dominio.
   static double realRoot(double v, int n) {
-    if (v >= 0) return math.pow(v, 1 / n).toDouble();
+    if (v >= 0) return _snapRoot(math.pow(v, 1 / n).toDouble(), v, n);
     if (n.isEven) throw const ExMathError(ExMathError.evenRootNegative);
-    return -math.pow(-v, 1 / n).toDouble();
+    return -_snapRoot(math.pow(-v, 1 / n).toDouble(), -v, n);
+  }
+
+  /// Ajusta al entero mas cercano cuando `r^n == v` (evita 3.9999999999999996 para raiz cubica de 64).
+  static double _snapRoot(double r, double v, int n) {
+    final k = r.roundToDouble();
+    if (k != r && (math.pow(k, n).toDouble() - v).abs() <= 1e-9 * (1 + v.abs())) return k;
+    return r;
   }
 
   /// `log_b(x)` exacto cuando ambos son racionales con las mismas bases primas.

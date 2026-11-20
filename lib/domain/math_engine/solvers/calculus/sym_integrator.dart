@@ -130,7 +130,7 @@ class SymIntegrator {
       final lu = _liate(f.l) <= _liate(f.r);
       u = lu ? f.l : f.r;
       dv = lu ? f.r : f.l;
-    } else if (f is XFn && (f.name == 'ln' || f.name == 'asin' || f.name == 'acos' || f.name == 'atan')) {
+    } else if (f is XFn && const {'ln', 'log', 'asin', 'acos', 'atan', 'asinh', 'acosh', 'atanh'}.contains(f.name)) {
       u = f;
       dv = Sx.one;
     } else {

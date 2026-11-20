@@ -1,3 +1,4 @@
+import '../calculus/generic_quadrature_integral.dart';
 import '../calculus/non_elementary_integral_handler.dart';
 import '../calculus/universal_rational_integrator.dart';
 import '../core/rational.dart';
@@ -135,7 +136,7 @@ class SymbolicIntegralSolver {
     } on ExtUnsupported {
       final alt = UniversalRationalIntegrator.definite(f, a, b) ?? NonElementaryIntegralHandler.definite(f, a, b);
       if (alt != null) return alt;
-      rethrow;
+      return GenericQuadratureIntegral.definite(f, a, b);
     }
     final big = r.antiderivative;
     // Integrando no acotado en [a, b] -> integral impropia.

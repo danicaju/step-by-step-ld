@@ -3,6 +3,7 @@ import '../exact/ext_expr.dart';
 import '../exact/ext_evaluator.dart';
 import '../trig_and_angles_solver.dart';
 import 'sym_build.dart';
+import 'sym_diff_rules.dart';
 import 'sym_latex.dart';
 
 /// Regla aplicada durante la derivacion (para los pasos didacticos).
@@ -37,8 +38,12 @@ class SymDiff {
       case XPow(:final base, :final exp):
         return _pow(f, base, exp);
       case XRoot(:final index, :final rad):
-        final n = index == null ? Rational(2) : (_constValue(index) ?? Rational(2));
-        return d(XPow(rad, XNum(Rational(1) / n)));
+        final n = index == null ? Rational(2) : _constValue(index);
+        if (n == null) throw const ExtUnsupported('Índice de raíz no constante');
+        final du = d(rad);
+        final outer = SymDiffRules.rootOuter(n, rad);
+        _chain(f, rad, outer, du);
+        return Sx.mul(outer, du);
       case XFn():
         return _fn(f);
       default:
@@ -140,10 +145,14 @@ class SymDiff {
         outer = Sx.div(Sx.one, Sx.add(Sx.one, Sx.pow(u, Sx.num(2))));
       case 'ln':
         outer = Sx.div(Sx.one, u);
-      default:
+      case 'log':
         // log_b(u) = u' / (u ln b)
         final b = f.base ?? Sx.num(10);
         outer = Sx.div(Sx.one, Sx.mul(u, XFn('ln', b)));
+      default:
+        final h = SymDiffRules.hyperbolicOuter(f.name, u);
+        if (h == null) throw const ExtUnsupported('Función no derivable en este modo');
+        outer = h;
     }
     _chain(f, u, outer, du);
     return Sx.mul(outer, du);

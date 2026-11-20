@@ -3,6 +3,7 @@ import '../equations/eq_poly.dart';
 import '../exact/ext_evaluator.dart';
 import '../exact/ext_expr.dart';
 import '../trig_and_angles_solver.dart';
+import 'integral_table_ext.dart';
 import 'sym_build.dart';
 
 /// Tabla de integrales inmediatas (con argumento lineal `ax + b`) y linealidad
@@ -117,7 +118,7 @@ class IntegralTable {
       case 'ln':
         return _byA(Sx.sub(Sx.mul(u, XFn('ln', u)), u), a);
       default:
-        return null;
+        return IntegralTableExt.fn(f, a);
     }
   }
 
@@ -147,23 +148,23 @@ class IntegralTable {
         if (fn.name == 'cos' && l3 != null) {
           return Sx.mul(Sx.rat(c), _byA(XFn('tan', fn.arg), l3.$1));
         }
+        if (l3 != null) return IntegralTableExt.coshSquared(c, fn, l3.$1);
       }
     }
     if (den is XRoot) {
       final l2 = linear(den.rad);
-      final isSqrt = den.index == null || Sx.isNum(den.index!, 2);
+      final nIdx = den.index == null ? Rational(2) : constValue(den.index!);
+      final isSqrt = nIdx == Rational(2);
       if (l2 != null && isSqrt) {
         return Sx.mul(Sx.rat(c * Rational(2)), _byA(den, l2.$1));
       }
-      final p = PolyOps.polyOf(den.rad);
-      // 1 / sqrt(1 - x^2) = arcsin x
-      if (p != null && isSqrt && PolyOps.degree(p) == 2 && PolyOps.coeff(p, 1).isZero) {
-        final a2 = PolyOps.coeff(p, 2);
-        final a0 = PolyOps.coeff(p, 0);
-        if (a2 == Rational(-1) && a0 == Rational(1)) {
-          return Sx.mul(Sx.rat(c), XFn('asin', Sx.x));
-        }
+      if (l2 != null && nIdx != null) {
+        final r = IntegralTableExt.inverseRoot(c, nIdx, den.rad, l2.$1);
+        if (r != null) return r;
       }
+      final p = PolyOps.polyOf(den.rad);
+      // 1 / sqrt(a0 - a2 x^2) = (1/sqrt(a2)) arcsin(sqrt(a2/a0) x)
+      if (p != null && isSqrt) return IntegralTableExt.arcsinForm(c, p);
     }
     // c / (p2 x^2 + p0) = c / (p2 k) arctan(x / k)
     final p = PolyOps.polyOf(den);
@@ -178,6 +179,7 @@ class IntegralTable {
           final arg = k == Rational(1) ? Sx.x : Sx.div(Sx.x, Sx.rat(k));
           return Sx.mul(Sx.rat(coef), XFn('atan', arg));
         }
+        return IntegralTableExt.arctanIrrational(c, p);
       }
     }
     return null;

@@ -28,7 +28,10 @@ class CalculusStepTexts {
     'sin': r"\text{Seno}:\ (\sin u)' = \cos u \cdot u'",
     'cos': r"\text{Coseno}:\ (\cos u)' = -\sin u \cdot u'",
     'tan': r"\text{Tangente}:\ (\tan u)' = \frac{u'}{\cos^{2} u}",
-    'inv': r"\text{Trig. inversa}:\ (\arctan u)' = \frac{u'}{1+u^{2}}",
+    'inv': r"\text{Trig. inversa}:\ (\arcsin u)' = \frac{u'}{\sqrt{1-u^{2}}},\ (\arccos u)' = -\frac{u'}{\sqrt{1-u^{2}}},\ (\arctan u)' = \frac{u'}{1+u^{2}}",
+    'raiz': r"\text{Raiz}:\ \left(\sqrt[n]{u}\right)' = \frac{u'}{n \cdot \sqrt[n]{u^{n-1}}}",
+    'log': r"\text{Log. en base a}:\ (\log_{a} u)' = \frac{u'}{u \ln a}",
+    'hip': r"\text{Hiperbolicas}:\ (\sinh u)' = \cosh u \cdot u',\ (\cosh u)' = \sinh u \cdot u',\ (\tanh u)' = \frac{u'}{\cosh^{2} u}",
   };
 
   static const _ruleNames = <String, String>{
@@ -43,6 +46,9 @@ class CalculusStepTexts {
     'cos': 'coseno',
     'tan': 'tangente',
     'inv': 'trigonométricas inversas',
+    'raiz': 'raíz n-ésima',
+    'log': 'logaritmo en base a',
+    'hip': 'hiperbólicas',
   };
 
   /// Reglas que hay que aplicar a [f], en el orden en que se explican en clase.
@@ -79,16 +85,18 @@ class CalculusStepTexts {
           }
           walk(base);
           walk(exp);
-        case XRoot(:final rad):
-          k.add('potencia');
+        case XRoot(:final index, :final rad):
+          k.add(index == null || Sx.isNum(index, 2) ? 'potencia' : 'raiz');
           if (rad is! XVar) k.add('cadena');
           walk(rad);
-        case XFn(:final name, :final arg):
+        case XFn(:final name, :final arg, :final base):
           k.add(switch (name) {
             'sin' => 'sin',
             'cos' => 'cos',
             'tan' => 'tan',
-            'ln' || 'log' => 'ln',
+            'ln' => 'ln',
+            'log' => base == null ? 'ln' : 'log',
+            'sinh' || 'cosh' || 'tanh' || 'asinh' || 'acosh' || 'atanh' => 'hip',
             _ => 'inv',
           });
           if (arg is! XVar) k.add('cadena');
@@ -99,7 +107,9 @@ class CalculusStepTexts {
     }
 
     walk(f);
-    const order = ['lineal', 'potencia', 'producto', 'cociente', 'cadena', 'exp', 'ln', 'sin', 'cos', 'tan', 'inv'];
+    const order = [
+      'lineal', 'potencia', 'raiz', 'producto', 'cociente', 'cadena', 'exp', 'ln', 'log', 'sin', 'cos', 'tan', 'inv', 'hip',
+    ];
     final out = [for (final o in order) if (k.contains(o)) o];
     return out.isEmpty ? const ['potencia'] : out;
   }
