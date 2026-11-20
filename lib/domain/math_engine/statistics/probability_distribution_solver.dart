@@ -43,7 +43,7 @@ class ProbabilityDistributionSolver {
     try {
       return ProportionSolver.parseQuantity(text);
     } on ArsenalException {
-      throw ArsenalException('Sintaxis incompleta: completa $name.');
+      throw ArsenalException('Sintaxis incompleta: Completa $name.');
     }
   }
 
@@ -107,7 +107,7 @@ class ProbabilityDistributionSolver {
     final ra = _q(a, op == NormalOp.between ? 'el límite a' : 'el valor a');
     final rb = op == NormalOp.between ? _q(b ?? '', 'el límite b') : null;
     if (rb != null && ra.toDouble() > rb.toDouble()) {
-      throw const ArsenalException('Math ERROR: se exige a menor o igual que b.');
+      throw const ArsenalException('Math ERROR: Se exige a menor o igual que b.');
     }
     final za = (ra - m) / s;
     final zb = rb == null ? null : (rb - m) / s;
@@ -188,14 +188,14 @@ class ProbabilityDistributionSolver {
   }) {
     final rn = _q(n, 'n'), rp = _q(p, 'p'), rk = _q(k, 'k');
     if (!rn.isInteger || rn.numerator < 1 || rn.numerator > maxN) {
-      throw const ArsenalException('Math ERROR: n debe ser un entero entre 1 y 1000.');
+      throw const ArsenalException('Math ERROR: N debe ser un entero entre 1 y 1000.');
     }
     if (!rp.isPositive || rp.toDouble() >= 1) {
-      throw const ArsenalException('Math ERROR: p debe cumplir 0 < p < 1.');
+      throw const ArsenalException('Math ERROR: P debe cumplir 0 < p < 1.');
     }
     final nn = rn.numerator;
     if (!rk.isInteger || rk.numerator < 0 || rk.numerator > nn) {
-      throw const ArsenalException('Math ERROR: k debe ser un entero entre 0 y n.');
+      throw const ArsenalException('Math ERROR: K debe ser un entero entre 0 y n.');
     }
     final kk = rk.numerator;
     final pn = BigInt.from(rp.numerator), pd = BigInt.from(rp.denominator);

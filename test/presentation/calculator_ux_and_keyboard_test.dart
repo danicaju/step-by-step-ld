@@ -453,6 +453,11 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '3'));
       await tester.pumpAndSettle();
+      // Entrada por coeficientes (la libre es la predeterminada).
+      await tester.tap(find.byKey(const Key('hdr_sys_input')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('sys_input_coef')).last);
+      await tester.pumpAndSettle();
 
       // Escribir '2' en a1, usar ▶ para ir a b1, ▼ para ir a b2, escribir '7'
       await tester.tap(find.widgetWithText(CasioPhysicalKey, '2'));

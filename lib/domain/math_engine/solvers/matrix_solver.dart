@@ -26,7 +26,7 @@ class MatrixSolver {
   }) {
     final effectiveA = matrixA ?? a;
     if (effectiveA == null) {
-      throw ArgumentError('matrixA o a es requerido');
+      throw ArgumentError('Falta la matriz A.');
     }
     final effectiveB = matrixB ?? b;
     final effectiveK = scalarK ?? scalar ?? Rational(1);

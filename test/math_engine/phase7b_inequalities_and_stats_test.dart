@@ -115,7 +115,9 @@ void main() {
     test('2.º grado con recta real visual: x^2 - 4x + 3 <= 0 => [1, 3]', () {
       final res = InequalitySolver.solveString('x^2 - 4x + 3 <= 0');
 
-      expect(res.steps.length, equals(2));
+      // Raices, recta real en su propio paso y solucion final limpia.
+      expect(res.steps.length, equals(3));
+      expect(res.steps[1].showsNumberLine, isTrue);
       expect(res.steps[0].latexExpression, contains('x_{1} = 1'));
       expect(res.steps[0].latexExpression, contains('x_{2} = 3'));
       // Verificamos que la tabla antigua \begin{array} ha sido eliminada a favor de la recta real

@@ -41,11 +41,11 @@ class TriangleSolver {
     final s = [...sides], a = [...angles];
     final ns = s.whereType<double>().length, na = a.whereType<double>().length;
     if (s.any((v) => v != null && v <= 0) || a.any((v) => v != null && v <= 0)) {
-      throw const ArsenalException('Math ERROR: lados y ángulos deben ser positivos.');
+      throw const ArsenalException('Math ERROR: Lados y ángulos deben ser positivos.');
     }
-    if (a.any((v) => v != null && v >= 180)) throw const ArsenalException('Math ERROR: un ángulo debe ser menor que 180°.');
-    if (ns == 0) throw const ArsenalException('Sintaxis incompleta: se necesita al menos un lado.');
-    if (ns + na != 3) throw const ArsenalException('Sintaxis incompleta: introduce exactamente 3 datos.');
+    if (a.any((v) => v != null && v >= 180)) throw const ArsenalException('Math ERROR: Un ángulo debe ser menor que 180°.');
+    if (ns == 0) throw const ArsenalException('Sintaxis incompleta: Se necesita al menos un lado.');
+    if (ns + na != 3) throw const ArsenalException('Sintaxis incompleta: Introduce exactamente 3 datos.');
     final steps = <MathStep>[];
     final given = [
       for (var i = 0; i < 3; i++)
@@ -107,18 +107,18 @@ class TriangleSolver {
         'El lado opuesto al ángulo recto es la hipotenusa; los otros dos son los catetos.');
     final accI = ad[i] != null, accJ = ad[j] != null;
     if ((accI && ad[i]! >= 90 - _eps) || (accJ && ad[j]! >= 90 - _eps)) {
-      throw const ArsenalException('Math ERROR: en un triángulo rectángulo los otros ángulos son agudos (menores que 90°).');
+      throw const ArsenalException('Math ERROR: En un triángulo rectángulo los otros ángulos son agudos (menores que 90°).');
     }
     if (accI && accJ && (ad[i]! + ad[j]!) != 90 && ((ad[i]! + ad[j]!) - 90).abs() > 1e-6) {
-      throw const ArsenalException('Math ERROR: los ángulos agudos deben sumar 90°.');
+      throw const ArsenalException('Math ERROR: Los ángulos agudos deben sumar 90°.');
     }
     if (!accI && !accJ && sd[r] != null && sd[i] != null && sd[j] == null) {
-      if (sd[i]! >= sd[r]!) throw const ArsenalException('Math ERROR: un cateto debe ser menor que la hipotenusa.');
+      if (sd[i]! >= sd[r]!) throw const ArsenalException('Math ERROR: Un cateto debe ser menor que la hipotenusa.');
       sd[j] = math.sqrt(sd[r]! * sd[r]! - sd[i]! * sd[i]!);
       _s(st, 'Teorema de Pitágoras', '$h^{2} = $li^{2} + $lj^{2}\\;\\Rightarrow\\; $lj = \\sqrt{${n(sd[r]!)}^{2} - ${n(sd[i]!)}^{2}} = ${n(sd[j]!)}',
           'Despejamos el cateto: cateto² = hipotenusa² - cateto².');
     } else if (!accI && !accJ && sd[r] != null && sd[j] != null && sd[i] == null) {
-      if (sd[j]! >= sd[r]!) throw const ArsenalException('Math ERROR: un cateto debe ser menor que la hipotenusa.');
+      if (sd[j]! >= sd[r]!) throw const ArsenalException('Math ERROR: Un cateto debe ser menor que la hipotenusa.');
       sd[i] = math.sqrt(sd[r]! * sd[r]! - sd[j]! * sd[j]!);
       _s(st, 'Teorema de Pitágoras', '$h^{2} = $li^{2} + $lj^{2}\\;\\Rightarrow\\; $li = \\sqrt{${n(sd[r]!)}^{2} - ${n(sd[j]!)}^{2}} = ${n(sd[i]!)}',
           'Despejamos el cateto: cateto² = hipotenusa² - cateto².');
@@ -162,7 +162,7 @@ class TriangleSolver {
   static TriangleSolution _sss(List<double?> s, List<MathStep> st) {
     final x = s.cast<double>();
     if (x[0] + x[1] <= x[2] || x[0] + x[2] <= x[1] || x[1] + x[2] <= x[0]) {
-      throw const ArsenalException('Math ERROR: no es un triángulo (un lado debe ser menor que la suma de los otros dos).');
+      throw const ArsenalException('Math ERROR: No es un triángulo (un lado debe ser menor que la suma de los otros dos).');
     }
     final ang = List<double>.filled(3, 0);
     for (var i = 0; i < 3; i++) {
@@ -198,7 +198,7 @@ class TriangleSolver {
     final miss = ang.indexWhere((v) => v == null);
     if (miss >= 0) {
       final sum = ang.whereType<double>().fold<double>(0, (p, v) => p + v);
-      if (sum >= 180 - _eps) throw const ArsenalException('Math ERROR: los ángulos deben sumar menos de 180°.');
+      if (sum >= 180 - _eps) throw const ArsenalException('Math ERROR: Los ángulos deben sumar menos de 180°.');
       ang[miss] = 180 - sum;
       _s(st, 'Tercer ángulo', '${_an[miss]} = 180^{\\circ} - ${TriangleSolver.ang(sum)} = ${TriangleSolver.ang(ang[miss]!)}', 'Los ángulos de un triángulo suman 180°.');
     }
@@ -218,7 +218,7 @@ class TriangleSolver {
     _s(st, 'Teorema del seno', '\\frac{${_sn[ai]}}{\\sin ${_an[ai]}} = \\frac{${_sn[other]}}{\\sin ${_an[other]}}\\;\\Rightarrow\\; \\sin ${_an[other]} = \\frac{${n(s[other]!)}\\sin ${TriangleSolver.ang(a[ai]!)}}{${n(s[ai]!)}} = ${n(sinOther)}',
         'Despejamos el seno del ángulo desconocido.');
     if (sinOther > 1 + 1e-12) {
-      throw const ArsenalException('Math ERROR: caso imposible, el seno sería mayor que 1.');
+      throw const ArsenalException('Math ERROR: Caso imposible, el seno sería mayor que 1.');
     }
     final base = _deg(math.asin(sinOther.clamp(-1.0, 1.0)));
     final cands = <double>[base];
@@ -237,7 +237,7 @@ class TriangleSolver {
       x[third] = s[ai]! * math.sin(_rad(c)) / math.sin(_rad(a[ai]!));
       out.add(TriangleSolution(x, ang));
     }
-    if (out.isEmpty) throw const ArsenalException('Math ERROR: caso imposible, no existe el triángulo.');
+    if (out.isEmpty) throw const ArsenalException('Math ERROR: Caso imposible, no existe el triángulo.');
     _s(st, out.length > 1 ? 'Caso ambiguo: dos triángulos' : 'Ángulo y lado restantes',
         out.map((o) => '${_an[other]} = ${TriangleSolver.ang(o.angles[other])},\\; ${_an[third]} = ${TriangleSolver.ang(o.angles[third])},\\; ${_sn[third]} = ${n(o.sides[third])}').join(r'\quad |\quad '),
         out.length > 1

@@ -71,6 +71,8 @@ import '../widgets/calculator_bezel_widgets.dart';
 import '../widgets/calculator_keypad_view.dart';
 import '../widgets/modes/calculator_method_tab.dart';
 import '../widgets/modes/probability_distribution_widget.dart';
+import '../widgets/modes/free_system_editor_view.dart';
+import '../../domain/math_engine/solvers/systems_free/free_system_solver.dart';
 import '../widgets/modes/inequality_system_editor_view.dart';
 import 'classwiz_state.dart';
 import '../utils/cell_fraction_editor.dart';
@@ -96,6 +98,7 @@ part 'calculator_screen_dpad.dart';
 part 'calculator_screen_dpad_vertical.dart';
 part 'calculator_screen_cell_fraction.dart';
 part 'calculator_screen_statement.dart';
+part 'calculator_screen_ineq_line.dart';
 part 'calculator_screen_history.dart';
 part 'calculator_screen_mode_reset.dart';
 part 'calculator_screen_keypress_helpers.dart';
@@ -445,6 +448,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                           },
                           graphAnalysis:
                               _calculatorMode == 5 ? _currentGraphAnalysis : null,
+                          ineqVisual: _sidePanelIneqVisual,
+                          isOledDark: _isOledDark,
                           onExportSticker: _openStickerExport,
                           onCopyLatex: _copyLatexToClipboardShortcut,
                           onOpenAiTutor: _openAiTutor,

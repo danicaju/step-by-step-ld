@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/theme_controller.dart';
 import '../theme/calculator_themes.dart';
 
+import '../../domain/math_engine/models/inequality_models.dart';
 import '../../domain/math_engine/models/step_resolution.dart';
 import '../../domain/math_engine/solvers/function_graph_solver.dart';
 import '../../domain/services/class_history_service.dart';
@@ -22,6 +23,10 @@ class WindowsSidePanel extends StatelessWidget {
   final int activeStepIndex;
   final ValueChanged<int> onSelectStep;
   final FunctionAnalysisResult? graphAnalysis;
+
+  /// Datos de la recta real (M6 / M7): se pintan integros en el paso que los muestra.
+  final Inequality1DVisualData? ineqVisual;
+  final bool isOledDark;
   final VoidCallback onExportSticker;
   final VoidCallback onCopyLatex;
   final VoidCallback onOpenAiTutor;
@@ -39,6 +44,8 @@ class WindowsSidePanel extends StatelessWidget {
     required this.activeStepIndex,
     required this.onSelectStep,
     this.graphAnalysis,
+    this.ineqVisual,
+    this.isOledDark = false,
     required this.onExportSticker,
     required this.onCopyLatex,
     required this.onOpenAiTutor,
@@ -117,6 +124,8 @@ class WindowsSidePanel extends StatelessWidget {
                     activeStepIndex: activeStepIndex,
                     onSelectStep: onSelectStep,
                     graphAnalysis: graphAnalysis,
+                    ineqVisual: ineqVisual,
+                    isOledDark: isOledDark,
                     onExportSticker: onExportSticker,
                     onCopyLatex: onCopyLatex,
                     onOpenAiTutor: onOpenAiTutor,

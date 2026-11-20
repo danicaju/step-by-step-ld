@@ -192,7 +192,7 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
               : (int.tryParse(fiRaw) ??
                   (throw FormatException('Frecuencia fᵢ no válida en fila ${i + 1}.')));
           if (fiVal <= 0) {
-            throw FormatException('fᵢ debe ser mayor que 0 en fila ${i + 1}.');
+            throw FormatException('La frecuencia fᵢ debe ser mayor que 0 en fila ${i + 1}.');
           }
           points.add(StatDataPoint(xiVal, fiVal));
         }

@@ -145,7 +145,7 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
     } on FormatException catch (e) {
       _showLcdError(e.message);
     } catch (_) {
-      _showLcdError('Sintaxis incompleta: la función no es válida.');
+      _showLcdError('Sintaxis incompleta: La función no es válida.');
     }
   }
 
@@ -168,7 +168,7 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
     } on FormatException catch (e) {
       _showLcdError(e.message);
     } catch (_) {
-      _showLcdError('Sintaxis incompleta: la función no es válida.');
+      _showLcdError('Sintaxis incompleta: La función no es válida.');
     }
   }
 
@@ -196,7 +196,7 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
     } on FormatException catch (e) {
       _showLcdError(e.message);
     } catch (_) {
-      _showLcdError('Sintaxis incompleta: la función no es válida.');
+      _showLcdError('Sintaxis incompleta: La función no es válida.');
     }
   }
 }

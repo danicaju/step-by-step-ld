@@ -1,6 +1,6 @@
 import '../../models/step_resolution.dart';
 import '../../models/inequality_models.dart';
-import 'inequality_parsing_helper.dart';
+import 'universal/inequality_interval_ops.dart';
 
 class InequalitySystem1DSolver {
   static final Expando<Inequality1DVisualData> visualDataExpando =
@@ -45,44 +45,43 @@ class InequalitySystem1DSolver {
       );
     }
 
-    // Calcular la intersección de intervalos
-    final intervals1 = visualDataList.isNotEmpty ? visualDataList[0].primaryIntervals : <InequalityInterval>[];
+    // Intersección exacta de los intervalos solución de todas las filas
+    if (visualDataList.length != singleResolutions.length) {
+      throw const FormatException('No se puede representar una de las inecuaciones del sistema.');
+    }
+    final intervals1 = visualDataList[0].primaryIntervals;
     final intervals2 = visualDataList.length > 1 ? visualDataList[1].primaryIntervals : <InequalityInterval>[];
-    var intersection = InequalityParsingHelper.intersectIntervalLists(intervals1, intervals2);
-    if (visualDataList.length > 2) {
-      final intervals3 = visualDataList[2].primaryIntervals;
-      intersection = InequalityParsingHelper.intersectIntervalLists(intersection, intervals3);
+    var intersection = intervals1;
+    for (var i = 1; i < visualDataList.length; i++) {
+      intersection = IntervalOps.intersect(intersection, visualDataList[i].primaryIntervals);
     }
 
-    final s1Latex = singleResolutions[0].exactResultLatex;
-    final s2Latex = singleResolutions.length > 1 ? singleResolutions[1].exactResultLatex : '';
-    final s3Latex = singleResolutions.length > 2 ? singleResolutions[2].exactResultLatex : '';
-    final sfLatex = intersection.isEmpty
-        ? r'\emptyset'
-        : intersection.map((i) => i.toIntervalLatex()).join(r' \cup ');
-
-    final capLatex = singleResolutions.length > 2
-        ? r'S_{1} \cap S_{2} \cap S_{3}'
-        : r'S_{1} \cap S_{2}';
+    final k = singleResolutions.length;
+    final sLatex = [for (final r in singleResolutions) r.exactResultLatex];
+    final sfLatex = IntervalOps.latexOf(intersection);
+    final capLatex = [for (var i = 1; i <= k; i++) 'S_{$i}'].join(r' \cap ');
+    const hatch = [
+      r'\text{rayado } / / /',
+      r'\text{rayado } \backslash \backslash \backslash',
+      r'\text{rayado horizontal}',
+      r'\text{rayado vertical}',
+    ];
 
     // Paso de representación en la recta e intersección con rayado
-    final repLatex = singleResolutions.length > 2
-        ? 'S_{1} = $s1Latex \\quad (\\text{rayado } / / /) \\\\\n'
-          'S_{2} = $s2Latex \\quad (\\text{rayado } \\backslash \\backslash \\backslash) \\\\\n'
-          'S_{3} = $s3Latex \\quad (\\text{rayado horizontal}) \\\\\n'
-          'S_{f} = $capLatex = $sfLatex'
-        : 'S_{1} = $s1Latex \\quad (\\text{rayado } / / /) \\\\\n'
-          'S_{2} = $s2Latex \\quad (\\text{rayado } \\backslash \\backslash \\backslash) \\\\\n'
-          'S_{f} = $capLatex = $sfLatex \\quad (\\text{zona en malla XXX})';
+    final repLatex = [
+      for (var i = 0; i < k; i++) 'S_{${i + 1}} = ${sLatex[i]} \\quad (${hatch[i]})',
+      'S_{f} = $capLatex = $sfLatex',
+    ].join(' \\\\\n');
 
     steps.add(
       MathStep(
         index: steps.length + 1,
-        shortTitle: 'Representación en la recta e intersección',
+        shortTitle: 'Intersección en la recta real',
         latexExpression: repLatex,
         pedagogicalNote:
             'Dibujamos sobre la recta real los puntos críticos ordenados. Trazamos cada solución con su rayado correspondiente. '
             'La solución final es la zona común donde todos los rayados coinciden.',
+        showsNumberLine: true,
       ),
     );
 

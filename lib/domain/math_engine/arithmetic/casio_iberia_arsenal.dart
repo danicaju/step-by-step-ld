@@ -75,7 +75,7 @@ class CasioIberiaArsenal {
   /// [nonRepeating] es la parte antes del periodo (`2.1`, `1`, `0`), [period] las cifras que se repiten.
   static StepByStepResolution periodicToFraction(String nonRepeating, String period) {
     if (period.isEmpty || !RegExp(r'^\d+$').hasMatch(period)) {
-      throw const ArsenalException('Sintaxis incompleta: escribe el periodo (cifras que se repiten).');
+      throw const ArsenalException('Sintaxis incompleta: Escribe el periodo (cifras que se repiten).');
     }
     var nr = nonRepeating.trim();
     final neg = nr.startsWith('-');
@@ -83,14 +83,14 @@ class CasioIberiaArsenal {
     if (nr.isEmpty) nr = '0';
     final parts = nr.split('.');
     if (parts.length > 2 || !RegExp(r'^\d+$').hasMatch(parts[0]) || (parts.length == 2 && parts[1].isNotEmpty && !RegExp(r'^\d+$').hasMatch(parts[1]))) {
-      throw const ArsenalException('Sintaxis incompleta: parte no periodica no valida.');
+      throw const ArsenalException('Sintaxis incompleta: Parte no periodica no valida.');
     }
     final intStr = parts[0];
     final fracStr = parts.length == 2 ? parts[1] : '';
     final k = fracStr.length;
     final m = period.length;
     if (intStr.length + k + m > 15) {
-      throw const ArsenalException('Math ERROR: demasiadas cifras (maximo 15).');
+      throw const ArsenalException('Math ERROR: Demasiadas cifras (maximo 15).');
     }
     final na = int.parse('$intStr$fracStr'); // parte no periodica como entero
     final p = int.parse(period);
@@ -185,7 +185,7 @@ class CasioIberiaArsenal {
   /// `D \div R d`: cociente entero C y resto R con `D = d*C + R`, `0 <= R < |d|`.
   static StepByStepResolution integerDivision(int dividend, int divisor) {
     if (divisor == 0) {
-      throw const ArsenalException('Math ERROR: el divisor no puede ser 0.');
+      throw const ArsenalException('Math ERROR: El divisor no puede ser 0.');
     }
     final r = dividend % divisor.abs(); // Dart: resto no negativo
     final c = (dividend - r) ~/ divisor;
@@ -221,10 +221,10 @@ class CasioIberiaArsenal {
 
   static void _check(int n, [int? r]) {
     if (n < 0 || n > maxFactorial) {
-      throw const ArsenalException('Math ERROR: n debe ser un entero entre 0 y 69.');
+      throw const ArsenalException('Math ERROR: N debe ser un entero entre 0 y 69.');
     }
     if (r != null && (r < 0 || r > n)) {
-      throw const ArsenalException('Math ERROR: se exige 0 <= r <= n.');
+      throw const ArsenalException('Math ERROR: Se exige 0 <= r <= n.');
     }
   }
 

@@ -195,6 +195,8 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                                 onSelectOperation:
                                                     _selectVectorOp,
                                                 operationsInHeader: true,
+                                                fractionNumeratorActive:
+                                                    _cw.x.cellNumEdit,
                                               )
                                             : (_calculatorMode == 11
                                                 ? CasioComplexEditorView(
@@ -215,6 +217,8 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                                                     onSelectOperation:
                                                         _selectComplexOp,
                                                     operationsInHeader: true,
+                                                    fractionNumeratorActive:
+                                                        _cw.x.cellNumEdit,
                                                   )
                                                 : (_calculatorMode == 7
                                                     ? (_activeResolution !=
@@ -279,13 +283,10 @@ extension _CalculatorScreenChassisLcd on _CalculatorScreenState {
                             : null,
                         calcValueRaw: _calcValueRaw,
                         headerSelectors: _buildHeaderSelectors(),
-                        supplementaryVisualFlex: _extraVisualFlex,
+                        supplementaryVisualFlex:
+                            _ineqLineStepActive ? 10 : _extraVisualFlex,
                         supplementaryVisualView: _extraVisual() ??
-                            ((_calculatorMode == 6 || _calculatorMode == 7) &&
-                                    _activeIneqVisualData != null &&
-                                    (_activeResolution == null ||
-                                        _activeResolution!.steps.length <= 1 ||
-                                        _activeStepIndex > 0)
+                            (_ineqLineStepActive
                                 ? NumberLineWidget(
                                     data: _activeIneqVisualData!,
                                     isOledDark: _isOledDark,

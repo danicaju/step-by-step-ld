@@ -58,8 +58,8 @@ void main() {
       LcdErrorText.clean('Error al evaluar: Invalid argument(s): No se puede dividir.'),
       'No se puede dividir.',
     );
-    expect(LcdErrorText.clean('Exception: FormatException: algo raro'), 'algo raro');
-    expect(LcdErrorText.clean('Math ERROR: operación no definida.'), 'operación no definida.');
+    expect(LcdErrorText.clean('Exception: FormatException: algo raro'), 'Algo raro');
+    expect(LcdErrorText.clean('Math ERROR: operación no definida.'), 'Operación no definida.');
     expect(LcdErrorText.clean('Error al evaluar:'), 'Operación no definida.');
   });
 

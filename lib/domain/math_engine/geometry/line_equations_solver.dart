@@ -59,7 +59,7 @@ class LineEquationsSolver {
 
   /// Desde un punto y un vector director.
   static LineEquationsResult fromPointVector(Rational x0, Rational y0, Rational v1, Rational v2) {
-    if (v1.isZero && v2.isZero) throw const ArsenalException('Math ERROR: el vector director no puede ser (0, 0).');
+    if (v1.isZero && v2.isZero) throw const ArsenalException('Math ERROR: El vector director no puede ser (0, 0).');
     return _solve(x0, y0, v1, v2,
         intro: 'P(${_r(x0)},\\; ${_r(y0)}),\\quad \\vec{v} = (${_r(v1)},\\; ${_r(v2)})', introNote: 'Datos: un punto y un vector director.');
   }

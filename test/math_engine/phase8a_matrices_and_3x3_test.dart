@@ -369,6 +369,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('menu_mode_3')));
       await tester.pumpAndSettle();
+      await pickHeader(tester, 'hdr_sys_input', 'sys_input_coef');
       await pickHeader(tester, 'hdr_sys_size', 'sys_dim_3');
       await tester.pumpAndSettle();
 

@@ -67,7 +67,7 @@ void main() {
     bothSizes('4c. triangulo imposible a=2, b=3, c=10: LcdErrorScreen claro', (t) async {
       await seq(t, 'mode:10 pick:hdr_vector_view:vector_view_2 2 = 3 = 1 0 = = = =');
       expect(find.byKey(const Key('lcd_error_screen')), findsOneWidget);
-      expect(find.textContaining('no es un triángulo'), findsWidgets);
+      expect(find.textContaining('No es un triángulo'), findsWidgets);
     });
   });
 

@@ -12,34 +12,43 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
 
   void _vectorInsertToken(String token) {
     final cells = _vectorActiveCells;
-    cells[_vectorActiveCol] = _appendTokenToNumericCell(
-      cells[_vectorActiveCol],
-      token,
-    );
+    cells[_vectorActiveCol] = token == '/'
+        ? _cellSlash(cells[_vectorActiveCol])
+        : _appendTokenToNumericCell(cells[_vectorActiveCol], token);
   }
 
   void _vectorBackspace() {
     final cells = _vectorActiveCells;
-    final cur = cells[_vectorActiveCol];
-    if (cur.isNotEmpty) {
-      cells[_vectorActiveCol] = cur.substring(0, cur.length - 1);
-    }
+    cells[_vectorActiveCol] = _cellBackspace(cells[_vectorActiveCol]);
   }
 
   void _vectorAdvanceOnEquals() {
     if (_vectorActiveCol < _vectorDim - 1) {
       _vectorActiveCol++;
+      _cw.x.cellNumEdit = true;
       return;
     }
     if (_vectorActiveRow < _vectorRowCount(_vectorOp) - 1) {
       _vectorActiveRow++;
       _vectorActiveCol = 0;
+      _cw.x.cellNumEdit = true;
       return;
     }
     _solveCurrentMode();
   }
 
   void _vectorMoveDpad({required int dRow, required int dCol}) {
+    if (_cellDpadInside(_vectorActiveCells[_vectorActiveCol], dRow, dCol)) {
+      return;
+    }
+    final before = (_vectorActiveRow, _vectorActiveCol);
+    _vectorMoveCell(dRow: dRow, dCol: dCol);
+    if (before != (_vectorActiveRow, _vectorActiveCol)) {
+      _cw.x.cellNumEdit = dCol > 0 || dRow > 0;
+    }
+  }
+
+  void _vectorMoveCell({required int dRow, required int dCol}) {
     if (dCol < 0) {
       if (_vectorActiveCol > 0) {
         _vectorActiveCol--;
@@ -105,29 +114,38 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
       }
       return;
     }
-    _complexCells[_complexActiveIndex] = _appendTokenToNumericCell(
-      _complexCells[_complexActiveIndex],
-      token,
-    );
+    _complexCells[_complexActiveIndex] = token == '/'
+        ? _cellSlash(_complexCells[_complexActiveIndex])
+        : _appendTokenToNumericCell(_complexCells[_complexActiveIndex], token);
   }
 
   void _complexBackspace() {
-    final cur = _complexCells[_complexActiveIndex];
-    if (cur.isNotEmpty) {
-      _complexCells[_complexActiveIndex] = cur.substring(0, cur.length - 1);
-    }
+    _complexCells[_complexActiveIndex] =
+        _cellBackspace(_complexCells[_complexActiveIndex]);
   }
 
   void _complexAdvanceOnEquals() {
     final maxIdx = _complexOp.lastCellIndex;
     if (_complexActiveIndex < maxIdx) {
       _complexActiveIndex++;
+      _cw.x.cellNumEdit = true;
     } else {
       _solveCurrentMode();
     }
   }
 
   void _complexMoveDpad({required int dRow, required int dCol}) {
+    if (_cellDpadInside(_complexCells[_complexActiveIndex], dRow, dCol)) {
+      return;
+    }
+    final before = _complexActiveIndex;
+    _complexMoveCell(dRow: dRow, dCol: dCol);
+    if (before != _complexActiveIndex) {
+      _cw.x.cellNumEdit = dCol > 0 || dRow > 0;
+    }
+  }
+
+  void _complexMoveCell({required int dRow, required int dCol}) {
     final maxIdx = _complexOp.lastCellIndex;
     if (dCol < 0 && _complexActiveIndex > 0) {
       _complexActiveIndex--;

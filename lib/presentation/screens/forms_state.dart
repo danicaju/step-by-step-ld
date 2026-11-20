@@ -66,6 +66,15 @@ class ExtraViewsState {
     ],
   );
 
+  /// M3: `true` = entrada libre (`miembro = miembro`); `false` = casillas de coeficientes.
+  bool sysFree = true;
+
+  /// M3 libre: 2 ecuaciones (layout 0) o 3 (layout 1); cada ecuacion son dos casillas (izq, der).
+  final ModeFormState sysForm = ModeFormState(cols: 2, layouts: [
+    [for (var i = 1; i <= 2; i++) ...[ModeField('Ec. $i izq', expr: true), ModeField('Ec. $i der', expr: true)]],
+    [for (var i = 1; i <= 3; i++) ...[ModeField('Ec. $i izq', expr: true), ModeField('Ec. $i der', expr: true)]],
+  ]);
+
   /// Celdas de coeficientes (Ruffini...): la fraccion `a/b` abierta edita el numerador.
   bool cellNumEdit = false;
 
@@ -84,7 +93,8 @@ class ExtraViewsState {
     m8View = 0;
     m10View = 0;
     cellNumEdit = false;
-    for (final f in [box, frac, line, tri, normal, bin]) {
+    sysFree = true;
+    for (final f in [box, frac, line, tri, normal, bin, sysForm]) {
       f.clear();
     }
     clearResults();

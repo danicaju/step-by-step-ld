@@ -21,6 +21,9 @@ class CasioVectorEditorView extends StatelessWidget {
   /// `true` si la operación se elige en el desplegable de la cabecera LCD.
   final bool operationsInHeader;
 
+  /// `true` si la fraccion de la celda activa edita el numerador (cursor arriba).
+  final bool fractionNumeratorActive;
+
   const CasioVectorEditorView({
     super.key,
     required this.dimension,
@@ -35,6 +38,7 @@ class CasioVectorEditorView extends StatelessWidget {
     this.onChangeDimension,
     this.onSelectOperation,
     this.operationsInHeader = false,
+    this.fractionNumeratorActive = false,
   });
 
   @override
@@ -227,7 +231,7 @@ class CasioVectorEditorView extends StatelessWidget {
           active: isActive,
           dark: isOledDark,
           latex: isFraction
-              ? CasioCellValueText.fractionTex(trimmed, activePart: isActive ? 1 : null, coloredCursor: true)
+              ? CasioCellValueText.fractionTex(trimmed, activePart: isActive ? (fractionNumeratorActive ? 0 : 1) : null, coloredCursor: true)
               : null,
           text: isFraction ? null : value,
           placeholder: '0',

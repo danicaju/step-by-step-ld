@@ -29,16 +29,16 @@ class FunctionTable {
   static Rational parseNumber(String text, String name) {
     final s = text.trim().replaceAll(' ', '').replaceAll(',', '.');
     if (s.isEmpty || s == '-' || s == '.' || s == '/') {
-      throw TableConfigException('Sintaxis incompleta: completa $name.');
+      throw TableConfigException('Sintaxis incompleta: Completa $name.');
     }
     try {
       final parts = s.split('/');
       if (parts.length == 2) {
         final d = Rational.fromDecimalString(parts[1]);
-        if (d.isZero) throw const TableConfigException('Math ERROR: denominador 0.');
+        if (d.isZero) throw const TableConfigException('Math ERROR: Denominador 0.');
         return Rational.fromDecimalString(parts[0]) / d;
       }
-      if (parts.length > 2) throw const FormatException('fraccion');
+      if (parts.length > 2) throw const FormatException('Fracción no válida.');
       return Rational.fromDecimalString(s);
     } on TableConfigException {
       rethrow;
@@ -54,14 +54,14 @@ class FunctionTable {
     required Rational end,
     required Rational step,
   }) {
-    if (step.isZero) throw const TableConfigException('Math ERROR: el paso no puede ser 0.');
+    if (step.isZero) throw const TableConfigException('Math ERROR: El paso no puede ser 0.');
     final span = end - start;
     if (!span.isZero && span.isNegative != step.isNegative) {
-      throw const TableConfigException('Math ERROR: el paso no lleva de Inicio a Fin.');
+      throw const TableConfigException('Math ERROR: El paso no lleva de Inicio a Fin.');
     }
     final count = (span / step).toDouble().floor() + 1;
     if (count > maxRows) {
-      throw TableConfigException('Math ERROR: la tabla admite como maximo $maxRows filas (hay $count).');
+      throw TableConfigException('Math ERROR: La tabla admite como maximo $maxRows filas (hay $count).');
     }
     return [
       for (var i = 0; i < count; i++)

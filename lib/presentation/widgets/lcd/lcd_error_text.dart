@@ -28,7 +28,14 @@ class LcdErrorText {
       s = next;
     }
     s = s.replaceAll(_offset, '').replaceAll(RegExp(r'\s+'), ' ').trim();
-    return s.isEmpty ? 'Operación no definida.' : s;
+    return s.isEmpty ? 'Operación no definida.' : capitalize(s);
+  }
+
+  /// Primera letra en mayuscula (los mensajes de error siempre empiezan por mayuscula).
+  static String capitalize(String s) {
+    final t = s.trimLeft();
+    if (t.isEmpty) return t;
+    return t[0].toUpperCase() + t.substring(1);
   }
 
   /// Mensaje limpio + pista de solucion segun el contenido.

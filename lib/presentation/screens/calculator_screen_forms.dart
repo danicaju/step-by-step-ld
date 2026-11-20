@@ -4,7 +4,14 @@ part of 'calculator_screen.dart';
 extension _CalculatorScreenForms on _CalculatorScreenState {
   ExtraViewsState get _x => _cw.x;
 
+  /// M3 en entrada libre (2 o 3 ecuaciones): el formulario sigue el tamano elegido en la cabecera.
+  ModeFormState? get _sysFreeForm {
+    if (_calculatorMode != 3 || !_x.sysFree || _systemDim > 3) return null;
+    return _x.sysForm..selector = _systemDim == 3 ? 1 : 0;
+  }
+
   ModeFormState? get _extraForm => switch (_calculatorMode) {
+        3 => _sysFreeForm,
         4 => _x.m4View == 2 ? _x.box : (_x.m4View == 3 ? _x.frac : null),
         8 => _x.m8View == 2 ? _x.normal : (_x.m8View == 3 ? _x.bin : null),
         10 => _x.m10View == 1 ? _x.line : (_x.m10View == 2 ? _x.tri : null),
@@ -15,6 +22,14 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
 
   Widget _buildExtraForm() {
     final f = _extraForm!;
+    if (_calculatorMode == 3) {
+      return FreeSystemEditorView(
+        form: f,
+        equations: _systemDim,
+        theme: _lcdTheme,
+        onFocus: (i) => updateState(() => f.focus = i),
+      );
+    }
     if (_calculatorMode == 4) {
       void onFocus(int i) => updateState(() => f.focus = i);
       return _x.m4View == 2
@@ -124,6 +139,14 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
       final StepByStepResolution res;
       final String label;
       switch (_calculatorMode) {
+        case 3:
+          final f = x.sysForm;
+          res = FreeSystemSolver.solve(
+            [for (var i = 0; i < _systemDim; i++) _t(f, 2 * i)],
+            [for (var i = 0; i < _systemDim; i++) _t(f, 2 * i + 1)],
+            method: _systemMethod,
+          );
+          label = 'M3: Sistema de ecuaciones libre';
         case 4:
           if (x.m4View == 2) {
             final r = SpanishBoxDivisionSolver.divideText(_t(x.box, 0), _t(x.box, 1));
@@ -191,7 +214,7 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
     } on FormatException catch (e) {
       _showLcdError(e.message);
     } catch (_) {
-      _showLcdError('Sintaxis incompleta: revisa los datos.');
+      _showLcdError('Sintaxis incompleta: Revisa los datos.');
     }
   }
 }

@@ -13,6 +13,31 @@ extension _CalculatorScreenCellFraction on _CalculatorScreenState {
     return true;
   }
 
+  // ── Celdas numericas compartidas (M10, M11): tecla a/b, DEL y D-Pad dentro de la fraccion ──
+
+  /// Tecla a/b sobre [cur]: con la celda vacia abre `■/■` en el numerador.
+  String _cellSlash(String cur) {
+    final (text, numEdit) = CellFractionEditor.slash(cur, _cw.x.cellNumEdit);
+    _cw.x.cellNumEdit = numEdit;
+    return text;
+  }
+
+  /// DEL sobre [cur]: nunca deja `/` suelta; con la fraccion vacia la elimina.
+  String _cellBackspace(String cur) {
+    final (text, numEdit) = CellFractionEditor.backspace(cur, _cw.x.cellNumEdit);
+    _cw.x.cellNumEdit = numEdit;
+    return text;
+  }
+
+  /// D-Pad dentro de la fraccion de [cur]; `true` si se consume (no cambia de celda).
+  bool _cellDpadInside(String cur, int dRow, int dCol) {
+    final dir = dCol < 0 ? 'left' : dCol > 0 ? 'right' : dRow < 0 ? 'up' : 'down';
+    final next = CellFractionEditor.dpad(cur, _cw.x.cellNumEdit, dir);
+    if (next == null) return false;
+    _cw.x.cellNumEdit = next;
+    return true;
+  }
+
   // ── M9: celda activa (MatA / MatB / k) con fracciones a/b ──────────────────
 
   String get _matrixActiveText {

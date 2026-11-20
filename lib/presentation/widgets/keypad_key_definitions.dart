@@ -325,6 +325,7 @@ class KeypadNumericRows extends StatelessWidget {
               CasioPhysicalKey(
                 label: '3',
                 shiftLabel: 'ENG',
+                alphaLabel: 'z',
                 minHeight: numMinH,
                 isShiftActive: isShiftActive,
                 isAlphaActive: isAlphaActive,

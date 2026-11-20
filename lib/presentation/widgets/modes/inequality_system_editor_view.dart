@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/editor/lcd_cursor_tokens.dart';
 import '../../../domain/math_engine/parser/expression_parser.dart';
-import '../safe_math.dart';
+import '../lcd/lcd_input_box.dart';
 
 class InequalitySystemEditorView extends StatelessWidget {
   final bool isOledDark;
@@ -31,15 +31,6 @@ class InequalitySystemEditorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final textColor =
         isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF101815);
-    final rowBg =
-        isOledDark ? const Color(0xFF1E293B) : const Color(0xFFC8D6CD);
-    final activeRowBg =
-        isOledDark ? const Color(0xFF0F172A) : const Color(0xFFD4E2D9);
-    final activeBorder =
-        isOledDark ? const Color(0xFF1A2530) : const Color(0xFF1A2530);
-    final inactiveBorder =
-        isOledDark ? const Color(0xFF334155) : const Color(0xFF7A8C80);
-
     return LayoutBuilder(
       builder: (context, constraints) {
         return Padding(
@@ -75,77 +66,7 @@ class InequalitySystemEditorView extends StatelessWidget {
                       children: [
                         for (int i = 0; i < ineqSysRows; i++) ...[
                           if (i > 0) const SizedBox(height: 5),
-                          GestureDetector(
-                            key: Key('ineq_sys_row_$i'),
-                            onTap: () => onSelectRow(i),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: ineqSysActiveRow == i ? activeRowBg : rowBg,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: ineqSysActiveRow == i
-                                      ? activeBorder
-                                      : inactiveBorder,
-                                  width: ineqSysActiveRow == i ? 1.8 : 1.0,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    '(${i + 1}) ',
-                                    style: TextStyle(
-                                      color: textColor.withValues(alpha: 0.65),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Builder(
-                                      builder: (context) {
-                                        final raw = ineqSysRowInputs[i];
-                                        final isActive = ineqSysActiveRow == i;
-                                        final cursor = isActive
-                                            ? ineqSysRowCursors[i]
-                                            : null;
-                                        final String rowTex;
-                                        if (raw.isEmpty) {
-                                          rowTex = isActive
-                                              ? LcdCursor.box
-                                              : (ineqSysUnknowns == 1
-                                                  ? r'2x - 3 \le 5'
-                                                  : r'x + y \le 4');
-                                        } else {
-                                          rowTex = ExpressionParser.rawToLiveLatex(
-                                            raw,
-                                            cursorPos: cursor,
-                                          );
-                                        }
-                                        return FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          alignment: Alignment.centerLeft,
-                                          child: SafeMath.tex(
-                                            rowTex,
-                                            textStyle: TextStyle(
-                                              color: raw.isEmpty && !isActive
-                                                  ? textColor.withValues(
-                                                      alpha: 0.38)
-                                                  : textColor,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          _row(i, textColor),
                         ],
                       ],
                     ),
@@ -158,6 +79,40 @@ class InequalitySystemEditorView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  /// Una fila `(i) [casilla]`: la casilla es un `LcdInputBox` con cursor parpadeante real
+  /// (tambien con la fila vacia) tanto en LCD claro como oscuro.
+  Widget _row(int i, Color textColor) {
+    final raw = ineqSysRowInputs[i];
+    final isActive = ineqSysActiveRow == i;
+    final String? rowTex = raw.isEmpty
+        ? (isActive ? LcdCursor.box : null)
+        : ExpressionParser.rawToLiveLatex(raw, cursorPos: isActive ? ineqSysRowCursors[i] : null);
+    return Row(
+      children: [
+        Text(
+          '(${i + 1}) ',
+          style: TextStyle(
+            color: textColor.withValues(alpha: 0.65),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Expanded(
+          child: LcdInputBox(
+            key: Key('ineq_sys_row_$i'),
+            active: isActive,
+            dark: isOledDark,
+            latex: rowTex,
+            placeholder: ineqSysUnknowns == 1 ? '2x - 3 ≤ 5' : 'x + y ≤ 4',
+            minWidth: 60,
+            minHeight: 32,
+            onTap: () => onSelectRow(i),
+          ),
+        ),
+      ],
     );
   }
 }

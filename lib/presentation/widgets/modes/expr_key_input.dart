@@ -48,7 +48,18 @@ class ExprKeyInput {
 
   /// Texto que inserta [key] en una expresion (con cursor); `null` si no edita expresiones.
   static String? tokenFor(String key, {bool alpha = false}) {
-    if (alpha && key == ')') return 'x';
+    if (alpha) {
+      // Letras ALPHA de la ClassWiz: x, y, z (tecla 3), e (x10^x) y ln (tecla log).
+      final letter = switch (key) {
+        ')' => 'x',
+        '(' => 'y',
+        '3' => 'z',
+        'SCI10' => 'e',
+        'LOG' || 'log' => 'ln(',
+        _ => null,
+      };
+      if (letter != null) return letter;
+    }
     if (RegExp(r'^[0-9]$').hasMatch(key)) return key;
     return _tokens[key];
   }

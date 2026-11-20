@@ -112,7 +112,7 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
       } on ArgumentError catch (e) {
         _showLcdError('Math ERROR: ${e.message ?? 'operación no definida.'}');
       } on StateError {
-        _showLcdError('Math ERROR: operación no definida.');
+        _showLcdError('Math ERROR: Operación no definida.');
       } catch (e) {
         _showLcdError('Math ERROR: $e');
       }
@@ -121,7 +121,7 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
 
   /// Texto limpio de un `ExMathError` (sin el nombre generico `Math ERROR`).
   String _mathErrorText(ExMathError e) =>
-      e.message == 'Math ERROR' ? 'Math ERROR: operación no definida.' : 'Math ERROR: ${e.message}';
+      e.message == 'Math ERROR' ? 'Math ERROR: Operación no definida.' : 'Math ERROR: ${e.message}';
 
   /// Motor exacto extendido de M1; `null` si debe resolverlo el motor clasico.
   StepByStepResolution? _tryExtendedMode1(String input) {
@@ -174,6 +174,10 @@ extension _CalculatorScreenSolversBasic on _CalculatorScreenState {
 
 
   void _solveMode3() {
+      if (_sysFreeForm != null) {
+        _solveExtra();
+        return;
+      }
       if (_systemDim == 4) {
         try {
           final augmentedRows = List.generate(4, (r) {

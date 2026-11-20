@@ -47,7 +47,7 @@ void main() {
 
   group('M3: grafica del sistema 2x2', () {
     bothSizes('el conmutador muestra las dos rectas y vuelve a los pasos', (t) async {
-      await seq(t, 'mode:3 2 = - 1 = 5 = 3 = 2 = 4 =');
+      await seq(t, 'mode:3 pick:hdr_sys_input:sys_input_coef 2 = - 1 = 5 = 3 = 2 = 4 =');
       expect(find.byKey(const Key('sys2_graph_toggle')), findsOneWidget);
       expect(find.byKey(const Key('system_graph_clip')), findsNothing, reason: 'por defecto se ven los pasos');
       await tapF(t, find.byKey(const Key('sys2_graph_toggle')));
@@ -60,7 +60,7 @@ void main() {
 
     testWidgets('sin conmutador antes de resolver ni en sistemas 3x3', (t) async {
       await boot(t, size: kDesktop);
-      await seq(t, 'mode:3');
+      await seq(t, 'mode:3 pick:hdr_sys_input:sys_input_coef');
       expect(find.byKey(const Key('sys2_graph_toggle')), findsNothing);
       await seq(t, 'pick:hdr_sys_size:sys_dim_3 1 = 1 = 1 = 6 = 2 = - 1 = 1 = 3 = 1 = 2 = - 1 = 2 =');
       expect(find.byKey(const Key('sys2_graph_toggle')), findsNothing);
@@ -68,7 +68,7 @@ void main() {
 
     testWidgets('gestos: arrastre, rueda, botones y doble toque', (t) async {
       await boot(t, size: kDesktop);
-      await seq(t, 'mode:3 2 = - 1 = 5 = 3 = 2 = 4 =');
+      await seq(t, 'mode:3 pick:hdr_sys_input:sys_input_coef 2 = - 1 = 5 = 3 = 2 = 4 =');
       await tapF(t, find.byKey(const Key('sys2_graph_toggle')));
       final gestures = find.byKey(const Key('system_graph_gestures'));
       final center = t.getCenter(gestures);
@@ -98,7 +98,7 @@ void main() {
       testWidgets('colores del tema ${theme.name}', (t) async {
         ThemeController.instance.select(theme, persist: false);
         await boot(t, size: kDesktop);
-        await seq(t, 'mode:3 2 = 3 = 6 = 1 = - 2 = 5 =');
+        await seq(t, 'mode:3 pick:hdr_sys_input:sys_input_coef 2 = 3 = 6 = 1 = - 2 = 5 =');
         await tapF(t, find.byKey(const Key('sys2_graph_toggle')));
         final c = t.widget<Container>(find.descendant(of: find.byKey(const Key('system_graph_clip')), matching: find.byType(Container)).first);
         expect(c.color, theme.lcdBackground);

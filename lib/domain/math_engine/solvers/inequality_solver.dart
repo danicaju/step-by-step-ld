@@ -10,6 +10,12 @@ import 'inequalities/quadratic_inequality_solver.dart';
 import 'inequalities/rational_abs_inequality_solver.dart';
 import 'inequalities/rational_inequality_solver.dart';
 import 'inequalities/inequality_system_1d_solver.dart';
+import 'inequalities/universal/inequality_family_detector.dart';
+import 'inequalities/universal/number_line_step.dart';
+import 'inequalities/universal/universal_inequality_solver.dart';
+import 'equations/eq_poly.dart';
+import 'exact/ext_parser.dart';
+import '../parser/expression_parser.dart';
 
 export 'inequalities/inequality_sign.dart';
 export 'inequalities/inequality_parsing_helper.dart';
@@ -22,7 +28,14 @@ export '../models/inequality_models.dart';
 
 class InequalitySolver {
   /// Obtiene los datos de renderizado visual asociados a una resolución de inecuación.
-  static Inequality1DVisualData? getVisualData(StepByStepResolution res) =>
+  static Inequality1DVisualData? getVisualData(StepByStepResolution res) {
+    final attached = StepByStepResolution.attachments[res];
+    if (attached is Inequality1DVisualData) return attached;
+    return _legacyVisual(res);
+  }
+
+  static Inequality1DVisualData? _legacyVisual(StepByStepResolution res) =>
+      UniversalInequalitySolver.visualDataExpando[res] ??
       LinearInequality1DSolver.visualDataExpando[res] ??
       QuadraticInequalitySolver.visualDataExpando[res] ??
       RationalAbsInequalitySolver.visualDataExpando[res] ??
@@ -56,6 +69,33 @@ class InequalitySolver {
     String rawInput, {
     InequalitySign? fallbackSign,
   }) {
+    final core = _solveCore(rawInput, fallbackSign: fallbackSign);
+    final visual = _legacyVisual(core);
+    final withLine = NumberLineStep.inject(core, visual);
+    if (visual != null) StepByStepResolution.attachments[withLine] = visual;
+    return withLine;
+  }
+
+  /// `true` si el enunciado no es lineal/cuadratico/racional clasico (raiz, log, exp, |.|,
+  /// trigonometrica, mixta) o es un polinomio de grado >= 3.
+  static bool _needsUniversal(String lhs, String rhs) {
+    try {
+      final a = ExtParser().parse(ExpressionParser.finalizeForEvaluation(lhs));
+      final b = ExtParser().parse(ExpressionParser.finalizeForEvaluation(rhs.isEmpty ? '0' : rhs));
+      if (InequalityFamilyDetector.detect(a, b) != InequalityFamily.general) return true;
+      final ra = PolyOps.rationalOf(a), rb = PolyOps.rationalOf(b);
+      if (ra == null || rb == null) return false;
+      final deg = [ra.$1, ra.$2, rb.$1, rb.$2].map(PolyOps.degree).reduce((p, q) => p > q ? p : q);
+      return deg >= 3 && PolyOps.degree(ra.$2) == 0 && PolyOps.degree(rb.$2) == 0;
+    } on Object {
+      return false;
+    }
+  }
+
+  static StepByStepResolution _solveCore(
+    String rawInput, {
+    InequalitySign? fallbackSign,
+  }) {
     final cleaned = _absToBars(ExponentNavigationHelper.flattenSimplePowers(rawInput))
         .replaceAll(' ', '')
         .replaceAll(r'\cdot', '*')
@@ -72,14 +112,27 @@ class InequalitySolver {
     }
 
     // Detectar si contiene valor absoluto: |...| o \left|...\right|
-    if (cleaned.contains('|') || cleaned.contains(r'\left|')) {
-      return RationalAbsInequalitySolver.solveAbsoluteValue(cleaned, fallbackSign: fallbackSign);
-    }
-
     final split = InequalityParsingHelper.splitByInequalitySign(cleaned, fallbackSign: fallbackSign);
     final lhs = split.lhs;
     final rhs = split.rhs;
     final sign = split.sign;
+
+    if (cleaned.contains('|') || cleaned.contains(r'\left|')) {
+      // Varios valores absolutos (|A|+|B|, |A|·|B|...): estudio general por tramos.
+      if ('|'.allMatches(cleaned).length > 2) {
+        return UniversalInequalitySolver.solve(lhs, rhs, sign);
+      }
+      try {
+        return RationalAbsInequalitySolver.solveAbsoluteValue(cleaned, fallbackSign: fallbackSign);
+      } on Object {
+        return UniversalInequalitySolver.solve(lhs, rhs, sign);
+      }
+    }
+
+    // Raices, logaritmos, exponenciales, valor absoluto compuesto, trigonometricas o grado >= 3.
+    if (_needsUniversal(lhs, rhs)) {
+      return UniversalInequalitySolver.solve(lhs, rhs, sign);
+    }
 
     // Racional: x en algun denominador -> tabla de signos.
     if (RationalInequalitySolver.isRational(lhs, rhs)) {

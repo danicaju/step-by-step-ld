@@ -324,6 +324,8 @@ class CasioLcdScreen extends StatelessWidget {
                                 CasioLcdScreen.sanitizeForMathTex(displayLatex);
                             return Column(
                               children: [
+                                // Con flex 10 el visual ocupa toda la LCD (recta real en su propio paso).
+                                if (supplementaryVisualFlex < 10)
                                 Expanded(
                                   flex: 10 - supplementaryVisualFlex,
                                   child: Align(
@@ -342,7 +344,7 @@ class CasioLcdScreen extends StatelessWidget {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 3),
+                                if (supplementaryVisualFlex < 10) const SizedBox(height: 3),
                                 Expanded(
                                   flex: supplementaryVisualFlex,
                                   child: supplementaryVisualView!,

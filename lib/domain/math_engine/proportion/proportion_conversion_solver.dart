@@ -10,22 +10,22 @@ class ProportionSolver {
   static Rational parseQuantity(String text) {
     final s = text.trim().replaceAll(' ', '');
     if (s.isEmpty || s == '-' || s == '/' || s == '.') {
-      throw const ArsenalException('Sintaxis incompleta: completa todas las casillas.');
+      throw const ArsenalException('Sintaxis incompleta: Completa todas las casillas.');
     }
     try {
       final slash = s.split('/');
       if (slash.length == 2) {
         final a = Rational.fromDecimalString(slash[0]);
         final b = Rational.fromDecimalString(slash[1]);
-        if (b.isZero) throw const ArsenalException('Math ERROR: denominador 0.');
+        if (b.isZero) throw const ArsenalException('Math ERROR: Denominador 0.');
         return a / b;
       }
-      if (slash.length > 2) throw const FormatException('fraccion');
+      if (slash.length > 2) throw const FormatException('Fracción no válida.');
       return Rational.fromDecimalString(s);
     } on ArsenalException {
       rethrow;
     } on Object {
-      throw const ArsenalException('Sintaxis incompleta: cantidad no valida.');
+      throw const ArsenalException('Sintaxis incompleta: Cantidad no valida.');
     }
   }
 
@@ -227,7 +227,7 @@ class ConversionFactorSolver {
 
   static StepByStepResolution solve(Rational value, ConversionUnit from, ConversionUnit to) {
     if (from.dimension != to.dimension) {
-      throw const ArsenalException('Math ERROR: unidades de distinta magnitud.');
+      throw const ArsenalException('Math ERROR: Unidades de distinta magnitud.');
     }
     final numChain = _chain(from.num, to.num);
     final denChain = from.den == null ? const <_UnitFraction>[] : _chain(from.den!, to.den!);

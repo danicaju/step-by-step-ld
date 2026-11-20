@@ -5,12 +5,16 @@ class MathStep {
   final String pedagogicalNote;
   final String? warningTrick;
 
+  /// `true` si este paso es el estudio de signos / interseccion que se dibuja en la recta real.
+  final bool showsNumberLine;
+
   const MathStep({
     required this.index,
     required this.shortTitle,
     required this.latexExpression,
     required this.pedagogicalNote,
     this.warningTrick,
+    this.showsNumberLine = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -19,6 +23,7 @@ class MathStep {
         'latexExpression': latexExpression,
         'pedagogicalNote': pedagogicalNote,
         'warningTrick': warningTrick,
+        if (showsNumberLine) 'showsNumberLine': true,
       };
 
   factory MathStep.fromJson(Map<String, dynamic> json) => MathStep(
@@ -27,6 +32,7 @@ class MathStep {
         latexExpression: json['latexExpression'] as String? ?? '',
         pedagogicalNote: json['pedagogicalNote'] as String? ?? '',
         warningTrick: json['warningTrick'] as String?,
+        showsNumberLine: json['showsNumberLine'] as bool? ?? false,
       );
 
   @override
@@ -47,13 +53,22 @@ class StepByStepResolution {
     required this.decimalApproxLatex,
   });
 
+  /// Datos auxiliares (p. ej. de la recta real) asociados a una resolucion; sobreviven a
+  /// [withOriginalInput].
+  static final Expando<Object> attachments = Expando<Object>();
+
   /// Misma resolucion con otro enunciado (p. ej. con las fracciones verticales tecleadas).
-  StepByStepResolution withOriginalInput(String latex) => StepByStepResolution(
-        originalInputLatex: latex,
-        steps: steps,
-        exactResultLatex: exactResultLatex,
-        decimalApproxLatex: decimalApproxLatex,
-      );
+  StepByStepResolution withOriginalInput(String latex) {
+    final copy = StepByStepResolution(
+      originalInputLatex: latex,
+      steps: steps,
+      exactResultLatex: exactResultLatex,
+      decimalApproxLatex: decimalApproxLatex,
+    );
+    final extra = attachments[this];
+    if (extra != null) attachments[copy] = extra;
+    return copy;
+  }
 
   Map<String, dynamic> toJson() => {
         'originalInputLatex': originalInputLatex,

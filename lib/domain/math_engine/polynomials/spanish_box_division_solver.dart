@@ -35,12 +35,12 @@ class SpanishBoxDivisionSolver {
   static Poly parsePoly(String raw, String name) {
     final text = raw.trim();
     if (text.isEmpty || text == '0') {
-      throw ArsenalException('Sintaxis incompleta: escribe $name.');
+      throw ArsenalException('Sintaxis incompleta: Escribe $name.');
     }
     try {
       final node = ExtParser().parse(ExpressionParser.finalizeForEvaluation(text));
       final p = PolyOps.polyOf(node);
-      if (p == null) throw const FormatException('no polinomio');
+      if (p == null) throw const FormatException('El texto no es un polinomio.');
       return PolyOps.clean(p);
     } on ArsenalException {
       rethrow;
@@ -90,8 +90,8 @@ class SpanishBoxDivisionSolver {
 
   static BoxDivisionResult divide(Poly dividend, Poly divisor) {
     final p = PolyOps.clean(dividend), q = PolyOps.clean(divisor);
-    if (q.isEmpty) throw const ArsenalException('Math ERROR: el divisor no puede ser 0.');
-    if (p.isEmpty) throw const ArsenalException('Sintaxis incompleta: escribe el dividendo.');
+    if (q.isEmpty) throw const ArsenalException('Math ERROR: El divisor no puede ser 0.');
+    if (p.isEmpty) throw const ArsenalException('Sintaxis incompleta: Escribe el dividendo.');
     final dq = PolyOps.degree(q);
     final lq = PolyOps.coeff(q, dq);
     final top = PolyOps.degree(p);

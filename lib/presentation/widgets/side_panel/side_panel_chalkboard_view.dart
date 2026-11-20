@@ -3,17 +3,21 @@ import 'package:flutter/material.dart';
 import '../../theme/theme_contrast.dart';
 import '../../theme/theme_controller.dart';
 import '../../theme/calculator_themes.dart';
+import '../../../domain/math_engine/models/inequality_models.dart';
 import '../../../domain/math_engine/models/step_resolution.dart';
 import '../../../domain/math_engine/solvers/function_graph_solver.dart';
 import '../../utils/latex_plain_text.dart';
 import '../casio_graph_canvas.dart';
 import '../casio_lcd_screen.dart';
+import '../number_line_painter.dart';
 import '../safe_math.dart';
 class SidePanelChalkboardView extends StatelessWidget {
   final StepByStepResolution? resolution;
   final int activeStepIndex;
   final ValueChanged<int> onSelectStep;
   final FunctionAnalysisResult? graphAnalysis;
+  final Inequality1DVisualData? ineqVisual;
+  final bool isOledDark;
   final VoidCallback onExportSticker;
   final VoidCallback onCopyLatex;
   final VoidCallback onOpenAiTutor;
@@ -24,6 +28,8 @@ class SidePanelChalkboardView extends StatelessWidget {
     required this.activeStepIndex,
     required this.onSelectStep,
     this.graphAnalysis,
+    this.ineqVisual,
+    this.isOledDark = false,
     required this.onExportSticker,
     required this.onCopyLatex,
     required this.onOpenAiTutor,
@@ -130,6 +136,9 @@ class SidePanelChalkboardView extends StatelessWidget {
                         step: resolution!.steps[idx],
                         isActive: idx == activeStepIndex,
                         onTap: () => onSelectStep(idx),
+                        numberLine: resolution!.steps[idx].showsNumberLine && ineqVisual != null
+                            ? NumberLineWidget(data: ineqVisual!, isOledDark: isOledDark)
+                            : null,
                       ),
                     );
                   },
@@ -253,11 +262,15 @@ class StepBoardTile extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
 
+  /// Recta real integra (sin recortes) del paso de estudio de signos.
+  final Widget? numberLine;
+
   const StepBoardTile({
     super.key,
     required this.step,
     required this.isActive,
     required this.onTap,
+    this.numberLine,
   });
 
   @override
@@ -328,6 +341,14 @@ class StepBoardTile extends StatelessWidget {
                 ),
               ),
             ),
+            if (numberLine != null) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                key: const Key('step_number_line'),
+                height: NumberLineWidget.naturalHeight + 6,
+                child: numberLine,
+              ),
+            ],
             const SizedBox(height: 6),
             Text(
               LatexPlainText.toPlain(step.pedagogicalNote),
