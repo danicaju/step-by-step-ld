@@ -5,13 +5,19 @@ import '../exact/ext_expr.dart';
 import '../exact/ext_parser.dart';
 import '../inequalities/universal/inequality_family_detector.dart';
 import '../linear_system_solver.dart';
+import '../trig_and_angles_solver.dart' show AngleUnit;
 import '../systems_2x2/system_2x2_fractions.dart';
 import 'free_system_rewrite.dart';
+import 'nd_common.dart';
+import 'nonlinear_algebraic_and_trig_systems.dart';
+import 'nonlinear_numeric_nd_solver.dart';
+import 'nonlinear_substitution_nd_solver.dart';
 import 'nonlinear_system_solver.dart';
 
-/// Sistemas 2x2 y 3x3 en entrada libre (`miembro izquierdo = miembro derecho` por ecuacion):
-/// lineales desordenados (parentesis, fracciones) y no lineales 2x2 (lineal + cuadratica,
-/// dos cuadraticas en x², y², exponenciales, logaritmicas y racionales).
+/// Sistemas 2x2, 3x3 y 4x4 en entrada libre (`miembro izquierdo = miembro derecho` por ecuacion):
+/// lineales desordenados (parentesis, fracciones) y no lineales: lineal + cuadratica, dos cuadraticas,
+/// exponenciales, logaritmicas, racionales (motor exacto 2x2) y, para cualquier N, cambios de
+/// variable, sustitucion en cascada, radicales y Newton-Raphson N-D (ver `nonlinear_*_nd_*`).
 class FreeSystemSolver {
   const FreeSystemSolver._();
 
@@ -44,14 +50,16 @@ class FreeSystemSolver {
     return '$buf = ${row.last.toLatex()}';
   }
 
-  /// Resuelve el sistema de [lhs] = [rhs] (2 o 3 ecuaciones).
+  /// Resuelve el sistema de [lhs] = [rhs] (2, 3 o 4 ecuaciones). [unit] es la unidad angular
+  /// (DEG/RAD) para sin, cos y tan.
   static StepByStepResolution solve(
     List<String> lhs,
     List<String> rhs, {
     SystemResolutionMethod method = SystemResolutionMethod.sustitucion,
+    AngleUnit unit = AngleUnit.rad,
   }) {
     final n = lhs.length;
-    if (n < 2 || n > 3 || rhs.length != n) throw const FormatException('Un sistema libre tiene 2 o 3 ecuaciones.');
+    if (n < 2 || n > 4 || rhs.length != n) throw const FormatException('Un sistema libre tiene 2, 3 o 4 ecuaciones.');
     for (var i = 0; i < n; i++) {
       if (lhs[i].trim().isEmpty && rhs[i].trim().isEmpty) {
         throw const FormatException('Completa todas las ecuaciones del sistema.');
@@ -59,15 +67,28 @@ class FreeSystemSolver {
     }
     final sides = [for (var i = 0; i < n; i++) (_parse(lhs[i]), _parse(rhs[i]))];
     _checkVariables(sides, n);
+    final original = '\\begin{cases} ${[for (final (l, r) in sides) '${l.latex()} = ${r.latex()}'].join(' \\\\ ')} \\end{cases}';
+    final sys = NdSystem(n, sides, unit, original);
+
+    try {
+      final exact = _solveExact(sides, n, original, method);
+      if (exact != null) return exact;
+    } on FormatException catch (e) {
+      if (e.message.contains('indeterminado') || e.message.contains('Completa')) rethrow;
+    }
+    return NonlinearSubstitutionNdSolver.solve(sys) ?? NonlinearAlgebraicSystems.solve(sys) ?? NonlinearNumericNdSolver.solve(sys);
+  }
+
+  /// Motor exacto: lineales (Gauss/sustitucion/igualacion/reduccion) y no lineales polinomicos,
+  /// exponenciales y logaritmicos 2x2. `null` si el sistema es no lineal de 3 o 4 ecuaciones.
+  static StepByStepResolution? _solveExact(List<(XNode, XNode)> sides, int n, String original, SystemResolutionMethod method) {
     final forms = [for (final (l, r) in sides) FreeSystemRewrite.rewrite(l, r)];
     final conditions = {for (final f in forms) ...f.conditions}.toList();
-    final original = '\\begin{cases} ${[for (final (l, r) in sides) '${l.latex()} = ${r.latex()}'].join(' \\\\ ')} \\end{cases}';
-
     final linear = forms.every((f) => f.poly.degree <= 1);
     final notes = [for (final f in forms) if (f.note != null) f.note!];
     final rewritten = [for (final f in forms) if (f.rewrite != null) f.rewrite!];
     if (!linear) {
-      if (n == 3) throw const FormatException('Los sistemas 3x3 libres deben ser lineales.');
+      if (n > 2) return null;
       return NonlinearSystemSolver.solve(
         forms: forms,
         originals: sides,
@@ -86,11 +107,11 @@ class FreeSystemSolver {
       );
     }
 
-    final vars = n == 2 ? ['x', 'y'] : ['x', 'y', 'z'];
+    final vars = ['x', 'y', 'z', 'w'].sublist(0, n);
     final rows = <List<Rational>>[
       for (final f in forms)
         [
-          for (var i = 0; i < n; i++) f.poly.coef([i == 0 ? 1 : 0, i == 1 ? 1 : 0, i == 2 ? 1 : 0]),
+          for (var i = 0; i < n; i++) f.poly.coef([for (var k = 0; k < 4; k++) k == i ? 1 : 0]),
           -f.poly.constantTerm,
         ],
     ];
@@ -100,7 +121,7 @@ class FreeSystemSolver {
       shortTitle: 'Expandir, quitar denominadores y ordenar',
       latexExpression: '$original \\;\\Longrightarrow\\; $ordered',
       pedagogicalNote:
-          'Quitamos paréntesis, pasamos las incógnitas al primer miembro y los números al segundo, y las ordenamos como a·x + b·y${n == 3 ? ' + c·z' : ''} = d.',
+          'Quitamos paréntesis, pasamos las incógnitas al primer miembro y los números al segundo, y las ordenamos como a·x + b·y${n >= 3 ? ' + c·z' : ''}${n == 4 ? ' + d·w' : ''} = e.',
       warningTrick: 'Al pasar un término al otro miembro cambia de signo.',
     );
     final inner = n == 2
@@ -125,20 +146,19 @@ class FreeSystemSolver {
   }
 
   static void _checkVariables(List<(XNode, XNode)> sides, int n) {
+    final allowed = NdSystem.vars.sublist(0, n);
     final bad = <String>{};
     for (final (l, r) in sides) {
       for (final node in [l, r]) {
         InequalityFamilyDetector.walk(node, (v) {
-          if (v is! XVar) return;
-          final ok = v.name == 'X' || v.name == 'Y' || (n == 3 && v.name == 'Z');
-          if (!ok) bad.add(v.name.toLowerCase());
+          if (v is XVar && !allowed.contains(v.name)) bad.add(v.name.toLowerCase());
         });
       }
     }
     if (bad.isNotEmpty) {
-      throw FormatException(n == 2
-          ? 'Un sistema de 2 ecuaciones solo usa las incógnitas x e y.'
-          : 'Un sistema de 3 ecuaciones solo usa las incógnitas x, y y z.');
+      final names = NdSystem.names.sublist(0, n);
+      throw FormatException(
+          'Un sistema de $n ecuaciones solo usa las incógnitas ${names.sublist(0, n - 1).join(', ')} y ${names.last}.');
     }
   }
 }

@@ -38,6 +38,14 @@ class LcdErrorText {
     return t[0].toUpperCase() + t.substring(1);
   }
 
+  /// Error real de dominio logaritmico (no basta con que el texto nombre "logaritmos").
+  static bool _isLogDomain(String l) {
+    if (l.contains('dominio') && (l.contains('logar') || l.contains('log'))) return true;
+    if (l.contains('argumento') && l.contains('log')) return true;
+    if (RegExp(r'\b(ln|log)\s*\(').hasMatch(l)) return true;
+    return RegExp(r'\blogaritmo\b').hasMatch(l) && !l.contains('logaritmos');
+  }
+
   /// Mensaje limpio + pista de solucion segun el contenido.
   static LcdErrorInfo info(String raw, {required bool syntax}) {
     final msg = clean(raw);
@@ -47,7 +55,11 @@ class LcdErrorText {
       hint = 'Revisa el signo del radicando o cambia a Modo Complejos (M11).';
     } else if (l.contains('dividir') || l.contains('división') || l.contains('division') || l.contains('nula')) {
       hint = 'El divisor no puede valer 0. Cambia el denominador.';
-    } else if (l.contains('logaritmo') || l.contains('log')) {
+    } else if (l.contains('no soportad') || l.contains('misma base')) {
+      hint = 'Revisa la sintaxis o comprueba que las funciones escritas tengan argumentos válidos.';
+    } else if (l.contains('base logar')) {
+      hint = 'La base del logaritmo debe ser mayor que 0 y distinta de 1.';
+    } else if (_isLogDomain(l)) {
       hint = 'El argumento del logaritmo debe ser mayor que 0.';
     } else if (syntax) {
       hint = 'Completa la expresión: cierra paréntesis y rellena los huecos.';

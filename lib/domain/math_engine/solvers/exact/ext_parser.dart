@@ -8,7 +8,7 @@ class ExtParser {
   static final RegExp _tokenRe = RegExp(
     r'\d+\.\d+|\.\d+|\d+|nCr|nPr|ncr|npr|arcsin|arccos|arctan|sin⁻¹|cos⁻¹|tan⁻¹'
     r'|asin|acos|atan|sin|cos|tan|log_|log|ln|sqrt|cbrt|root|abs|Abs|ANS|ans'
-    r'|pi|π|ℯ|[√∛³ⁿ]|[+\-*/:^(),!|]|[A-Fa-fXYxyZz]',
+    r'|pi|π|ℯ|[√∛³ⁿ]|[+\-*/:^(),!|]|[A-Fa-fWwXYxyZz]',
   );
 
   late List<String> _t;
@@ -228,7 +228,7 @@ class ExtParser {
     final fn = _fnName(tok);
     if (fn != null) return _function(fn);
     if (tok == 'log_') return _logBase();
-    if (RegExp(r'^[A-Fa-fXYxyZz]$').hasMatch(tok)) {
+    if (RegExp(r'^[A-Fa-fWwXYxyZz]$').hasMatch(tok)) {
       _p++;
       return XVar(tok.toUpperCase());
     }

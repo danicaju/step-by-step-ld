@@ -162,7 +162,7 @@ class NonlinearSystemSolver {
   }
 
   // --------------------------------------------------------------- reduccion
-  static bool _onlySquares(MPoly p) => p.terms.keys.every((k) => k == '0,0,0' || k == '2,0,0' || k == '0,2,0');
+  static bool _onlySquares(MPoly p) => p.terms.keys.every((k) => k == MPoly.zeroKey || k == '2,0,0,0' || k == '0,2,0,0');
 
   static void _reduction(List<EqForm> forms, List<MathStep> steps, List<(ExNum, ExNum)> cands) {
     final p = forms[0].poly, q = forms[1].poly;

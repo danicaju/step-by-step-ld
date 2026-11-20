@@ -308,13 +308,13 @@ extension _CalculatorScreenHeaderSpecs on _CalculatorScreenState {
       _HeaderSpec(
         keyName: 'hdr_sys_input',
         prefix: 'Entrada',
-        value: _x.sysFree && _systemDim <= 3 ? 0 : 1,
+        value: _x.sysFree ? 0 : 1,
         items: const [
           LcdDropdownItem(value: 0, label: 'Libre (miembro = miembro)', key: Key('sys_input_free')),
           LcdDropdownItem(value: 1, label: 'Coeficientes ax+by=c', key: Key('sys_input_coef')),
         ],
         onSelect: (v) {
-          _x.sysFree = v == 0 && _systemDim <= 3;
+          _x.sysFree = v == 0;
           _x.cellNumEdit = false;
           _lcdErrorKind = null;
           _activeResolution = null;

@@ -325,13 +325,10 @@ void main() {
       expect(() => sys(['x+y', 'x+y'], ['1', '2']), returnsNormally);
       expect(() => sys(['x+w', 'x-y'], ['1', '2']), throwsFormatException);
       expect(() => sys(['', ''], ['', '']), throwsFormatException);
-      expect(() => sys(['x+y+z', 'x^2', 'y'], ['1', '2', '3']), throwsFormatException);
-      try {
-        sys(['x^3+y', 'x*y'], ['1', '2']);
-        fail('debía lanzar');
-      } on FormatException catch (e) {
-        expect(e.message[0], e.message[0].toUpperCase());
-      }
+      // 3x3 y 4x4 no lineales se resuelven por cascada; el 2x2 sin receta cae a Newton (sin excepcion).
+      expect(() => sys(['x+y+z', 'x^2', 'y'], ['1', '2', '3']), returnsNormally);
+      expect(() => sys(['x^3+y', 'x*y'], ['1', '2']), returnsNormally);
+      expect(() => sys(['x+y+z+w', 'x-y', 'z', 'q'], ['1', '2', '3', '4']), throwsFormatException);
     });
   });
 
@@ -386,8 +383,8 @@ void main() {
       expectLesson(r, minSteps: 5);
     });
 
-    bothSizes('logaritmico log(x) + log(y) = 2, x - y = 15 -> (20, 5)', (t) async {
-      await seq(t, 'mode:3 log x ) + log y ) = 2 = x - y = 1 5 =');
+    bothSizes('logaritmico log_10(x) + log_10(y) = 2, x - y = 15 -> (20, 5)', (t) async {
+      await seq(t, 'mode:3 log 1 0 > x > + log 1 0 > y > = 2 = x - y = 1 5 =');
       final r = res(t);
       expect(norm(r.exactResultLatex), contains('(20,5)'));
       expect(lessonText(r), contains('descartada'));

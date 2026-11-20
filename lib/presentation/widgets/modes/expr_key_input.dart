@@ -54,6 +54,7 @@ class ExprKeyInput {
         ')' => 'x',
         '(' => 'y',
         '3' => 'z',
+        '2' => 'w',
         'SCI10' => 'e',
         'LOG' || 'log' => 'ln(',
         _ => null,
@@ -61,6 +62,8 @@ class ExprKeyInput {
       if (letter != null) return letter;
     }
     if (RegExp(r'^[0-9]$').hasMatch(key)) return key;
+    // Logaritmo con base estilo ClassWiz: el cursor queda dentro de la base (log_{|}(argumento)).
+    if (key == 'LOG') return 'log_(';
     return _tokens[key];
   }
 

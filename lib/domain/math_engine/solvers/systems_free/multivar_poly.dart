@@ -1,23 +1,25 @@
 import '../../core/rational.dart';
 import '../exact/ext_expr.dart';
 
-/// Polinomio en `x`, `y`, `z` con coeficientes racionales exactos (clave `"i,j,k"` = exponentes).
+/// Polinomio en `x`, `y`, `z`, `w` con coeficientes racionales exactos (clave `"i,j,k,l"` = exponentes).
 class MPoly {
   final Map<String, Rational> terms;
   const MPoly._(this.terms);
 
-  static const List<String> names = ['x', 'y', 'z'];
+  static const List<String> names = ['x', 'y', 'z', 'w'];
+  static const int nVars = 4;
+  static const String zeroKey = '0,0,0,0';
 
-  static String _key(List<int> e) => e.join(',');
+  static String _key(List<int> e) => [for (var i = 0; i < nVars; i++) i < e.length ? e[i] : 0].join(',');
   static List<int> _exps(String k) => k.split(',').map(int.parse).toList();
 
   factory MPoly.fromTerms(Map<String, Rational> t) =>
       MPoly._({for (final e in t.entries) if (!e.value.isZero) e.key: e.value});
 
-  factory MPoly.constant(Rational r) => MPoly.fromTerms({'0,0,0': r});
+  factory MPoly.constant(Rational r) => MPoly.fromTerms({zeroKey: r});
 
   factory MPoly.variable(int idx) {
-    final e = [0, 0, 0]..[idx] = 1;
+    final e = List<int>.filled(nVars, 0)..[idx] = 1;
     return MPoly.fromTerms({_key(e): Rational(1)});
   }
 
@@ -31,14 +33,14 @@ class MPoly {
         return d > m ? d : m;
       });
 
-  bool get isConstant => terms.keys.every((k) => k == '0,0,0');
+  bool get isConstant => terms.keys.every((k) => k == zeroKey);
 
-  Rational get constantTerm => terms['0,0,0'] ?? Rational(0);
+  Rational get constantTerm => terms[zeroKey] ?? Rational(0);
 
   /// Coeficiente del monomio de exponentes [e].
   Rational coef(List<int> e) => terms[_key(e)] ?? Rational(0);
 
-  /// Grado en la variable [v] (0 = x, 1 = y, 2 = z).
+  /// Grado en la variable [v] (0 = x, 1 = y, 2 = z, 3 = w).
   int degreeIn(int v) => terms.keys.fold(0, (m, k) {
         final d = _exps(k)[v];
         return d > m ? d : m;
@@ -60,7 +62,7 @@ class MPoly {
       final ea = _exps(a.key);
       for (final b in o.terms.entries) {
         final eb = _exps(b.key);
-        final k = _key([ea[0] + eb[0], ea[1] + eb[1], ea[2] + eb[2]]);
+        final k = _key([for (var i = 0; i < nVars; i++) ea[i] + eb[i]]);
         t[k] = (t[k] ?? Rational(0)) + a.value * b.value;
       }
     }
@@ -92,7 +94,7 @@ class MPoly {
     final out = <int, Rational>{};
     for (final e in terms.entries) {
       final ex = _exps(e.key);
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < nVars; i++) {
         if (i != v && ex[i] != 0) return null;
       }
       out[ex[v]] = e.value;
@@ -106,7 +108,7 @@ class MPoly {
     terms.forEach((k, c) {
       final ex = _exps(k);
       var m = c.toDouble();
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < nVars; i++) {
         for (var j = 0; j < ex[i]; j++) {
           m *= vals[i];
         }
@@ -131,7 +133,7 @@ class MPoly {
       final c = terms[k]!;
       final ex = _exps(k);
       final mono = StringBuffer();
-      for (var i = 0; i < 3; i++) {
+      for (var i = 0; i < nVars; i++) {
         if (ex[i] == 1) mono.write(names[i]);
         if (ex[i] > 1) mono.write('${names[i]}^{${ex[i]}}');
       }
@@ -174,7 +176,7 @@ class RFun {
       case XNum(:final value):
         return RFun.poly(MPoly.constant(value));
       case XVar(:final name):
-        final i = switch (name) { 'X' => 0, 'Y' => 1, 'Z' => 2, _ => -1 };
+        final i = switch (name) { 'X' => 0, 'Y' => 1, 'Z' => 2, 'W' => 3, _ => -1 };
         return i < 0 ? null : RFun.poly(MPoly.variable(i));
       case XNeg(:final a):
         final v = fromNode(a);

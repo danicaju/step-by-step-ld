@@ -6,7 +6,7 @@ extension _CalculatorScreenLabels on _CalculatorScreenState {
     final modeLabels = {
       1: 'M1: CALCULAR',
       2: 'M2: ECUACIONES',
-      3: _systemDim == 3 ? 'M3: SIST 3×3' : 'M3: SIST 2×2',
+      3: 'M3: SIST $_systemDim×$_systemDim',
       4: _cw.x.m4View >= 2
           ? 'M4: POLINOMIOS'
           : _polyIsNotableMode

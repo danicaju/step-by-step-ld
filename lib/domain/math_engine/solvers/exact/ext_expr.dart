@@ -52,6 +52,7 @@ class XVar extends XNode {
         'X' => 'x',
         'Y' => 'y',
         'Z' => 'z',
+        'W' => 'w',
         _ => name,
       };
 }

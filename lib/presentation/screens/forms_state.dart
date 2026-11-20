@@ -86,6 +86,7 @@ class ExtraViewsState {
   final ModeFormState sysForm = ModeFormState(cols: 2, layouts: [
     [for (var i = 1; i <= 2; i++) ...[ModeField('Ec. $i izq', expr: true), ModeField('Ec. $i der', expr: true)]],
     [for (var i = 1; i <= 3; i++) ...[ModeField('Ec. $i izq', expr: true), ModeField('Ec. $i der', expr: true)]],
+    [for (var i = 1; i <= 4; i++) ...[ModeField('Ec. $i izq', expr: true), ModeField('Ec. $i der', expr: true)]],
   ]);
 
   /// Celdas de coeficientes (Ruffini...): la fraccion `a/b` abierta edita el numerador.

@@ -6,8 +6,8 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
 
   /// M3 en entrada libre (2 o 3 ecuaciones): el formulario sigue el tamano elegido en la cabecera.
   ModeFormState? get _sysFreeForm {
-    if (_calculatorMode != 3 || !_x.sysFree || _systemDim > 3) return null;
-    return _x.sysForm..selector = _systemDim == 3 ? 1 : 0;
+    if (_calculatorMode != 3 || !_x.sysFree) return null;
+    return _x.sysForm..selector = (_systemDim - 2).clamp(0, 2);
   }
 
   ModeFormState? get _extraForm => switch (_calculatorMode) {
@@ -123,6 +123,8 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
   bool _handleExtraKey(String key) {
     final f = _extraForm;
     if (f == null || _lcdErrorKind != null) return false;
+    // Los modificadores los gestiona el toggle comun (si no, ALPHA no se desactivaba).
+    if (key == 'ALPHA' || key == 'SHIFT') return false;
     if (_isShiftActive) {
       // SHIFT + x² = exponente libre (x^4, x^10...): el resto de SHIFT+tecla sigue su camino normal.
       if (key != '^2') return false;
@@ -175,6 +177,7 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
             [for (var i = 0; i < _systemDim; i++) _t(f, 2 * i)],
             [for (var i = 0; i < _systemDim; i++) _t(f, 2 * i + 1)],
             method: _systemMethod,
+            unit: _angleUnit,
           );
           label = 'M3: Sistema de ecuaciones libre';
         case 4:

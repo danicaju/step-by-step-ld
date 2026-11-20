@@ -1,20 +1,22 @@
 import 'dart:math' as math;
 
 import '../../exact/ext_expr.dart';
+import '../../trig_and_angles_solver.dart' show AngleUnit;
 
 /// Evaluador numerico (double) rapido del AST extendido en `x`. Devuelve `null` fuera del
 /// dominio real (raiz par de negativo, logaritmo de no positivo, division por 0, etc.).
 abstract final class NumFn {
   static double? eval(XNode n, double x) => evalEnv(n, {'X': x});
 
-  /// Igual que [eval] con varias variables (`X`, `Y`, `Z`) en [env].
-  static double? evalEnv(XNode n, Map<String, double> env) {
-    final v = _ev(n, env);
+  /// Igual que [eval] con varias variables (`X`, `Y`, `Z`, `W`) en [env]. [unit] es la unidad
+  /// angular de sin/cos/tan y de sus inversas (radianes por defecto).
+  static double? evalEnv(XNode n, Map<String, double> env, {AngleUnit unit = AngleUnit.rad}) {
+    final v = _ev(n, env, unit);
     // Un desbordamiento (2^2000) es +-infinito y sigue "definido"; solo NaN queda fuera del dominio.
     return (v == null || v.isNaN) ? null : v;
   }
 
-  static double? _ev(XNode n, Map<String, double> env) {
+  static double? _ev(XNode n, Map<String, double> env, AngleUnit unit) {
     switch (n) {
       case XNum(:final value):
         return value.toDouble();
@@ -23,10 +25,10 @@ abstract final class NumFn {
       case XVar(:final name):
         return env[name];
       case XNeg(:final a):
-        final v = evalEnv(a, env);
+        final v = evalEnv(a, env, unit: unit);
         return v == null ? null : -v;
       case XBin(:final l, :final op, :final r):
-        final a = evalEnv(l, env), b = evalEnv(r, env);
+        final a = evalEnv(l, env, unit: unit), b = evalEnv(r, env, unit: unit);
         if (a == null || b == null) return null;
         return switch (op) {
           '+' => a + b,
@@ -35,21 +37,21 @@ abstract final class NumFn {
           _ => b == 0 ? null : a / b,
         };
       case XPow(:final base, :final exp):
-        final b = evalEnv(base, env), e = evalEnv(exp, env);
+        final b = evalEnv(base, env, unit: unit), e = evalEnv(exp, env, unit: unit);
         if (b == null || e == null) return null;
         return _pow(b, e, exp);
       case XRoot(:final index, :final rad):
-        final r = evalEnv(rad, env);
-        final idx = index == null ? 2.0 : evalEnv(index, env);
+        final r = evalEnv(rad, env, unit: unit);
+        final idx = index == null ? 2.0 : evalEnv(index, env, unit: unit);
         if (r == null || idx == null || idx < 1 || idx != idx.roundToDouble()) return null;
         final k = idx.round();
         if (k.isEven) return r < 0 ? null : math.pow(r, 1 / k).toDouble();
         return r < 0 ? -math.pow(-r, 1 / k).toDouble() : math.pow(r, 1 / k).toDouble();
       case XAbs(:final a):
-        final v = evalEnv(a, env);
+        final v = evalEnv(a, env, unit: unit);
         return v?.abs();
       case XFn(:final name, :final arg, :final base):
-        return _fn(name, evalEnv(arg, env), base == null ? null : evalEnv(base, env), base != null);
+        return _fn(name, evalEnv(arg, env, unit: unit), base == null ? null : evalEnv(base, env, unit: unit), base != null, unit);
       default:
         return null;
     }
@@ -67,7 +69,19 @@ abstract final class NumFn {
     return null;
   }
 
-  static double? _fn(String name, double? a, double? base, bool hasBase) {
+  static double _toRad(double a, AngleUnit u) => switch (u) {
+        AngleUnit.deg => a * math.pi / 180,
+        AngleUnit.grad => a * math.pi / 200,
+        _ => a,
+      };
+
+  static double _fromRad(double a, AngleUnit u) => switch (u) {
+        AngleUnit.deg => a * 180 / math.pi,
+        AngleUnit.grad => a * 200 / math.pi,
+        _ => a,
+      };
+
+  static double? _fn(String name, double? a, double? base, bool hasBase, AngleUnit unit) {
     if (a == null) return null;
     switch (name) {
       case 'ln':
@@ -78,17 +92,18 @@ abstract final class NumFn {
         if (base == null || base <= 0 || base == 1) return null;
         return math.log(a) / math.log(base);
       case 'sin':
-        return math.sin(a);
+        return math.sin(_toRad(a, unit));
       case 'cos':
-        return math.cos(a);
+        return math.cos(_toRad(a, unit));
       case 'tan':
-        return math.cos(a).abs() < 1e-12 ? null : math.tan(a);
+        final r = _toRad(a, unit);
+        return math.cos(r).abs() < 1e-12 ? null : math.tan(r);
       case 'asin':
-        return a.abs() <= 1 ? math.asin(a) : null;
+        return a.abs() <= 1 ? _fromRad(math.asin(a), unit) : null;
       case 'acos':
-        return a.abs() <= 1 ? math.acos(a) : null;
+        return a.abs() <= 1 ? _fromRad(math.acos(a), unit) : null;
       case 'atan':
-        return math.atan(a);
+        return _fromRad(math.atan(a), unit);
     }
     return null;
   }
