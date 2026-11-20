@@ -2,6 +2,7 @@ import '../../../models/step_resolution.dart';
 import '../../exact/ext_expr.dart';
 import '../inequality_sign.dart';
 import 'inequality_family_detector.dart';
+import 'inequality_family_steps_ext.dart';
 import 'numeric_function.dart';
 
 /// Pasos didacticos previos al estudio de signos segun la familia de la inecuacion
@@ -21,6 +22,8 @@ abstract final class InequalityFamilySteps {
   }
 
   static List<MathStep> build(InequalityFamily fam, XNode l, XNode r, InequalitySign s) {
+    final ext = InequalityFamilyStepsExt.build(fam, l, r, s);
+    if (ext != null) return ext;
     final steps = switch (fam) {
       InequalityFamily.radical => _radical(l, r, s),
       InequalityFamily.logarithmic => _log(l, r, s),

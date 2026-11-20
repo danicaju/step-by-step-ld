@@ -6,6 +6,7 @@ import '../inequalities/universal/numeric_function.dart';
 import '../../models/step_resolution.dart';
 import '../trig_and_angles_solver.dart' show AngleUnit;
 import 'dpoly.dart';
+import 'nd_atom_inverses.dart';
 import 'nd_common.dart';
 
 /// Funcion elemental de UNA variable dentro de un sistema: `kind(a·v + b)`.
@@ -73,7 +74,9 @@ abstract final class NonlinearSubstitutionNdSolver {
           }
           return (make('logb', g.$1, g.$2, base: bv), 1.0);
         }
-        if (name == 'sin' || name == 'cos' || name == 'tan') return (make(name, g.$1, g.$2), 1.0);
+        if (name == 'sin' || name == 'cos' || name == 'tan' || NdAtomInverses.kinds.contains(name)) {
+          return (make(name, g.$1, g.$2), 1.0);
+        }
         return null;
       case XRoot(:final index, :final rad):
         final g = _linear(rad, v, unit);
@@ -178,6 +181,8 @@ abstract final class NonlinearSubstitutionNdSolver {
         if (u.abs() > 1 + 1e-9) return [];
         final c = _acos(u, unit);
         g = [c, NdFmt.wrap(turn - c, turn)];
+      case 'sinh' || 'cosh' || 'tanh' || 'asin' || 'acos' || 'atan':
+        g = NdAtomInverses.invert(at.kind, u, unit);
       default: // tan
         final t = NdFmt.wrap(_fromRad(math.atan(u), unit), turn / 2);
         g = [t, t + turn / 2];
@@ -225,7 +230,7 @@ abstract final class NonlinearSubstitutionNdSolver {
         'root' => 'u mayor o igual que 0 (una raíz par no es negativa)',
         'exp' => 'u mayor que 0 (una potencia de base positiva es positiva)',
         'sin' || 'cos' => 'u entre -1 y 1',
-        _ => 'sin restricción para u',
+        _ => NdAtomInverses.note(kind),
       };
 
   // ------------------------------------------------------------- resolucion

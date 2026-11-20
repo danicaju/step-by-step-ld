@@ -6,7 +6,11 @@ import 'package:casio_tutor_calc/domain/math_engine/models/step_resolution.dart'
 import 'package:casio_tutor_calc/domain/math_engine/solvers/calculus/sym_build.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/exact/ext_expr.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/exact/ext_parser.dart';
+import 'package:casio_tutor_calc/domain/math_engine/solvers/inequality_solver.dart';
+import 'package:casio_tutor_calc/domain/math_engine/solvers/systems_free/free_system_solver.dart';
+import 'package:casio_tutor_calc/domain/math_engine/solvers/super_equation_solver.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/symbolic_derivative_solver.dart';
+import 'package:casio_tutor_calc/domain/math_engine/solvers/trig_and_angles_solver.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/symbolic_integral_solver.dart';
 import 'package:casio_tutor_calc/presentation/painters/graph_viewport_calculator.dart';
 import 'package:casio_tutor_calc/presentation/painters/universal_function_painter.dart';
@@ -192,6 +196,111 @@ void main() {
       expect(lg.result.asymptotes.vertical.map((a) => a.x), contains(0));
       final ex = FunctionFamilyStudySolver.study('e^(-x)');
       expect(lessonText(ex.result.resolution), contains(r'x \to +\infty'));
+    });
+  });
+
+  group('M2 ecuaciones con las familias nuevas', () {
+    String eq(String raw, {AngleUnit angle = AngleUnit.rad}) {
+      final r = SuperEquationSolver.solve(raw, angle: angle);
+      expectCleanNotes(r);
+      expect(r.steps, isNotEmpty);
+      return r.exactResultLatex.replaceAll(' ', '');
+    }
+
+    test('raices de indice n', () {
+      expect(eq('cbrt(x+2)=-2'), 'x=-10');
+      expect(eq('root(3,x-1)=2'), 'x=9');
+      expect(eq('root(4,x+1)=2'), 'x=15');
+      expect(eq('root(4,x+1)=-2'), contains('Sinsolucion'));
+    });
+
+    test('trigonometricas inversas con rango', () {
+      expect(eq('arctan(x)=pi/4'), 'x=1');
+      expect(eq('arctan(x)=45', angle: AngleUnit.deg), 'x=1');
+      expect(eq('arctan(x)=1'), contains(r'\tan'));
+      expect(eq('arcsin(2x)=pi/6'), r'x=\frac{1}{4}');
+      expect(eq('arcsin(x)=2'), contains('Sinsolucion'));
+      expect(eq('arccos(x)=pi'), 'x=-1');
+    });
+
+    test('hiperbolicas', () {
+      expect(eq('cosh(x)=1'), 'x=0');
+      expect(eq('cosh(x)=0'), contains('Sinsolucion'));
+      expect(eq('cosh(x)=1/2'), contains('Sinsolucion'));
+      expect(eq('sinh(x)=0'), 'x=0');
+      expect(eq('tanh(x)=0'), 'x=0');
+      expect(eq('tanh(x)=2'), contains('Sinsolucion'));
+      expect(eq('sinh(x)=3'), contains(r'\ln'));
+      expect(eq('cosh(x)=5'), contains(r'\ln'));
+      expect(eq('tanh(x)=1/2'), contains(r'\ln'));
+    });
+
+    test('identidades y contradicciones', () {
+      expect(eq('sin(x)^2+cos(x)^2=1'), contains('Identidad'));
+      expect(eq('cosh(x)^2-sinh(x)^2=1'), contains('Identidad'));
+      expect(eq('sin(x)^2+cos(x)^2=2'), contains('Sinsolucion'));
+      // no se roba una ecuacion normal
+      expect(eq('sin(x)=1/2', angle: AngleUnit.deg), isNot(contains('Identidad')));
+    });
+  });
+
+  group('M6 inecuaciones con las familias nuevas', () {
+    String ineq(String raw) {
+      final r = InequalitySolver.solveString(raw);
+      expectCleanNotes(r);
+      expect(r.steps.any((st) => st.showsNumberLine), isTrue, reason: 'recta real: $raw');
+      return r.exactResultLatex.replaceAll(' ', '');
+    }
+
+    test('raiz cubica no corta el dominio en -2', () {
+      expect(ineq('cbrt(x+2)<0'), r'(-\infty,-2)');
+      expect(ineq('cbrt(x+2)>1'), r'(-1,+\infty)');
+      expect(ineq('cbrt(x+2)>=-2'), r'[-10,+\infty)');
+    });
+
+    test('trigonometricas inversas respetan su dominio', () {
+      expect(ineq('arcsin(x)>=0'), '[0,1]');
+      expect(ineq('arcsin(x)>0'), '(0,1]');
+      expect(ineq('arcsin(x)<=0'), '[-1,0]');
+      expect(ineq('arctan(x)<=0'), r'(-\infty,0]');
+      expect(ineq('arctan(x)>0'), r'(0,+\infty)');
+    });
+
+    test('hiperbolicas', () {
+      expect(ineq('cosh(x)>=1'), r'(-\infty,+\infty)');
+      expect(ineq('cosh(x)>1'), r'(-\infty,0)\cup(0,+\infty)');
+      expect(ineq('cosh(x)<1'), r'\emptyset');
+      expect(ineq('sinh(x)>0'), r'(0,+\infty)');
+      expect(ineq('tanh(x)>=0'), r'[0,+\infty)');
+    });
+  });
+
+  group('M3 sistemas con las familias nuevas', () {
+    String sys(List<String> lhs, List<String> rhs) {
+      final r = FreeSystemSolver.solve(lhs, rhs);
+      expectCleanNotes(r);
+      expect(r.steps, isNotEmpty);
+      return r.exactResultLatex.replaceAll(' ', '').replaceAll(r'\left', '').replaceAll(r'\right', '').replaceAll(r'\,', '');
+    }
+
+    test('2x2 hiperbolico: cosh(x)+sinh(y)=1, cosh(x)-sinh(y)=1 -> (0, 0)', () {
+      expect(sys(['cosh(x)+sinh(y)', 'cosh(x)-sinh(y)'], ['1', '1']), contains('(0,0)'));
+    });
+
+    test('2x2 con raiz cubica: cbrt(x)+y=3, x-y=7 -> (8, 1)', () {
+      expect(sys(['cbrt(x)+y', 'x-y'], ['3', '7']), contains('(8,1)'));
+    });
+
+    test('2x2 con inversas', () {
+      expect(sys(['arctan(x)+y', 'arctan(x)-y'], ['pi/4+1', 'pi/4-1']), contains('(1,1)'));
+      expect(sys(['arcsin(x)+tanh(y)', 'arcsin(x)-tanh(y)'], ['pi/2', 'pi/2']), contains('(1,0)'));
+    });
+
+    test('3x3 y 4x4 con arctan, cbrt y senh', () {
+      final r3 = sys(['arctan(x)+y+z', 'y-z', 'cbrt(z)+x'], ['pi/4+3', '1', '3']);
+      expect(r3, isNotEmpty);
+      final r4 = sys(['sinh(x)+y+z+w', 'y-z', 'z+w', 'w-x'], ['3', '0', '2', '1']);
+      expect(r4, isNotEmpty);
     });
   });
 }

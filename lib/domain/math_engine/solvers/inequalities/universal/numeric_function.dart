@@ -104,6 +104,18 @@ abstract final class NumFn {
         return a.abs() <= 1 ? _fromRad(math.acos(a), unit) : null;
       case 'atan':
         return _fromRad(math.atan(a), unit);
+      case 'sinh':
+        return (math.exp(a) - math.exp(-a)) / 2;
+      case 'cosh':
+        return (math.exp(a) + math.exp(-a)) / 2;
+      case 'tanh':
+        return a > 20 ? 1 : (a < -20 ? -1 : (math.exp(2 * a) - 1) / (math.exp(2 * a) + 1));
+      case 'asinh':
+        return a < 0 ? -math.log(-a + math.sqrt(a * a + 1)) : math.log(a + math.sqrt(a * a + 1));
+      case 'acosh':
+        return a >= 1 ? math.log(a + math.sqrt(a * a - 1)) : null;
+      case 'atanh':
+        return a.abs() < 1 ? 0.5 * math.log((1 + a) / (1 - a)) : null;
     }
     return null;
   }
@@ -118,6 +130,16 @@ abstract final class NumFn {
         XRoot(:final index, :final rad) => hasX(rad) || (index != null && hasX(index)),
         XFn(:final arg, :final base) => hasX(arg) || (base != null && hasX(base)),
         XComb(n: final cn, r: final cr) => hasX(cn) || hasX(cr),
+      };
+
+  /// `true` si el arbol contiene sin, cos o tan (funciones periodicas: se estudia una vuelta).
+  static bool hasPeriodic(XNode n) => switch (n) {
+        XFn(:final name, :final arg) => const {'sin', 'cos', 'tan'}.contains(name) || hasPeriodic(arg),
+        XNeg(:final a) || XAbs(:final a) || XFact(:final a) => hasPeriodic(a),
+        XBin(:final l, :final r) => hasPeriodic(l) || hasPeriodic(r),
+        XPow(:final base, :final exp) => hasPeriodic(base) || hasPeriodic(exp),
+        XRoot(:final rad) => hasPeriodic(rad),
+        _ => false,
       };
 
   /// `true` si el arbol contiene alguna funcion trigonometrica.

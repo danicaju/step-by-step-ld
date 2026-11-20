@@ -4,6 +4,10 @@ import 'equations/super_equation_helpers.dart';
 import 'equations/biquadratic_equation_solver.dart';
 import 'equations/eq_context.dart';
 import 'equations/exponential_equation_solver.dart';
+import 'equations/hyperbolic_equation_solver.dart';
+import 'equations/identity_equation_solver.dart';
+import 'equations/inverse_function_equation_solver.dart';
+import 'equations/nth_root_equation_solver.dart';
 import 'equations/irrational_equation_solver.dart';
 import 'equations/logarithmic_equation_solver.dart';
 import 'equations/rational_equation_solver.dart';
@@ -41,9 +45,13 @@ class SuperEquationSolver {
 
     // 2. Solvers por tipo sobre el AST (cada intento con un contexto limpio).
     final attempts = <(bool Function(EqCtx), StepByStepResolution? Function(EqCtx))>[
+      (IdentityEquationSolver.matches, IdentityEquationSolver.solve),
       (TrigonometricEquationSolver.matches, TrigonometricEquationSolver.solve),
       (LogarithmicEquationSolver.matches, LogarithmicEquationSolver.solve),
       (ExponentialEquationSolver.matches, ExponentialEquationSolver.solve),
+      (NthRootEquationSolver.matches, NthRootEquationSolver.solve),
+      (InverseFunctionEquationSolver.matches, InverseFunctionEquationSolver.solve),
+      (HyperbolicEquationSolver.matches, HyperbolicEquationSolver.solve),
       (IrrationalEquationSolver.matches, IrrationalEquationSolver.solve),
       (RationalEquationSolver.matches, RationalEquationSolver.solve),
     ];

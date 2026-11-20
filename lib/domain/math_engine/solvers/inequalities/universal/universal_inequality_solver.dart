@@ -40,7 +40,7 @@ class UniversalInequalitySolver {
       throw const FormatException('Escribe la incógnita x en la inecuación.');
     }
     final family = InequalityFamilyDetector.detect(l, r);
-    final trig = NumFn.hasTrig(l) || NumFn.hasTrig(r);
+    final trig = NumFn.hasPeriodic(l) || NumFn.hasPeriodic(r);
     final window = trig ? (0.0, 2 * math.pi) : null;
     double? f(double x) {
       final a = NumFn.eval(l, x), b = NumFn.eval(r, x);
