@@ -357,7 +357,7 @@ void main() {
     testWidgets('M1: la lista OPTN ofrece las secciones y inserta hiperbolicas e inversas', (t) async {
       await boot(t, size: kDesktop);
       await seq(t, 'optn');
-      for (final s in ['Constantes', 'Trig. Inversas', 'Hiperbólicas', 'Funciones']) {
+      for (final s in ['Hiperbólicas', 'Funciones']) {
         expect(find.textContaining(s), findsWidgets, reason: s);
       }
       await tapF(t, find.textContaining('Hiperbólicas'));
@@ -365,6 +365,10 @@ void main() {
       expect(live(t), contains(r'\cosh'));
       await seq(t, '0');
       await seq(t, 'optn');
+      await pad(t, 'right');
+      for (final s in ['Constantes', 'Trig. Inversas']) {
+        expect(find.textContaining(s), findsWidgets, reason: s);
+      }
       await tapF(t, find.textContaining('Trig. Inversas'));
       await tapF(t, find.textContaining('arcsin'));
       expect(live(t), contains(r'\sin^{-1}'));

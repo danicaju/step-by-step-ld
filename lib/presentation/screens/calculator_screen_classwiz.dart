@@ -240,12 +240,18 @@ extension _CalculatorScreenListMenu on _CalculatorScreenState {
           ]);
         } else {
           _setList('optn', 'OPTN', [
-            ..._sectionEntries,
+            const LcdListItem('sec:hyp', 'Funciones Hiperbólicas'),
             const LcdListItem('suf', 'Sufijos Ingeniería'),
             const LcdListItem('ang', 'Unidades Angulares'),
             const LcdListItem('oth', 'Otras funciones'),
             const LcdListItem('exp', 'Exportar / Copiar'),
             const LcdListItem('ibr', 'Arsenal Iberia'),
+            for (final s in [
+              OptnTokenSections.constants,
+              OptnTokenSections.inverseTrig,
+              OptnTokenSections.functions,
+            ])
+              LcdListItem('sec:${s.id}', s.title),
           ]);
         }
     }
