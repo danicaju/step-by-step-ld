@@ -15,7 +15,9 @@ extension _CalculatorScreenKeypressAns on _CalculatorScreenState {
     if (_isShiftActive || _isAlphaActive || _isMenuOpen || _isSetupOpen) return false;
     if (_isCalcPromptActive || _isMemViewOpen) return false;
     final binary = _ansBinaryKeys.contains(key);
-    if (!binary && !_ansFreshKeys.contains(key)) return false;
+    final freshToken = key.startsWith(OptnTokenSections.keyPrefix) &&
+        (key.endsWith('(') || key.endsWith('ℯ') || key.endsWith('π'));
+    if (!binary && !freshToken && !_ansFreshKeys.contains(key)) return false;
     _resetMultiStatement();
     _activeResolution = null;
     _activeStepIndex = 0;

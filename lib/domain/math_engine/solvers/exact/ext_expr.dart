@@ -147,7 +147,14 @@ class XFn extends XNode {
   final XNode? base;
   const XFn(this.name, this.arg, {this.base});
 
-  static const _inv = {'asin': 'arcsin', 'acos': 'arccos', 'atan': 'arctan'};
+  static const _inv = {
+    'asin': 'arcsin',
+    'acos': 'arccos',
+    'atan': 'arctan',
+    'asinh': 'sinh^{-1}',
+    'acosh': 'cosh^{-1}',
+    'atanh': 'tanh^{-1}',
+  };
 
   @override
   String latex() {

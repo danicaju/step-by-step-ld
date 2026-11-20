@@ -334,6 +334,9 @@ extension _CalculatorScreenKeypress on _CalculatorScreenState {
   }
 
   String _appendTokenToNumericCell(String current, String token) {
+    // Celdas con expresion (`sinh(0)`, `root(3,8)`, `π/4`...): edicion lineal por el final.
+    if (CellExpressionInput.accepts(current, token)) return CellExpressionInput.append(current, token);
+    if (CellExpressionInput.isExpression(current)) return current;
     if (current.contains('/')) {
       return CellFractionEditor.append(current, token, _cw.x.cellNumEdit);
     }

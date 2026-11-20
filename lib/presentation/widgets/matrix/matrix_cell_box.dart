@@ -58,7 +58,7 @@ class _MatrixCellBoxState extends State<MatrixCellBox> {
   @override
   Widget build(BuildContext context) {
     final v = widget.value.trim();
-    final isFraction = v.contains('/');
+    final isFraction = CasioCellValueText.needsLatex(v);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: LcdInputBox(

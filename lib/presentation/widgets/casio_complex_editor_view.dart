@@ -57,7 +57,11 @@ class CasioComplexEditorView extends StatelessWidget {
                     ? r'\text{Potencias de la unidad imaginaria } i^{n}'
                     : (selectedOperation == ComplexOperation.toPolar
                         ? r'\text{Binomica } a + bi \rightarrow \text{ Polar } r_{\alpha}'
-                        : r'\text{Forma binomica } a + bi'),
+                        : selectedOperation == ComplexOperation.expZ
+                            ? r'e^{a+bi} = e^{a}\left(\cos b + i\sin b\right)'
+                            : selectedOperation == ComplexOperation.lnZ
+                                ? r'\mathrm{Ln}(z) = \ln|z| + i\arg(z)'
+                                : r'\text{Forma binomica } a + bi'),
                 mutedColor,
                 12,
               ),
@@ -239,7 +243,7 @@ class CasioComplexEditorView extends StatelessWidget {
     final String value = index < cells.length ? cells[index] : '';
     final idleFg = isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF1A2530);
     final trimmed = value.trim();
-    final isFraction = trimmed.contains('/');
+    final isFraction = CasioCellValueText.needsLatex(trimmed);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

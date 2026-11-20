@@ -5,6 +5,7 @@ import '../../polynomials/algebraic_fraction_solver.dart';
 import '../equations/eq_poly.dart';
 import '../exact/ext_expr.dart';
 import '../exact/ext_parser.dart';
+import '../exact/identity_simplifier.dart';
 
 /// M1 algebraico: `x` / `y` minusculas son variables simbolicas (no registros de memoria).
 ///
@@ -14,7 +15,7 @@ class M1SymbolicSolver {
   const M1SymbolicSolver._();
 
   static final RegExp _fnNames = RegExp(
-    r'sin|cos|tan|log|ln|Abs|ANS|ans|root|mcm|mcd|nCr|nPr|Pol|Rec|RanInt|Ran|arcsin|arccos|arctan|asin|acos|atan|exp|sqrt',
+    r'asinh|acosh|atanh|sinh|cosh|tanh|cbrt|sin|cos|tan|log|ln|Abs|ANS|ans|root|mcm|mcd|nCr|nPr|Pol|Rec|RanInt|Ran|arcsin|arccos|arctan|asin|acos|atan|exp|sqrt',
   );
 
   static String _stripFns(String raw) => raw.replaceAll(_fnNames, '');
@@ -79,29 +80,36 @@ class M1SymbolicSolver {
     }
     final v = vars.first;
     final lower = _withMemory(raw, memory).replaceAll(v, 'x');
-    final XNode node;
+    final XNode parsed;
     try {
-      node = ExtParser().parse(ExpressionParser.finalizeForEvaluation(lower));
+      parsed = ExtParser().parse(ExpressionParser.finalizeForEvaluation(lower));
     } on ExtUnsupported catch (e) {
       throw FormatException(e.message);
     }
-    final original = _asVar(node.latex(), v);
+    final original = _asVar(parsed.latex(), v);
     final steps = <MathStep>[
       _s(1, 'Variable algebraica',
           original,
           'La letra $v minúscula es una incógnita: no se sustituye por ningún número, se opera con ella como símbolo. '
           '(Las mayúsculas X, Y, A..F, M son las memorias.)'),
     ];
+    // Identidades fundamentales (sen^2 + cos^2 = 1, ln(e^a) = a...) antes de operar.
+    final idSteps = <MathStep>[];
+    final node = IdentitySimplifier.apply(parsed, idSteps);
+    for (final s in idSteps) {
+      steps.add(_s(steps.length + 1, s.shortTitle, _asVar(s.latexExpression, v), s.pedagogicalNote));
+    }
     final frac = PolyOps.rationalOf(node);
     if (frac == null) {
-      steps.add(_s(2, 'Expresión no polinómica',
-          original,
+      final shownNow = _asVar(node.latex(), v);
+      steps.add(_s(steps.length + 1, 'Expresión no polinómica',
+          shownNow,
           'Esta expresión no es un polinomio ni una fracción algebraica, así que se deja indicada. '
           'Pulsa CALC para evaluarla dando un valor a $v.'));
       return StepByStepResolution(
         originalInputLatex: original,
         steps: steps,
-        exactResultLatex: original,
+        exactResultLatex: shownNow,
         decimalApproxLatex: '',
       );
     }

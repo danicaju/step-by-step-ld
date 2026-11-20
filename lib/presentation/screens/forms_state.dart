@@ -42,12 +42,12 @@ class ExtraViewsState {
     selectorLabels: LineEquationsVisualEditor.forms,
     cols: 2,
     layouts: [
-      [ModeField('x1'), ModeField('y1'), ModeField('x2'), ModeField('y2')],
-      [ModeField('x0'), ModeField('y0'), ModeField('v1'), ModeField('v2')],
-      [ModeField('x0'), ModeField('y0'), ModeField('m')],
-      [ModeField('m'), ModeField('n')],
-      [ModeField('A'), ModeField('B'), ModeField('C')],
-      [ModeField('x0'), ModeField('y0'), ModeField('v1'), ModeField('v2')],
+      [ModeField('x1', scalar: true), ModeField('y1', scalar: true), ModeField('x2', scalar: true), ModeField('y2', scalar: true)],
+      [ModeField('x0', scalar: true), ModeField('y0', scalar: true), ModeField('v1', scalar: true), ModeField('v2', scalar: true)],
+      [ModeField('x0', scalar: true), ModeField('y0', scalar: true), ModeField('m', scalar: true)],
+      [ModeField('m', scalar: true), ModeField('n', scalar: true)],
+      [ModeField('A', scalar: true), ModeField('B', scalar: true), ModeField('C', scalar: true)],
+      [ModeField('x0', scalar: true), ModeField('y0', scalar: true), ModeField('v1', scalar: true), ModeField('v2', scalar: true)],
     ],
   );
 

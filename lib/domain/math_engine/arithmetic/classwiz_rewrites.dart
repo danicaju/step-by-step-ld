@@ -1,10 +1,9 @@
 import '../parser/balanced_scan.dart';
 import '../solvers/trig_and_angles_solver.dart';
 
-/// Reescrituras previas a evaluar (menu OPTN): hiperbolicas, sufijos de
-/// ingenieria y sufijos angulares `r` / `g`.
+/// Reescrituras previas a evaluar (menu OPTN): sufijos de ingenieria y
+/// sufijos angulares `r` / `g`.
 ///
-/// - `sinh(u)`, `cosh(u)`, `tanh(u)` -> expresion con `ℯ` (resultado exacto).
 /// - `5#k` -> `5*(1000)`; `#M #G #m #u #n` analogos (exactos).
 /// - `N#r` / `N#g` -> N convertido a la unidad angular activa.
 class ClassWizRewrites {
@@ -19,21 +18,23 @@ class ClassWizRewrites {
     'n': '1/1000000000',
   };
 
-  static final RegExp _hypRe = RegExp(r'(sinh|cosh|tanh)\(');
   static final RegExp _suffixRe = RegExp(r'#([kMGmun])');
   static final RegExp _angleRe = RegExp(r'#([rg])');
 
-  /// Aplica todas las reescrituras en orden.
+  /// Aplica todas las reescrituras en orden. Las hiperbolicas ya no se
+  /// reescriben: las evalua de forma nativa el motor extendido (`ExtHyperbolic`).
   static String prepare(String input, AngleUnit unit) {
-    var out = rewriteHyperbolics(input);
-    out = rewriteAngleSuffix(out, unit);
+    var out = rewriteAngleSuffix(input, unit);
     out = out.replaceAllMapped(_suffixRe, (m) => '*(${_suffix[m.group(1)]})');
     return out;
   }
 
-  static bool needsRewrite(String s) =>
-      s.contains('sinh(') || s.contains('cosh(') || s.contains('tanh(') || s.contains('#');
+  static bool needsRewrite(String s) => s.contains('#');
 
+  static final RegExp _hypRe = RegExp(r'(sinh|cosh|tanh)\(');
+
+  /// Forma exponencial de `sinh/cosh/tanh` (ya no se usa en `prepare`; se
+  /// conserva como utilidad de referencia).
   static String rewriteHyperbolics(String s) {
     var out = s;
     while (true) {

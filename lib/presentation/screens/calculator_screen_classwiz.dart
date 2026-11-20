@@ -181,11 +181,10 @@ extension _CalculatorScreenClassWiz on _CalculatorScreenState {
 
 /// Menus de lista en la LCD: OPTN (M1/M9/M10), CONST (SHIFT+7) y CONV (SHIFT+8).
 extension _CalculatorScreenListMenu on _CalculatorScreenState {
-  static const List<LcdListItem> _hypItems = [
-    LcdListItem('sinh(', 'sinh', detail: 'seno hiperbólico'),
-    LcdListItem('cosh(', 'cosh', detail: 'coseno hiperb.'),
-    LcdListItem('tanh(', 'tanh', detail: 'tangente hiperb.'),
-  ];
+  /// Entradas `sec:<id>` que abren las secciones de funciones/constantes de OPTN.
+  static List<LcdListItem> get _sectionEntries => [
+        for (final s in OptnTokenSections.all) LcdListItem('sec:${s.id}', s.title),
+      ];
   static const List<LcdListItem> _sufItems = [
     LcdListItem('#k', 'k', detail: '×10³'),
     LcdListItem('#M', 'M', detail: '×10⁶'),
@@ -227,24 +226,26 @@ extension _CalculatorScreenListMenu on _CalculatorScreenState {
         ]);
       default:
         if (_calculatorMode == 9) {
-          _setList('optn', 'OPTN · Matrices', const [
-            LcdListItem('MatA', 'MatA'),
-            LcdListItem('MatB', 'MatB'),
-            LcdListItem('Trn', 'Trn', detail: 'transpuesta'),
+          _setList('optn', 'OPTN · Matrices', [
+            const LcdListItem('MatA', 'MatA'),
+            const LcdListItem('MatB', 'MatB'),
+            const LcdListItem('Trn', 'Trn', detail: 'transpuesta'),
+            ..._sectionEntries,
           ]);
         } else if (_calculatorMode == 10) {
-          _setList('optn', 'OPTN · Vectores', const [
-            LcdListItem('VctA', 'VctA', detail: 'u'),
-            LcdListItem('VctB', 'VctB', detail: 'v'),
+          _setList('optn', 'OPTN · Vectores', [
+            const LcdListItem('VctA', 'VctA', detail: 'u'),
+            const LcdListItem('VctB', 'VctB', detail: 'v'),
+            ..._sectionEntries,
           ]);
         } else {
-          _setList('optn', 'OPTN', const [
-            LcdListItem('hyp', 'Funciones Hiperbólicas'),
-            LcdListItem('suf', 'Sufijos Ingeniería'),
-            LcdListItem('ang', 'Unidades Angulares'),
-            LcdListItem('oth', 'Otras funciones'),
-            LcdListItem('exp', 'Exportar / Copiar'),
-            LcdListItem('ibr', 'Arsenal Iberia'),
+          _setList('optn', 'OPTN', [
+            ..._sectionEntries,
+            const LcdListItem('suf', 'Sufijos Ingeniería'),
+            const LcdListItem('ang', 'Unidades Angulares'),
+            const LcdListItem('oth', 'Otras funciones'),
+            const LcdListItem('exp', 'Exportar / Copiar'),
+            const LcdListItem('ibr', 'Arsenal Iberia'),
           ]);
         }
     }
@@ -310,15 +311,15 @@ extension _CalculatorScreenListMenu on _CalculatorScreenState {
       _openProportion(int.parse(token.substring(5)));
       return;
     }
-    if (_activeResolution != null) _clearActiveResolutionCursor();
-    _applyRawInsertion(token);
+    _insertTokenKey(token);
   }
 
   void _optnSelect(LcdListItem item) {
     final l = _cw.list!;
     switch (item.id) {
-      case 'hyp':
-        _setList('sub', 'Hiperbólicas', _hypItems, parent: l);
+      case final String id when id.startsWith('sec:'):
+        final section = OptnTokenSections.byId(id.substring(4));
+        if (section != null) _setList('sub', section.title, _optnSectionItems(section), parent: l);
       case 'suf':
         _setList('sub', 'Sufijos', _sufItems, parent: l);
       case 'ang':

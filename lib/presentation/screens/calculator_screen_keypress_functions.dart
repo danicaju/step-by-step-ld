@@ -3,6 +3,9 @@ part of 'calculator_screen.dart';
 extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
   bool _handleKeyPressFunctions(String key) {
       if (key == 'M-') return _memMinus();
+      if (key.startsWith(OptnTokenSections.keyPrefix)) {
+        return _insertTokenKey(key.substring(OptnTokenSections.keyPrefix.length));
+      }
       if (key == 'ANS') {
         _isShiftActive = false;
         _isAlphaActive = false;
@@ -312,8 +315,10 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
 
       if (key == 'SCI10') {
         final bool isShift = _isShiftActive;
+        final bool isAlpha = _isAlphaActive;
         _isShiftActive = false;
         _isAlphaActive = false;
+        if (isAlpha && !isShift) return _insertTokenKey('ℯ');
         if (_supportsScientificFns) {
           if (_activeResolution != null) {
             _clearActiveResolutionCursor();
@@ -362,6 +367,7 @@ extension _CalculatorScreenKeypressFunctions on _CalculatorScreenState {
       if (key == 'PI') {
         _isShiftActive = false;
         _isAlphaActive = false;
+        if (_insertIntoCell('π')) return true;
         if (_supportsScientificFns) {
           if (_activeResolution != null) {
             _clearActiveResolutionCursor();

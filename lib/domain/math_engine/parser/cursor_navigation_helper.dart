@@ -114,6 +114,23 @@ class CursorNavigationHelper {
     return (updated, safe + token.length);
   }
 
+  /// `true` si `raw[idx]` es la coma separadora de una plantilla de dos slots.
+  static bool isTemplateComma(String raw, int idx) {
+    if (idx < 0 || idx >= raw.length || raw[idx] != ',') return false;
+    var depth = 0;
+    for (var i = idx - 1; i >= 0; i--) {
+      if (raw[i] == ')') depth++;
+      if (raw[i] == '(') {
+        if (depth == 0) {
+          final head = raw.substring(0, i + 1);
+          return head.endsWith('root(') || head.endsWith('log_(');
+        }
+        depth--;
+      }
+    }
+    return false;
+  }
+
   /// Borra el token o carácter inmediatamente anterior a [currentPos].
   static (String raw, int cursor) deleteAtCursor(
     String raw,
@@ -143,6 +160,10 @@ class CursorNavigationHelper {
     if (unwrapped != null) return unwrapped;
     final prefix = raw.substring(0, safe);
     final suffix = raw.substring(safe);
+
+    // La coma que separa los dos slots de `root(n,x)` / `log_(b,x)` no se borra:
+    // fusionaria indice y radicando (`root(38)`). DEL solo salta al slot anterior.
+    if (isTemplateComma(raw, safe - 1)) return (raw, safe - 1);
 
     // Borrar una apertura vacia `(|)` o `sin(|)` elimina tambien su cierre.
     final emptyPair = suffix.startsWith(')');

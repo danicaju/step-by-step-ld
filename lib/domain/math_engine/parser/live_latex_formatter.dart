@@ -227,6 +227,7 @@ class LiveLatexFormatter {
     // (un salto de fila TeX).
     out = out.replaceAllMapped(RegExp(r'(?<!\\)\bpi\b'), (_) => r'\pi ');
     out = out.replaceAll('π', r'\pi ');
+    out = out.replaceAll('ℯ', 'e');
 
     // 6. Memoria ANS y variables
     out = out.replaceAll('Ran#', r'\mathrm{Ran}\#');

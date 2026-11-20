@@ -10,6 +10,14 @@ typedef ExKey = (int, int, int);
 class ExMathError extends FormatException {
   static const String evenRootNegative = 'Raíz de índice par de un número negativo (no existe en ℝ).';
   static const String divByZero = 'No se puede dividir entre cero.';
+  static const String inverseTrigDomain = 'El argumento de arcsen y arccos debe estar en [-1, 1].';
+  static const String logDomain = 'El argumento del logaritmo debe ser positivo.';
+  static const String logBaseDomain = 'La base del logaritmo debe ser positiva y distinta de 1.';
+  static const String acoshDomain = 'El argumento de acosh debe ser mayor o igual que 1.';
+  static const String atanhDomain = 'El argumento de atanh debe estar en (-1, 1).';
+  static const String rootIndexDomain = 'El índice de la raíz debe ser un entero entre 2 y 12.';
+  static const String tanUndefined = 'La tangente no está definida en este ángulo.';
+  static const String lnZero = 'Ln(0) no está definido: z debe ser distinto de cero.';
   const ExMathError([super.message = 'Math ERROR']);
 }
 

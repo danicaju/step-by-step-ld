@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/editor/cell_expression_input.dart';
 import '../../../domain/math_engine/parser/live_latex_formatter.dart';
 import '../casio_cell_value_text.dart';
 import '../lcd/lcd_input_box.dart';
@@ -47,6 +48,9 @@ class FormCellBox extends StatelessWidget {
     if (field.expr) {
       if (text.isEmpty) return null;
       return LiveLatexFormatter.rawToLiveLatex(text, cursorPos: active ? field.pos : null);
+    }
+    if (field.scalar && CellExpressionInput.isExpression(text)) {
+      return CasioCellValueText.fractionTex(text, activePart: active ? 1 : null, coloredCursor: true);
     }
     if (text.contains('/')) {
       return CasioCellValueText.fractionTex(text,

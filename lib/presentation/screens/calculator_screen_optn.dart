@@ -72,15 +72,15 @@ extension _CalculatorScreenOptn on _CalculatorScreenState {
                   ),
                   onPressed: () {
                     Navigator.pop(ctx);
-                    updateState(() {
-                      if (_activeResolution != null) _clearActiveResolutionCursor();
-                      _applyRawInsertion(token);
-                    });
+                    _handleKeyPress(OptnTokenSections.keyFor(token));
                   },
                   child: Text(label),
                 ),
             ],
           ),
+        // Funciones y constantes en todos los modos con entrada matematica (M1 las tiene en la lista LCD).
+        if (_calculatorMode != 1 && _calculatorMode != 7)
+          ..._optnTokenButtons(ctx, skip: _calculatorMode == 12 ? const {'ℯ'} : const {}),
         if (_calculatorMode == 1)
           ListTile(
             leading: Icon(Icons.functions_rounded, color: hw.panelAccentText),

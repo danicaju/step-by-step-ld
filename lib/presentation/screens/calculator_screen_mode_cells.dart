@@ -38,6 +38,11 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
   }
 
   void _vectorMoveDpad({required int dRow, required int dCol}) {
+    final exprText = _cellExprDpad(_vectorActiveCells[_vectorActiveCol], dRow, dCol);
+    if (exprText != null) {
+      _vectorActiveCells[_vectorActiveCol] = exprText;
+      return;
+    }
     if (_cellDpadInside(_vectorActiveCells[_vectorActiveCol], dRow, dCol)) {
       return;
     }
@@ -135,6 +140,11 @@ extension _CalculatorScreenModeCells on _CalculatorScreenState {
   }
 
   void _complexMoveDpad({required int dRow, required int dCol}) {
+    final exprText = _cellExprDpad(_complexCells[_complexActiveIndex], dRow, dCol);
+    if (exprText != null) {
+      _complexCells[_complexActiveIndex] = exprText;
+      return;
+    }
     if (_cellDpadInside(_complexCells[_complexActiveIndex], dRow, dCol)) {
       return;
     }

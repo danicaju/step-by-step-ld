@@ -244,6 +244,9 @@ extension _CalculatorScreenModeReset on _CalculatorScreenState {
   }
 
   Rational _parseStatRational(String raw) {
+    if (CellExpressionInput.isExpression(raw)) {
+      return ScalarCellEvaluator.rational(raw, angle: _angleUnit);
+    }
     final s = raw.trim().replaceAll(',', '.');
     if (s.contains('/')) {
       final parts = s.split('/');

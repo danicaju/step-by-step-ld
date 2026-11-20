@@ -2,12 +2,15 @@ import '../core/rational.dart';
 import '../models/step_resolution.dart';
 import '../models/complex_models.dart';
 import 'complex/complex_arithmetic_solver.dart';
+import 'complex/complex_euler_solver.dart';
+import 'exact/exact_number.dart';
 import 'complex/complex_polar_solver.dart';
 
 export '../models/complex_models.dart';
 export 'complex/complex_arithmetic_solver.dart';
 export 'complex/complex_polar_solver.dart';
 export 'complex/complex_polar_radical.dart';
+export 'complex/complex_euler_solver.dart';
 
 /// Facade modular para operaciones con números complejos en 1.º de Bachillerato / PAU.
 /// Todas las APIs históricas se mantienen 100 % retrocompatibles.
@@ -31,6 +34,8 @@ class ComplexSolver {
           angleDegrees: polarAngleDegrees ?? 0,
         ),
       ComplexOperation.powerOfI => powerOfI(z1.real.numerator),
+      ComplexOperation.expZ => exp(_exact(z1.real), _exact(z1.imag)).resolution,
+      ComplexOperation.lnZ => ln(_exact(z1.real), _exact(z1.imag)).resolution,
     };
   }
 
@@ -53,8 +58,18 @@ class ComplexSolver {
       ComplexOperation.fromPolar =>
         ComplexResult(resolution: fromPolar(modulus: z1.real, angleDegrees: z1.imag.toDouble())),
       ComplexOperation.powerOfI => ComplexResult(resolution: powerOfI(z1.real.numerator)),
+      ComplexOperation.expZ => exp(_exact(z1.real), _exact(z1.imag)),
+      ComplexOperation.lnZ => ln(_exact(z1.real), _exact(z1.imag)),
     };
   }
+
+  static ExNum _exact(Rational r) => ExNum.rational(r);
+
+  /// Exponencial compleja `e^(a+bi) = e^a (cos b + i sen b)` (b en radianes).
+  static ComplexResult exp(ExNum a, ExNum b) => ComplexEulerSolver.exp(a, b);
+
+  /// Logaritmo complejo principal `Ln z = ln|z| + i arg(z)`, con `arg(z)` en (-π, π].
+  static ComplexResult ln(ExNum a, ExNum b) => ComplexEulerSolver.ln(a, b);
 
   /// Suma de complejos en forma binómica: (a + bi) + (c + di).
   static StepByStepResolution add(RationalComplex z1, RationalComplex z2) =>

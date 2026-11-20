@@ -40,12 +40,20 @@ class ExtMath {
     return ExNum.opaque('$c\\sqrt[$n]{$rad}', approx);
   }
 
+  /// Raiz n-esima real de [v]: indices impares admiten radicando negativo
+  /// (`-pow(-v, 1/n)`); los pares lo rechazan con error de dominio.
+  static double realRoot(double v, int n) {
+    if (v >= 0) return math.pow(v, 1 / n).toDouble();
+    if (n.isEven) throw const ExMathError(ExMathError.evenRootNegative);
+    return -math.pow(-v, 1 / n).toDouble();
+  }
+
   /// `log_b(x)` exacto cuando ambos son racionales con las mismas bases primas.
   static ExNum? logExact(Rational b, Rational x) {
     if (x == Rational(1)) return ExNum.integer(0);
     final mb = _exps(b);
     final mx = _exps(x);
-    if (mb.isEmpty) throw const ExMathError();
+    if (mb.isEmpty) throw const ExMathError(ExMathError.logBaseDomain);
     final p0 = mb.keys.first;
     final k = Rational(mx[p0] ?? 0, mb[p0]!);
     if (k.isZero) return null;

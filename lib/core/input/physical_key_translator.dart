@@ -18,7 +18,8 @@ class PhysicalAction {
 
 /// Traduce eventos del teclado fisico a pulsaciones de la calculadora.
 ///
-/// Mantiene un buffer de letras para detectar `sin(`, `cos(`, `tan(`, `log(`, `ln(` y `sqrt(`;
+/// Mantiene un buffer de letras para detectar `sin(`, `cosh(`, `arcsin(`, `asin(`, `log(`, `ln(`,
+/// `sqrt(`, `cbrt(` y la constante `pi`; las funciones sin tecla propia viajan como `tok:<texto>`.
 /// `x`, `y`, `e` e `i` se emiten como variables cuando no forman parte de una funcion.
 class PhysicalKeyTranslator {
   String _pending = '';
@@ -30,6 +31,24 @@ class PhysicalKeyTranslator {
     'log': ['LOG'],
     'ln': ['ALPHA', 'LOG'],
     'sqrt': ['√'],
+    'cbrt': ['ALPHA', '√'],
+    'sinh': ['tok:sinh('],
+    'cosh': ['tok:cosh('],
+    'tanh': ['tok:tanh('],
+    'asinh': ['tok:asinh('],
+    'acosh': ['tok:acosh('],
+    'atanh': ['tok:atanh('],
+    'arcsin': ['tok:arcsin('],
+    'arccos': ['tok:arccos('],
+    'arctan': ['tok:arctan('],
+    'asin': ['tok:arcsin('],
+    'acos': ['tok:arccos('],
+    'atan': ['tok:arctan('],
+  };
+
+  /// Constantes que se escriben con letras (`pi`): se emiten al terminar la palabra.
+  static const Map<String, List<String>> _constants = {
+    'pi': ['PI'],
   };
 
   static const Map<String, List<String>> _variables = {
@@ -46,10 +65,16 @@ class PhysicalKeyTranslator {
     LogicalKeyboardKey.arrowDown: 'down',
   };
 
-  bool _isPrefix(String s) => _functions.keys.any((f) => f.startsWith(s));
+  bool _isPrefix(String s) =>
+      _functions.keys.any((f) => f.startsWith(s)) || _constants.keys.any((c) => c.startsWith(s));
 
   List<PhysicalAction> _flush() {
     final out = <PhysicalAction>[];
+    final constant = _constants[_pending];
+    if (constant != null) {
+      _pending = '';
+      return constant.map(PhysicalAction.key).toList();
+    }
     for (final ch in _pending.split('')) {
       final v = _variables[ch];
       if (v != null) out.addAll(v.map(PhysicalAction.key));

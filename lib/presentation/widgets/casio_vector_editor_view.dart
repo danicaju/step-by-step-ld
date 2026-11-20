@@ -222,7 +222,7 @@ class CasioVectorEditorView extends StatelessWidget {
   }) {
     final idleFg = isOledDark ? const Color(0xFFE8F3EE) : const Color(0xFF1A2530);
     final trimmed = value.trim();
-    final isFraction = trimmed.contains('/');
+    final isFraction = CasioCellValueText.needsLatex(trimmed);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [

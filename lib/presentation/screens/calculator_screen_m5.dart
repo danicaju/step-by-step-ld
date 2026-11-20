@@ -81,10 +81,13 @@ extension _CalculatorScreenM5 on _CalculatorScreenState {
     if (!_m5FormActive || _lcdErrorKind != null) return false;
     final m = _m5;
     if (_isShiftActive) {
-      // SHIFT + x² = exponente libre; el resto de SHIFT+tecla sigue su camino normal.
-      if (key != '^2' || (m.view == 2 && m.table.showRows)) return false;
+      // SHIFT + x² = exponente libre; SHIFT + sin/cos/tan/√/log = su inversa o plantilla.
+      if (m.view == 2 && m.table.showRows) return false;
+      final shifted = ExprKeyInput.shiftToken(key);
+      if (key != '^2' && shifted == null) return false;
       _isShiftActive = false;
-      return m.view == 1 ? m.limit.key('^(') : m.table.key('^(');
+      final k = shifted == null ? '^(' : '${ExprKeyInput.tokPrefix}$shifted';
+      return m.view == 1 ? m.limit.key(k) : m.table.key(k);
     }
     final alpha = _isAlphaActive;
     _isAlphaActive = false;

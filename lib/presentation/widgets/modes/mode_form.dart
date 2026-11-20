@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/editor/cell_expression_input.dart';
 import '../../../domain/math_engine/parser/expression_parser.dart';
 import '../../utils/cell_fraction_editor.dart';
 import '../../utils/expr_cursor_nav.dart';
@@ -11,11 +12,15 @@ import 'form_cell_box.dart';
 class ModeField {
   final String label;
   final bool expr;
+
+  /// Campo numerico que tambien admite expresiones reales (`root(3,8)`, `π/4`, `ln(ℯ^(2))`).
+  final bool scalar;
   String text;
 
   /// Posicion del cursor en [text] (solo campos `expr`; por defecto, al final).
   int cursor;
-  ModeField(this.label, {this.expr = false, this.text = ''}) : cursor = text.length;
+  ModeField(this.label, {this.expr = false, this.scalar = false, this.text = ''})
+      : cursor = text.length;
 
   int get pos => cursor.clamp(0, text.length);
 
@@ -69,6 +74,15 @@ class ModeFormState {
   /// movimiento interno se cambia de casilla. Nunca sale del formulario hacia la cabecera.
   void dpad(String dir) {
     final cur = active;
+    if (cur != null && cur.scalar && (dir == 'left' || dir == 'right')) {
+      final text = dir == 'right'
+          ? CellExpressionInput.dpadRight(cur.text)
+          : CellExpressionInput.dpadLeft(cur.text);
+      if (text != null && CellExpressionInput.isExpression(cur.text)) {
+        cur.text = text;
+        return;
+      }
+    }
     if (cur != null && !cur.expr) {
       final next = CellFractionEditor.dpad(cur.text, fracNum, dir);
       if (next != null) {
@@ -176,6 +190,7 @@ class ModeFormState {
     final f = active;
     if (f == null) return false;
     if (f.expr) return _exprKey(f, k, alpha);
+    if (f.scalar && _scalarKey(f, k)) return true;
     if (_fractionKey(f, k)) return true;
     final next = ExprKeyInput.applyNumber(f.text, k);
     if (next == null) return false;
@@ -200,6 +215,20 @@ class ModeFormState {
     if (token == null) return false;
     final (r, c) = ExpressionParser.insertAtCursor(f.text, pos, token, keepLeadingZero: true);
     f.set(r, c);
+    return true;
+  }
+
+  /// Campo numerico con expresiones: `tok:`/`PI` y, ya dentro de una expresion, su edicion lineal.
+  bool _scalarKey(ModeField f, String k) {
+    final token = k.startsWith(ExprKeyInput.tokPrefix)
+        ? k.substring(ExprKeyInput.tokPrefix.length)
+        : (k == 'PI' ? 'π' : k);
+    if (k == 'DEL' && CellExpressionInput.isExpression(f.text)) {
+      f.text = CellExpressionInput.backspace(f.text);
+      return true;
+    }
+    if (!CellExpressionInput.accepts(f.text, token)) return false;
+    f.text = CellExpressionInput.append(f.text, token);
     return true;
   }
 

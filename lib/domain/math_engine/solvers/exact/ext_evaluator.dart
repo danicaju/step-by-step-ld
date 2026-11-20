@@ -5,6 +5,7 @@ import '../../models/step_resolution.dart';
 import '../trig_and_angles_solver.dart';
 import 'exact_number.dart';
 import 'ext_expr.dart';
+import 'ext_hyperbolic.dart';
 import 'ext_math.dart';
 import 'ext_trig.dart';
 
@@ -99,18 +100,15 @@ class ExtEvaluator {
 
   ExNum _root(XRoot n) {
     final idx = n.index == null ? 2 : (eval(n.index!).asInt ?? 0);
-    if (idx < 2 || idx > 12) throw const ExMathError();
+    if (idx < 2 || idx > 12) throw const ExMathError(ExMathError.rootIndexDomain);
     final x = eval(n.rad);
     ExNum out;
     final r = x.asRational;
     if (r != null) {
       out = ExtMath.nthRoot(r, idx);
     } else {
-      if (x.approx < 0 && idx.isEven) throw const ExMathError(ExMathError.evenRootNegative);
       final lat = idx == 2 ? '\\sqrt{${x.toLatex()}}' : '\\sqrt[$idx]{${x.toLatex()}}';
-      out = ExNum.opaque(lat, idx.isEven || x.approx >= 0
-          ? math.pow(x.approx, 1 / idx).toDouble()
-          : -math.pow(-x.approx, 1 / idx).toDouble());
+      out = ExNum.opaque(lat, ExtMath.realRoot(x.approx, idx));
     }
     final isInt = r != null && r.isInteger && r.numerator > 1;
     final mid = isInt
@@ -211,6 +209,10 @@ class ExtEvaluator {
         out = ExtTrig.inverse(n.name, x, angle);
         title = 'Función trigonométrica inversa';
         note = 'Buscamos el ángulo cuya razón trigonométrica vale ese número (resultado en ${_unitName()}).';
+      case 'sinh' || 'cosh' || 'tanh' || 'asinh' || 'acosh' || 'atanh':
+        out = ExtHyperbolic.eval(n.name, x);
+        title = 'Función hiperbólica';
+        note = 'Las funciones hiperbólicas no dependen de DEG ni RAD: sinh(x) = (e^x - e^(-x))/2 y cosh(x) = (e^x + e^(-x))/2.';
       case 'ln':
         out = _ln(x);
         title = 'Logaritmo neperiano';
@@ -232,7 +234,7 @@ class ExtEvaluator {
       };
 
   ExNum _ln(ExNum x) {
-    if (x.approx <= 0) throw const ExMathError();
+    if (x.approx <= 0) throw const ExMathError(ExMathError.logDomain);
     if (x.asRational == Rational(1)) return ExNum.integer(0);
     if (x.isExact && x.terms.length == 1) {
       final e = x.terms.entries.first;
@@ -245,8 +247,9 @@ class ExtEvaluator {
   }
 
   ExNum _log2(ExNum base, ExNum x) {
-    if (x.approx <= 0 || base.approx <= 0 || (base.approx - 1).abs() < 1e-12) {
-      throw const ExMathError();
+    if (x.approx <= 0) throw const ExMathError(ExMathError.logDomain);
+    if (base.approx <= 0 || (base.approx - 1).abs() < 1e-12) {
+      throw const ExMathError(ExMathError.logBaseDomain);
     }
     final b = base.asRational;
     final v = x.asRational;

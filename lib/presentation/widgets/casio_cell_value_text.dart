@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
+import '../../core/editor/cell_expression_input.dart';
 import '../../core/editor/lcd_cursor_tokens.dart';
 import '../../domain/math_engine/parser/expression_parser.dart';
 import '../utils/cell_fraction_editor.dart';
@@ -36,7 +37,15 @@ class CasioCellValueText extends StatelessWidget {
 
   /// `\frac{n}{d}` con huecos `\square` y cursor en la parte activa.
   /// Con [coloredCursor] el cursor lleva el color `#1A2530` (parpadea con `LcdBlink`).
+  /// `true` si el valor se dibuja como LaTeX: fraccion `a/b` o expresion (`sinh(0)`, `π/4`...).
+  static bool needsLatex(String value) =>
+      value.contains('/') || CellExpressionInput.isExpression(value);
+
   static String fractionTex(String value, {int? activePart, bool coloredCursor = false}) {
+    if (CellExpressionInput.isExpression(value)) {
+      return ExpressionParser.rawToLiveLatex(value.trim(),
+          cursorPos: activePart == null ? null : value.trim().length, ghostClosers: true);
+    }
     final parts = CellFractionEditor.parts(value.trim());
     if (parts == null) return ExpressionParser.rawToLiveLatex(value.trim());
     final bar = coloredCursor ? LcdCursor.bar : LcdCursor.command;
@@ -57,7 +66,7 @@ class CasioCellValueText extends StatelessWidget {
     if (trimmed.isEmpty) {
       return Text(emptyFallback, style: fallbackStyle ?? style);
     }
-    if (!trimmed.contains('/')) {
+    if (!needsLatex(trimmed)) {
       return Text(value, style: style);
     }
 

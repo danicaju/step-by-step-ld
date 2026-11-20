@@ -4,6 +4,7 @@ import '../trig_and_angles_solver.dart';
 import 'ext_evaluator.dart';
 import 'ext_expr.dart';
 import 'ext_parser.dart';
+import 'identity_simplifier.dart';
 
 export 'ext_expr.dart' show ExtUnsupported;
 export 'exact_number.dart' show ExMathError;
@@ -24,7 +25,7 @@ class ExtendedCalcSolver {
         s.contains('!') ||
         s.contains('ℯ') ||
         s.contains('∛') ||
-        RegExp(r'nCr|nPr|ncr|npr|[Aa]bs\(').hasMatch(s)) {
+        RegExp(r'nCr|nPr|ncr|npr|[Aa]bs\(|sinh|cosh|tanh').hasMatch(s)) {
       return true;
     }
     if (_fracPow.hasMatch(s)) return true;
@@ -52,9 +53,21 @@ class ExtendedCalcSolver {
     Map<String, Rational> memory = const {},
   }) {
     final root = ExtParser().parse(raw);
+    final identitySteps = <MathStep>[];
+    final simplified = IdentitySimplifier.apply(root, identitySteps, angle: angle);
     final ev = ExtEvaluator(angle: angle, memory: memory);
-    final value = ev.eval(root);
-    final steps = List<MathStep>.of(ev.steps);
+    final value = ev.eval(simplified);
+    final merged = [...identitySteps, ...ev.steps];
+    final steps = <MathStep>[
+      for (var i = 0; i < merged.length; i++)
+        MathStep(
+          index: i + 1,
+          shortTitle: merged[i].shortTitle,
+          latexExpression: merged[i].latexExpression,
+          pedagogicalNote: merged[i].pedagogicalNote,
+          warningTrick: merged[i].warningTrick,
+        ),
+    ];
 
     final isInverse = root is XFn && const {'asin', 'acos', 'atan'}.contains(root.name);
     final unitSuffix = isInverse && angle == AngleUnit.deg ? '^\\circ' : '';
@@ -62,7 +75,7 @@ class ExtendedCalcSolver {
     final dec = value.decimalLatex();
     final decimal = dec.isEmpty ? exact : '$dec$unitSuffix';
 
-    if (steps.isEmpty || root is XBin || root is XNeg) {
+    if (steps.isEmpty || ((root is XBin || root is XNeg) && identitySteps.isEmpty)) {
       steps.add(MathStep(
         index: steps.length + 1,
         shortTitle: 'Operar y simplificar',

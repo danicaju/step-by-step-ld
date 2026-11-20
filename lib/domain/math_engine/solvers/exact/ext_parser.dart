@@ -1,5 +1,6 @@
 import '../../core/rational.dart';
 import '../../parser/expression_parser.dart';
+import '../../parser/latex_normalizer.dart';
 import 'ext_expr.dart';
 
 /// Parser descendente recursivo del motor extendido de M1.
@@ -7,6 +8,7 @@ import 'ext_expr.dart';
 class ExtParser {
   static final RegExp _tokenRe = RegExp(
     r'\d+\.\d+|\.\d+|\d+|nCr|nPr|ncr|npr|arcsin|arccos|arctan|sin⁻¹|cos⁻¹|tan⁻¹'
+    r'|asinh|acosh|atanh|sinh|cosh|tanh'
     r'|asin|acos|atan|sin|cos|tan|log_|log|ln|sqrt|cbrt|root|abs|Abs|ANS|ans'
     r'|pi|π|ℯ|[√∛³ⁿ]|[+\-*/:^(),!|]|[A-Fa-fWwXYxyZz]',
   );
@@ -59,7 +61,7 @@ class ExtParser {
   }
 
   XNode parse(String input) {
-    final cleaned = ExpressionParser.latexToPlain(fracToSlash(input))
+    final cleaned = ExpressionParser.latexToPlain(fracToSlash(LatexNormalizer.toPlain(input)))
         .replaceAll(r'\cdot', '*')
         .replaceAll('·', '*')
         .replaceAll('×', '*')
@@ -255,7 +257,7 @@ class ExtParser {
 
   static String? _fnName(String t) => switch (t) {
         'sin' || 'cos' || 'tan' || 'ln' => t,
-        'asin' || 'arcsin' || 'sin⁻¹' => 'asin',
+        'sinh' || 'cosh' || 'tanh' || 'asinh' || 'acosh' || 'atanh' => t,        'asin' || 'arcsin' || 'sin⁻¹' => 'asin',
         'acos' || 'arccos' || 'cos⁻¹' => 'acos',
         'atan' || 'arctan' || 'tan⁻¹' => 'atan',
         'log' => 'log',

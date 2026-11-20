@@ -303,8 +303,21 @@ extension _CalculatorScreenSolversAdvanced on _CalculatorScreenState {
           _recordCurrentResolutionToHistory(res, 'M11: Complejos (potencia de i)');
           return;
         }
+        // e^z (Euler) y Ln z: partes reales con π, e, raices y logaritmos.
+        if (_complexOp == ComplexOperation.expZ || _complexOp == ComplexOperation.lnZ) {
+          final a = ScalarCellEvaluator.tryEval(_complexCells[0], angle: _angleUnit) ?? ExNum.integer(0);
+          final b = ScalarCellEvaluator.tryEval(_complexCells[1], angle: _angleUnit) ?? ExNum.integer(0);
+          final res = (_complexOp == ComplexOperation.expZ ? ComplexSolver.exp(a, b) : ComplexSolver.ln(a, b)).resolution;
+          updateState(() => _activeResolution = res);
+          _recordCurrentResolutionToHistory(res, 'M11: Complejos (${_complexOp.shortLabel})');
+          return;
+        }
         // a+bi → r_α con radicales (`-1 + √3 i`): modulo y angulo exactos.
-        if (_complexOp == ComplexOperation.toPolar && (_complexCells[0].contains('√') || _complexCells[1].contains('√'))) {
+        bool simpleRadical(String c) => !c.contains('√') || RadicalPart.parse(c) != null;
+        if (_complexOp == ComplexOperation.toPolar &&
+            (_complexCells[0].contains('√') || _complexCells[1].contains('√')) &&
+            simpleRadical(_complexCells[0]) &&
+            simpleRadical(_complexCells[1])) {
           RadicalPart part(String raw) {
             if (!raw.contains('√')) return RadicalPart(_parseRationalCell(raw, defaultValue: Rational(0)));
             return RadicalPart.parse(raw) ?? (throw const FormatException('Radical no válido: escribe √n, k√n o -k√n (ej: 2√3).'));

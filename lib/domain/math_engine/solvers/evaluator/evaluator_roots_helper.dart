@@ -3,6 +3,7 @@ import '../../ast/ast_nodes.dart';
 import '../../core/rational.dart';
 import '../../models/step_resolution.dart';
 import '../exact/exact_number.dart' show ExMathError;
+import '../exact/ext_math.dart';
 import '../radical_and_factor_solver.dart';
 
 class EvaluatorRootsHelper {
@@ -63,7 +64,21 @@ class EvaluatorRootsHelper {
       return NthRootNode(n, reduceNextStep(radicand, fullRoot: fullRoot));
     }
     final val = radicand.value;
-    final doubleVal = math.pow(val.toDouble(), 1 / n).toDouble();
+    if (val.isInteger) {
+      final absN = val.numerator.abs();
+      final approx = math.pow(absN, 1 / n).round();
+      if (math.pow(approx, n) == absN) {
+        final exact = val.numerator < 0 ? -approx : approx;
+        if (val.numerator < 0 && n.isEven) throw const ExMathError(ExMathError.evenRootNegative);
+        addStep(
+          title: 'Raíz de índice $n exacta',
+          latex: '\\sqrt[$n]{${val.numerator}} = $exact',
+          note: '${val.numerator} es una potencia $n-ésima perfecta.',
+        );
+        return ResolvedRationalNode(Rational(exact));
+      }
+    }
+    final doubleVal = ExtMath.realRoot(val.toDouble(), n);
     addStep(
       title: 'Raíz de índice $n',
       latex: '\\sqrt[$n]{${val.toLatex()}} \\approx ${doubleVal.toStringAsFixed(4)}',

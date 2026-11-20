@@ -9,7 +9,9 @@ enum ComplexOperation {
   divide('z₁ / z₂'),
   toPolar('a+bi → r_α'),
   fromPolar('r_α → a+bi'),
-  powerOfI('iⁿ (potencia)');
+  powerOfI('iⁿ (potencia)'),
+  expZ('e^z (Euler)'),
+  lnZ('Ln z');
 
   final String shortLabel;
   const ComplexOperation(this.shortLabel);

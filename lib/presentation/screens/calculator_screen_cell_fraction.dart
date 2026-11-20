@@ -17,6 +17,7 @@ extension _CalculatorScreenCellFraction on _CalculatorScreenState {
 
   /// Tecla a/b sobre [cur]: con la celda vacia abre `■/■` en el numerador.
   String _cellSlash(String cur) {
+    if (CellExpressionInput.isExpression(cur)) return CellExpressionInput.append(cur, '/');
     final (text, numEdit) = CellFractionEditor.slash(cur, _cw.x.cellNumEdit);
     _cw.x.cellNumEdit = numEdit;
     return text;
@@ -24,9 +25,17 @@ extension _CalculatorScreenCellFraction on _CalculatorScreenState {
 
   /// DEL sobre [cur]: nunca deja `/` suelta; con la fraccion vacia la elimina.
   String _cellBackspace(String cur) {
+    if (CellExpressionInput.isExpression(cur)) return CellExpressionInput.backspace(cur);
     final (text, numEdit) = CellFractionEditor.backspace(cur, _cw.x.cellNumEdit);
     _cw.x.cellNumEdit = numEdit;
     return text;
+  }
+
+  /// ◀ ▶ dentro de una celda con expresion: `root(n,x)` ⇄ coma y cierre de parentesis.
+  /// Devuelve el nuevo texto o `null` si el D-Pad debe pasar a otra celda.
+  String? _cellExprDpad(String cur, int dRow, int dCol) {
+    if (dRow != 0 || dCol == 0 || !CellExpressionInput.isExpression(cur)) return null;
+    return dCol > 0 ? CellExpressionInput.dpadRight(cur) : CellExpressionInput.dpadLeft(cur);
   }
 
   /// D-Pad dentro de la fraccion de [cur]; `true` si se consume (no cambia de celda).
@@ -74,6 +83,11 @@ extension _CalculatorScreenCellFraction on _CalculatorScreenState {
 
   /// D-Pad en M9: primero navega dentro de la fraccion de la celda; despues, de celda en celda.
   void _matrixMoveDpad({required int dRow, required int dCol}) {
+    final exprText = _cellExprDpad(_matrixActiveText, dRow, dCol);
+    if (exprText != null) {
+      _matrixActiveText = exprText;
+      return;
+    }
     final dir = dCol < 0 ? 'left' : dCol > 0 ? 'right' : dRow < 0 ? 'up' : 'down';
     final next = CellFractionEditor.dpad(_matrixActiveText, _cw.x.cellNumEdit, dir);
     if (next != null) {

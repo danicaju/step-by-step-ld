@@ -81,7 +81,7 @@ class ExtTrig {
           case 'cos':
             return c;
           default:
-            if (c.isZero) throw const ExMathError();
+            if (c.isZero) throw const ExMathError(ExMathError.tanUndefined);
             return s / c;
         }
       }
@@ -93,7 +93,7 @@ class ExtTrig {
       _ => math.tan(rad),
     };
     if (name == 'tan' && math.cos(rad).abs() < 1e-12) {
-      throw const ExMathError();
+      throw const ExMathError(ExMathError.tanUndefined);
     }
     final argLatex =
         unit == AngleUnit.deg ? '${arg.toLatex()}^\\circ' : arg.toLatex();
@@ -104,7 +104,9 @@ class ExtTrig {
 
   static ExNum inverse(String name, ExNum x, AngleUnit unit) {
     final v = x.approx;
-    if (name != 'atan' && v.abs() > 1 + 1e-12) throw const ExMathError();
+    if (name != 'atan' && v.abs() > 1 + 1e-12) {
+      throw const ExMathError(ExMathError.inverseTrigDomain);
+    }
     if (x.isExact && x.isAlgebraic) {
       final a = v.abs();
       int? ref;

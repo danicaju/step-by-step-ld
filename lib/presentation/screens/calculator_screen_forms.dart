@@ -126,11 +126,12 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
     // Los modificadores los gestiona el toggle comun (si no, ALPHA no se desactivaba).
     if (key == 'ALPHA' || key == 'SHIFT') return false;
     if (_isShiftActive) {
-      // SHIFT + x² = exponente libre (x^4, x^10...): el resto de SHIFT+tecla sigue su camino normal.
-      if (key != '^2') return false;
+      // SHIFT + x² = exponente libre (x^4, x^10...); SHIFT + sin/cos/tan/√/log = inversa o plantilla.
+      final shifted = ExprKeyInput.shiftToken(key);
+      if (key != '^2' && shifted == null) return false;
       _isShiftActive = false;
       if (_activeResolution != null) _resetResolutionView();
-      return f.key('^');
+      return f.key(shifted == null ? '^' : '${ExprKeyInput.tokPrefix}$shifted');
     }
     final alpha = _isAlphaActive;
     _isAlphaActive = false;
@@ -199,7 +200,12 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
           }
         case 10:
           if (x.m10View == 1) {
-            Rational n(int i) => ProportionSolver.parseQuantity(_t(x.line, i));
+            Rational n(int i) {
+              final t = _t(x.line, i);
+              return CellExpressionInput.isExpression(t)
+                  ? ScalarCellEvaluator.rational(t, angle: _angleUnit)
+                  : ProportionSolver.parseQuantity(t);
+            }
             final r = switch (x.line.selector) {
               0 => LineEquationsSolver.fromPoints(n(0), n(1), n(2), n(3)),
               1 => LineEquationsSolver.fromPointVector(n(0), n(1), n(2), n(3)),
@@ -212,7 +218,13 @@ extension _CalculatorScreenForms on _CalculatorScreenState {
             res = r.resolution;
             label = 'M10: Ecuaciones de la recta';
           } else {
-            double? v(int i) => TriangleValueParser.parseOrNull(_t(x.tri, i));
+            double? v(int i) {
+              final t = _t(x.tri, i);
+              final plain = TriangleValueParser.parseOrNull(t);
+              if (plain != null || t.trim().isEmpty) return plain;
+              // Los angulos del triangulo son siempre grados: arctan(1) = 45.
+              return ScalarCellEvaluator.toDouble(t);
+            }
             final isRight = x.tri.selector == 0;
             final r = TriangleSolver.solve(
               sides: [v(0), v(1), v(2)],

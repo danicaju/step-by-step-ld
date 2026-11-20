@@ -4,7 +4,10 @@
 class ExprKeyInput {
   const ExprKeyInput._();
 
-  static const List<String> _fns = ['sin(', 'cos(', 'tan(', 'log(', 'ln(', '√('];
+  static const List<String> _fns = [
+    'asinh(', 'acosh(', 'atanh(', 'sinh(', 'cosh(', 'tanh(', 'arcsin(', 'arccos(', 'arctan(',
+    'sin⁻¹(', 'cos⁻¹(', 'tan⁻¹(', 'root(', 'sin(', 'cos(', 'tan(', 'log(', 'ln(', '√(',
+  ];
 
   static const Map<String, String> _tokens = {
     'sin': 'sin(',
@@ -27,7 +30,21 @@ class ExprKeyInput {
     '.': '.',
     'x': 'x',
     'X': 'x',
+    'PI': 'π',
   };
+
+  /// Prefijo de las teclas "token": `tok:sinh(` inserta el texto tal cual (OPTN, atajos fisicos).
+  static const String tokPrefix = 'tok:';
+
+  /// Token de la tecla con SHIFT activo (`sin⁻¹(`, `root(`, `10^(`); `null` si no cambia.
+  static String? shiftToken(String key) => switch (key) {
+        'sin' => 'sin⁻¹(',
+        'cos' => 'cos⁻¹(',
+        'tan' => 'tan⁻¹(',
+        '√' => 'root(',
+        'LOG' || 'log' => '10^(',
+        _ => null,
+      };
 
   /// Edicion lineal (sin cursor interno): el exponente se anade plano, sin par `^()`.
   static const Map<String, String> _linear = {'^2': '^2', '^3': '^3', '^': '^', '^(': '^('};
@@ -41,6 +58,7 @@ class ExprKeyInput {
       return cur.isEmpty ? cur : cur.substring(0, cur.length - 1);
     }
     if (alpha && key == ')') return '${cur}x';
+    if (key.startsWith(tokPrefix)) return '$cur${key.substring(tokPrefix.length)}';
     if (RegExp(r'^[0-9]$').hasMatch(key)) return '$cur$key';
     final t = _linear[key] ?? _tokens[key];
     return t == null ? null : '$cur$t';
@@ -48,6 +66,7 @@ class ExprKeyInput {
 
   /// Texto que inserta [key] en una expresion (con cursor); `null` si no edita expresiones.
   static String? tokenFor(String key, {bool alpha = false}) {
+    if (key.startsWith(tokPrefix)) return key.substring(tokPrefix.length);
     if (alpha) {
       // Letras ALPHA de la ClassWiz: x, y, z (tecla 3), e (x10^x) y ln (tecla log).
       final letter = switch (key) {
