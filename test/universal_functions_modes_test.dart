@@ -287,8 +287,15 @@ void main() {
       expect(sys(['cosh(x)+sinh(y)', 'cosh(x)-sinh(y)'], ['1', '1']), contains('(0,0)'));
     });
 
-    test('2x2 con raiz cubica: cbrt(x)+y=3, x-y=7 -> (8, 1)', () {
+    test('2x2 con raiz cubica: cbrt(x)+y=3, x-y=7 -> (8, 1) por cambio de variable', () {
       expect(sys(['cbrt(x)+y', 'x-y'], ['3', '7']), contains('(8,1)'));
+      final r = FreeSystemSolver.solve(['cbrt(x)+y', 'x-y'], ['3', '7']);
+      final titles = r.steps.map((st) => st.shortTitle).join('|');
+      expect(titles, contains('Cambio de variable en los radicales'));
+      expect(titles, isNot(contains('Newton')));
+      expect(r.exactResultLatex, isNot(contains('{,}')));
+      // la raiz impar admite a negativa: x = -8, y = 1
+      expect(sys(['cbrt(x)+y', 'x-y'], ['-1', '-9']), contains('(-8,1)'));
     });
 
     test('2x2 con inversas', () {

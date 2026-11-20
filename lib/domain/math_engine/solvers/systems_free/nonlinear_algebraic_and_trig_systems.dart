@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../core/rational.dart';
 import '../../models/step_resolution.dart';
 import '../exact/ext_expr.dart';
@@ -12,23 +14,33 @@ import 'nonlinear_cascade.dart';
 abstract final class NonlinearAlgebraicSystems {
   static bool _isSqrt(XRoot r) => r.index == null || (r.index is XNum && (r.index as XNum).value == Rational(2));
 
-  static Set<int> _sqrtVars(XNode n) {
-    final s = <int>{};
+  /// Indice entero (>= 2) de una raiz; `null` si no es constante.
+  static int? _idx(XRoot r) {
+    if (r.index == null) return 2;
+    final i = r.index!;
+    return i is XNum && i.value.isInteger && i.value.numerator >= 2 ? i.value.numerator : null;
+  }
+
+  /// Incognitas que aparecen solas bajo una raiz de indice constante: variable -> indice.
+  static Map<int, int> _rootVars(XNode n) {
+    final s = <int, int>{};
     InequalityFamilyDetector.walk(n, (v) {
-      if (v is XRoot && _isSqrt(v) && v.rad is XVar) {
+      if (v is XRoot && v.rad is XVar) {
         final i = NdSystem.vars.indexOf((v.rad as XVar).name);
-        if (i >= 0) s.add(i);
+        final k = _idx(v);
+        if (i >= 0 && k != null) s.putIfAbsent(i, () => k);
       }
     });
     return s;
   }
 
-  static XNode _tr(XNode n, Set<int> sq) {
+  static XNode _tr(XNode n, Map<int, int> sq) {
     switch (n) {
-      case XRoot r when _isSqrt(r) && r.rad is XVar && sq.contains(NdSystem.vars.indexOf((r.rad as XVar).name)):
+      case XRoot r when r.rad is XVar && sq[NdSystem.vars.indexOf((r.rad as XVar).name)] == _idx(r) && _idx(r) != null:
         return r.rad;
       case XVar(:final name):
-        return sq.contains(NdSystem.vars.indexOf(name)) ? XPow(n, XNum(Rational(2))) : n;
+        final k = sq[NdSystem.vars.indexOf(name)];
+        return k != null ? XPow(n, XNum(Rational(k))) : n;
       case XNeg(:final a):
         return XNeg(_tr(a, sq));
       case XBin(:final l, :final op, :final r):
@@ -59,11 +71,11 @@ abstract final class NonlinearAlgebraicSystems {
 
   static StepByStepResolution? solve(NdSystem sys) {
     final n = sys.n;
-    final sq = <int>{};
+    final sq = <int, int>{};
     for (final (l, r) in sys.sides) {
-      sq
-        ..addAll(_sqrtVars(l))
-        ..addAll(_sqrtVars(r));
+      for (final side in [l, r]) {
+        _rootVars(side).forEach((v, k) => sq.putIfAbsent(v, () => k));
+      }
     }
     final sides = [for (final (l, r) in sys.sides) (_tr(l, sq), _tr(r, sq))];
     final eqs = <CascadeEq>[];
@@ -92,8 +104,11 @@ abstract final class NonlinearAlgebraicSystems {
     if (sq.isNotEmpty) {
       steps.add(NdFmt.step(
         'Cambio de variable en los radicales',
-        NdFmt.cases([for (final v in sq) '${NdSystem.names[v]} = a_{${v + 1}}^{2} \\quad (a_{${v + 1}} \\ge 0)']),
-        'Llamamos a a la raíz de cada incógnita bajo el radical. Así desaparecen las raíces y el sistema pasa a ser polinómico en a, que debe ser mayor o igual que 0.',
+        NdFmt.cases([
+          for (final e in sq.entries)
+            '${NdSystem.names[e.key]} = a_{${e.key + 1}}^{${e.value}}${e.value.isEven ? ' \\quad (a_{${e.key + 1}} \\ge 0)' : ''}',
+        ]),
+        'Llamamos a a la raíz de cada incógnita bajo el radical. Así desaparecen las raíces y el sistema pasa a ser polinómico en a. Con índice par, a debe ser mayor o igual que 0; con índice impar, a puede ser negativa.',
       ));
     }
     if (squared) {
@@ -125,12 +140,13 @@ abstract final class NonlinearAlgebraicSystems {
     for (final s in found) {
       final v = [...s];
       var ok = true;
-      for (final i in sq) {
-        if (v[i] < -1e-9) {
+      for (final e in sq.entries) {
+        final i = e.key;
+        if (e.value.isEven && v[i] < -1e-9) {
           ok = false;
           negRoot++;
         } else {
-          v[i] = v[i] * v[i];
+          v[i] = math.pow(v[i], e.value).toDouble();
         }
       }
       if (ok) cands.add(v);
