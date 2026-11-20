@@ -1,3 +1,6 @@
+@Tags(['slow'])
+library;
+
 import 'package:casio_tutor_calc/main.dart';
 import 'package:casio_tutor_calc/presentation/theme/calculator_themes.dart';
 import 'package:casio_tutor_calc/presentation/theme/theme_contrast.dart';

@@ -1,6 +1,13 @@
 # STEP-BY-STEP LD (`casio_tutor_calc`)
 Calculadora Casio ClassWiz paso a paso (Flutter/Dart, ESO/Bachillerato España). Resultados siempre como `StepByStepResolution` en LaTeX.
 
+## REGLAS DE TESTS Y AHORRO DE TOKENS (obligatorias)
+- **Nunca** ejecutar `flutter test` sin argumentos: la suite completa la lanza el usuario en su terminal local.
+- Ejecutar solo el test de la tarea actual, siempre con reporter silencioso: `flutter test --no-pub -r failures-only test/<archivo>_test.dart`
+- Regresión rápida sin tests pesados (UI/fuzzing/temas): `flutter test --no-pub -r failures-only --exclude-tags slow`
+- Tests pesados llevan `@Tags(['slow'])` + `library;` en la primera línea (tag declarado en `dart_test.yaml`).
+- No leer archivos de `test/` ajenos a la tarea salvo que un fallo concreto apunte a ellos.
+
 ## Mapa
 - `lib/domain/math_engine/`: `ast/` (AST tipado, sin eval de strings), `parser/` (tokenizer, parser, navegación cursor/plantillas), `solvers/` (un solver por modo, subcarpetas por tema), `core/`, `models/`.
 - `lib/presentation/`: `screens/` (calculator_screen_*: teclado, d-pad, solvers, toolbars), `widgets/` (LCD en `lcd/`, teclado, editores matriz/vector/complejo/cálculo), `painters/`, `utils/`.

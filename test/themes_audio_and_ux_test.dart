@@ -1,3 +1,6 @@
+@Tags(['slow'])
+library;
+
 import 'dart:io';
 
 import 'package:casio_tutor_calc/core/audio/hardware_sound_synthesizer.dart';
