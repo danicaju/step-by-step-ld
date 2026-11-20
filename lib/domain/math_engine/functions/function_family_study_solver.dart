@@ -5,6 +5,7 @@ import 'angle_format.dart';
 import 'exp_log_trig_family_study.dart';
 import 'function_family.dart';
 import 'function_family_classifier.dart';
+import 'inverse_hyperbolic_family_study.dart';
 import 'polynomial_family_study.dart';
 import 'rational_radical_family_study.dart';
 
@@ -63,6 +64,14 @@ class FunctionFamilyStudySolver {
       case FunctionFamily.tangent:
         raw0 = ExpLogTrigFamilyStudy.study(info, deg: degrees);
         set = AsymptoteSet(vertical: _tanAsymptotes(info, degrees));
+      case FunctionFamily.arcSine ||
+            FunctionFamily.arcCosine ||
+            FunctionFamily.arcTangent ||
+            FunctionFamily.hypSine ||
+            FunctionFamily.hypCosine ||
+            FunctionFamily.hypTangent:
+        raw0 = InverseHyperbolicFamilyStudy.study(info, model.node, deg: degrees);
+        set = InverseHyperbolicFamilyStudy.asymptotes(info, deg: degrees);
       default:
         raw0 = ExpLogTrigFamilyStudy.study(info, deg: degrees);
     }

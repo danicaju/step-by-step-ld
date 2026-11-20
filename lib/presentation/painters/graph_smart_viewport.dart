@@ -38,6 +38,15 @@ List<Offset> notablePoints(FunctionModel f, AsymptoteSet asym, {FamilyInfo? info
       add(x0, info.d.toDouble());
     case FunctionFamily.exponential:
       add(-info!.c.toDouble() / info.b.toDouble(), (info.a + info.d).toDouble());
+    case FunctionFamily.arcSine || FunctionFamily.arcCosine:
+      // Extremos del dominio cerrado [(-1-C)/B, (1-C)/B]: la curva solo existe ahi.
+      for (final u in const [-1.0, 1.0]) {
+        final x = (u - info!.c.toDouble()) / info.b.toDouble();
+        add(x, f.at(x));
+      }
+    case FunctionFamily.hypCosine:
+      final x0 = -info!.c.toDouble() / info.b.toDouble();
+      add(x0, f.at(x0));
     case FunctionFamily.unknown:
       pts.addAll(_localExtrema(f));
     default:

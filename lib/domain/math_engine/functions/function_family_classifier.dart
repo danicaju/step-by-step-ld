@@ -99,6 +99,18 @@ class FunctionFamilyClassifier {
             return FamilyInfo(FunctionFamily.cosine, inner: lin, a: A, d: D);
           case 'tan':
             return FamilyInfo(FunctionFamily.tangent, inner: lin, a: A, d: D);
+          case 'asin':
+            return FamilyInfo(FunctionFamily.arcSine, inner: lin, a: A, d: D);
+          case 'acos':
+            return FamilyInfo(FunctionFamily.arcCosine, inner: lin, a: A, d: D);
+          case 'atan':
+            return FamilyInfo(FunctionFamily.arcTangent, inner: lin, a: A, d: D);
+          case 'sinh':
+            return FamilyInfo(FunctionFamily.hypSine, inner: lin, a: A, d: D);
+          case 'cosh':
+            return FamilyInfo(FunctionFamily.hypCosine, inner: lin, a: A, d: D);
+          case 'tanh':
+            return FamilyInfo(FunctionFamily.hypTangent, inner: lin, a: A, d: D);
           case 'ln':
             return FamilyInfo(FunctionFamily.logarithmic, inner: lin, a: A, d: D);
           case 'log':

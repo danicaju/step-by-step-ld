@@ -17,6 +17,12 @@ enum FunctionFamily {
   sine,
   cosine,
   tangent,
+  arcSine,
+  arcCosine,
+  arcTangent,
+  hypSine,
+  hypCosine,
+  hypTangent,
   unknown;
 
   /// Tipo del desplegable `Tipo` de M5 (2..8; 1 = Funcion libre) al que pertenece.
@@ -28,11 +34,14 @@ enum FunctionFamily {
         radicalEven || radicalOdd => 6,
         exponential || logarithmic => 7,
         sine || cosine || tangent => 8,
+        arcSine || arcCosine || arcTangent || hypSine || hypCosine || hypTangent => 8,
         unknown => 1,
       };
 
   bool get isPolynomial => this == constant || this == linear || this == quadratic || this == cubic;
   bool get isTrig => this == sine || this == cosine || this == tangent;
+  bool get isInverseTrig => this == arcSine || this == arcCosine || this == arcTangent;
+  bool get isHyperbolic => this == hypSine || this == hypCosine || this == hypTangent;
 }
 
 /// Nombre didactico de cada tipo del desplegable (indice 0..7 = teclas 1..8).
@@ -44,7 +53,7 @@ const List<String> kM5KindLabels = [
   'Racional P(x)/Q(x)',
   'Radical √ / ³√',
   'Exponencial / Log',
-  'Trigonométrica',
+  'Trig. / Hiperbólica',
 ];
 
 /// Forma `A * g(B x + C) + D` (radical, exponencial, logaritmo, trig) o polinomio / racional.

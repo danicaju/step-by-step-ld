@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:casio_tutor_calc/domain/math_engine/functions/function_family_study_solver.dart';
 import 'package:casio_tutor_calc/domain/math_engine/core/rational.dart';
 import 'package:casio_tutor_calc/domain/math_engine/models/step_resolution.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/calculus/sym_build.dart';
@@ -7,6 +8,8 @@ import 'package:casio_tutor_calc/domain/math_engine/solvers/exact/ext_expr.dart'
 import 'package:casio_tutor_calc/domain/math_engine/solvers/exact/ext_parser.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/symbolic_derivative_solver.dart';
 import 'package:casio_tutor_calc/domain/math_engine/solvers/symbolic_integral_solver.dart';
+import 'package:casio_tutor_calc/presentation/painters/graph_viewport_calculator.dart';
+import 'package:casio_tutor_calc/presentation/painters/universal_function_painter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'support/exercise_dsl.dart';
@@ -92,6 +95,103 @@ void main() {
         final dec = double.parse(r.decimalApproxLatex.replaceAll('{,}', '.').replaceAll(',', '.').replaceAll(RegExp(r'[^0-9.\-]'), ''));
         expect((dec - expected).abs(), lessThan(1e-4), reason: '$raw -> ${r.decimalApproxLatex}');
       }
+    });
+  });
+
+  group('M5 estudio y trazado de las 8 familias', () {
+    const ejemplos = ['x^3-4x', '1/x', 'cbrt(x+2)', 'e^x', 'ln(x)', 'sin(x)', 'arctan(x)', 'cosh(x)'];
+
+    test('los 8 ejemplos se analizan y se trazan sin NaN ni excepciones', () {
+      for (final raw in ejemplos) {
+        final fs = FunctionFamilyStudySolver.study(raw);
+        expectCleanNotes(fs.result.resolution);
+        expect(fs.result.resolution.steps, isNotEmpty, reason: raw);
+        final w = GraphViewportCalculator.window(fs.result.model, fs.result.asymptotes, info: fs.info);
+        expect(w.width.isFinite && w.height.isFinite && w.width > 0 && w.height > 0, isTrue, reason: raw);
+        final branches = UniversalFunctionPainter.branchesFor(fs.result.model, fs.result.asymptotes, w);
+        expect(branches, isNotEmpty, reason: raw);
+        for (final b in branches) {
+          for (final p in b) {
+            expect(p.$1.isFinite && p.$2.isFinite, isTrue, reason: '$raw punto $p');
+          }
+        }
+      }
+    });
+
+    test('raiz cubica: dominio R y f(-10) = -2; raiz cuadrada: [-2, +inf)', () {
+      final c = FunctionFamilyStudySolver.study('cbrt(x+2)');
+      expect(c.result.domain.isAllReals, isTrue);
+      expect(c.result.model.at(-10), -2);
+      expect(c.result.model.at(-3), closeTo(-1, 1e-12));
+      expect(c.result.model.at(62), 4); // sin error de redondeo
+      final s = FunctionFamilyStudySolver.study('sqrt(x+2)');
+      expect(s.result.domain.contains(-2), isTrue);
+      expect(s.result.domain.contains(-2.5), isFalse);
+      expect(s.result.domain.contains(100), isTrue);
+      final r = c.result.model;
+      final ramas = UniversalFunctionPainter.branchesFor(r, c.result.asymptotes, const GraphWindow(-8, 8, -4, 4));
+      expect(ramas.length, 1); // trazo continuo a ambos lados de x = -2
+    });
+
+    test('arcsin y arccos solo existen en [-1, 1]', () {
+      for (final raw in ['arcsin(x)', 'arccos(x)']) {
+        final fs = FunctionFamilyStudySolver.study(raw);
+        expect(fs.result.domain.contains(-1), isTrue, reason: raw);
+        expect(fs.result.domain.contains(1), isTrue, reason: raw);
+        expect(fs.result.domain.contains(1.01), isFalse, reason: raw);
+        expect(fs.result.domain.contains(-1.01), isFalse, reason: raw);
+        final w = GraphViewportCalculator.window(fs.result.model, fs.result.asymptotes, info: fs.info);
+        final ramas = UniversalFunctionPainter.branchesFor(fs.result.model, fs.result.asymptotes, w);
+        for (final b in ramas) {
+          expect(b.first.$1, greaterThanOrEqualTo(-1 - 1e-9));
+          expect(b.last.$1, lessThanOrEqualTo(1 + 1e-9));
+        }
+      }
+    });
+
+    test('arctan: dominio R y asintotas horizontales exactas en RAD y DEG', () {
+      final rad = FunctionFamilyStudySolver.study('arctan(x)');
+      expect(rad.result.domain.isAllReals, isTrue);
+      final ys = rad.result.asymptotes.horizontal.map((a) => a.n).toList()..sort();
+      expect(ys[0], closeTo(-1.5707963267948966, 1e-12));
+      expect(ys[1], closeTo(1.5707963267948966, 1e-12));
+      expect(rad.result.asymptotes.horizontal.map((a) => a.latex).join(), contains(r'\pi'));
+      final deg = FunctionFamilyStudySolver.study('arctan(x)', degrees: true);
+      final yd = deg.result.asymptotes.horizontal.map((a) => a.n).toList()..sort();
+      expect(yd, [-90.0, 90.0]);
+      expect(deg.result.asymptotes.horizontal.map((a) => a.latex).join(), contains('90'));
+    });
+
+    test('hiperbolicas: paridad, imagen, minimo de cosh y asintotas de tanh', () {
+      final sh = FunctionFamilyStudySolver.study('sinh(x)');
+      final shText = lessonText(sh.result.resolution);
+      expect(shText, contains('impar'));
+      expect(sh.result.asymptotes.horizontal, isEmpty);
+      final ch = FunctionFamilyStudySolver.study('cosh(x)');
+      final chText = lessonText(ch.result.resolution);
+      expect(chText, contains('par'));
+      expect(chText, contains(r'\left[1,\,+\infty\right)'));
+      expect(chText, contains(r'\left(0,\,1\right)'));
+      final th = FunctionFamilyStudySolver.study('tanh(x)');
+      final ys = th.result.asymptotes.horizontal.map((a) => a.n).toList()..sort();
+      expect(ys, [-1.0, 1.0]);
+      for (final fs in [sh, ch, th]) {
+        expectCleanNotes(fs.result.resolution);
+        expect(fs.result.domain.isAllReals, isTrue);
+      }
+    });
+
+    test('estudio coherente de polinomica, racional, exponencial, logaritmica con base y trig', () {
+      final cub = lessonText(FunctionFamilyStudySolver.study('x^3-4x').result.resolution);
+      expect(cub, contains('-2'));
+      final rat = FunctionFamilyStudySolver.study('1/x');
+      expect(rat.result.asymptotes.vertical.map((a) => a.x), contains(0));
+      expect(rat.result.asymptotes.horizontal.map((a) => a.n), contains(0));
+      final lg = FunctionFamilyStudySolver.study('log_(2,x)');
+      expect(lg.result.model.at(8), closeTo(3, 1e-12));
+      expect(lg.result.asymptotes.vertical.map((a) => a.x), contains(0));
+      final ex = FunctionFamilyStudySolver.study('e^(-x)');
+      expect(lessonText(ex.result.resolution), contains(r'x \to +\infty'));
     });
   });
 }

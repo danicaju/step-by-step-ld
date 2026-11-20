@@ -130,9 +130,9 @@ class DomainSolver {
           final p = PolyOps.polyOf(r);
           if (p != null) {
             out.add(_Constraint(p, 'ne'));
-          } else if (r is XRoot && _evenIndex(r.index)) {
+          } else if (r is XRoot) {
             final rp = PolyOps.polyOf(r.rad);
-            if (rp != null) out.add(_Constraint(rp, 'gt'));
+            if (rp != null) out.add(_Constraint(rp, _evenIndex(r.index) ? 'gt' : 'ne'));
           } else {
             notes.add('Hay un denominador no polinomico: el dominio se estima.');
           }
@@ -148,24 +148,37 @@ class DomainSolver {
         }
         _collect(rad, out, notes);
       case XPow(:final base, :final exp):
-        if (exp is XNum && !exp.value.isInteger) {
-          final bp = PolyOps.polyOf(base);
-          if (bp != null) out.add(_Constraint(bp, exp.value.denominator.isEven ? 'ge' : 'ne'));
-          if (exp.value.isNegative && bp != null && exp.value.denominator.isEven) {
-            out.removeLast();
-            out.add(_Constraint(bp, 'gt'));
+        final ep = PolyOps.polyOf(exp);
+        final e = ep != null && PolyOps.degree(ep) <= 0 ? PolyOps.coeff(ep, 0) : null;
+        final bp = PolyOps.polyOf(base);
+        if (e != null && bp != null && !e.isZero) {
+          if (e.isInteger) {
+            if (e.isNegative) out.add(_Constraint(bp, 'ne'));
+          } else if (e.denominator.isEven) {
+            out.add(_Constraint(bp, e.isNegative ? 'gt' : 'ge'));
+          } else if (e.isNegative) {
+            out.add(_Constraint(bp, 'ne'));
           }
-        } else if (exp is XNum && exp.value.isNegative) {
-          final bp = PolyOps.polyOf(base);
-          if (bp != null) out.add(_Constraint(bp, 'ne'));
         }
         _collect(base, out, notes);
       case XFn(:final name, :final arg):
+        final p = PolyOps.polyOf(arg);
         if (name == 'ln' || name == 'log') {
-          final p = PolyOps.polyOf(arg);
           if (p != null) out.add(_Constraint(p, 'gt'));
         } else if (name == 'tan') {
           notes.add('tan(x) no esta definida en x = pi/2 + k pi.');
+        } else if (p != null) {
+          final one = PolyOps.constant(Rational(1));
+          switch (name) {
+            case 'asin' || 'acos':
+              out.add(_Constraint(PolyOps.sub(one, p), 'ge'));
+              out.add(_Constraint(PolyOps.add(one, p), 'ge'));
+            case 'acosh':
+              out.add(_Constraint(PolyOps.sub(p, one), 'ge'));
+            case 'atanh':
+              out.add(_Constraint(PolyOps.sub(one, p), 'gt'));
+              out.add(_Constraint(PolyOps.add(one, p), 'gt'));
+          }
         }
         _collect(arg, out, notes);
       default:

@@ -157,7 +157,12 @@ class ExtEvaluator {
       final bpr = bp.asRational;
       if (bpr != null) return ExtMath.nthRoot(bpr, er.denominator);
     }
-    if (b.approx < 0 && !b.approx.isNaN) throw const ExMathError();
+    if (b.approx < 0 && !b.approx.isNaN) {
+      // Exponente p/q con q impar: raiz real (signo segun la paridad de p).
+      if (er == null || er.denominator.isEven) throw const ExMathError();
+      final mag = math.pow(-b.approx, er.toDouble()).toDouble();
+      return ExNum.opaque('${_wrap(b)}^{${e.toLatex()}}', er.numerator.isOdd ? -mag : mag);
+    }
     final lat = '${_wrap(b)}^{${e.toLatex()}}';
     return ExNum.opaque(lat, math.pow(b.approx, e.approx).toDouble());
   }

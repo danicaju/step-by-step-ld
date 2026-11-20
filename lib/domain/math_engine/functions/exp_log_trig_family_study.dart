@@ -43,7 +43,7 @@ class ExpLogTrigFamilyStudy {
           i.base == null || i.base! > 1
               ? (b.isPositive == a.isPositive ? 'Base mayor que 1 y signos positivos: la función crece.' : 'La función es decreciente por el signo de A o de B.')
               : 'Base entre 0 y 1: la función decrece (salvo que A o B cambien el signo).'),
-      fstep('Asíntota horizontal', 'y_{AH} = ${rl(d)}\\quad (x \\to ${(inc ? -1 : 1) * (b.isNegative ? -1 : 1) < 0 ? '-' : '+'}\\infty)',
+      fstep('Asíntota horizontal', 'y_{AH} = ${rl(d)}\\quad (x \\to ${b.toDouble() * lb > 0 ? '-' : '+'}\\infty)',
           'Cuando el exponente tiende a -infinito la potencia se acerca a 0 y f tiende a D = ${rl(d)}.'),
       fstep('Punto clave', 'x = ${rl(x1)} \\implies f = ${rl(a + d)} \\implies ${_pt(rl(x1), rl(a + d))}',
           'Si el exponente vale 0, la potencia vale 1. Para a^x el punto clave es (0, 1).'),
